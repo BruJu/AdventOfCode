@@ -125,5 +125,34 @@ namespace lines_transform {
         return retval;
     }
 
+    template <typename D, typename I, typename Mapper, typename Reducer, typename Finalize>
+    std::vector<D> group(const std::vector<std::string> & lines, Mapper mapper, Reducer reducer, Finalize finalizer) {
+        std::vector<D> values;
+
+        std::optional<I> accumulator = std::nullopt;
+
+        const auto append = [&]() {
+            if (accumulator) {
+                values.emplace_back(finalizer(accumulator.value()));
+                accumulator = std::nullopt;
+            }
+        };
+
+        for (const std::string & line : lines) {
+            if (line == "") {
+                append();
+            } else if (!accumulator.has_value()) {
+                accumulator = mapper(line);
+            } else {
+                accumulator = reducer(accumulator.value(), mapper(line));
+            }
+        }
+
+        append();
+
+        return values;
+    }
+
+    template <typename T> inline T map_identity(T t) { return t; }
 }
 

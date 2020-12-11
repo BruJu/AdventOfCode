@@ -5,6 +5,7 @@
 namespace day01 { Output start(const std::vector<std::string> & lines); }
 namespace day02 { Output start(const std::vector<std::string> & lines); }
                   Output day03(const std::vector<std::string> & lines);
+                  Output day04(const std::vector<std::string> & lines);
 
 
 void dispatch(const InputConfig & config) {
@@ -12,6 +13,7 @@ void dispatch(const InputConfig & config) {
         case  1: config.run(day01::start); return;
         case  2: config.run(day02::start); return;
         case  3: config.run(day03       ); return;
+        case  4: config.run(day04       ); return;
 
 
 

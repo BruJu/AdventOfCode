@@ -4,3 +4,7 @@
 2 inputs/02_real.txt      ?       ?
 3 inputs/03_example.txt   7       336
 3 inputs/03_real.txt      ?       ?
+4 inputs/04_example.txt   2       ?
+4 inputs/04_valid.txt     ?       4
+4 inputs/04_invalid.txt   ?       0
+4 inputs/04_real.txt      ?       ?
