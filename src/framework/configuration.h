@@ -10,10 +10,10 @@
 struct InputConfig {
     int day;
     std::string filename;
-    std::optional<int> expectedPart1 = std::nullopt;
-    std::optional<int> expectedPart2 = std::nullopt;
+    Output::Optional expectedPart1 = std::nullopt;
+    Output::Optional expectedPart2 = std::nullopt;
 
-    InputConfig(int pDay, std::string pFileName, std::optional<int> pPart1, std::optional<int> pPart2)
+    InputConfig(int pDay, std::string pFileName, Output::Optional pPart1, Output::Optional pPart2)
     : day(pDay), filename(pFileName), expectedPart1(pPart1), expectedPart2(pPart2) {}
 
     static std::vector<InputConfig> read_configuration(const char * path = "config.txt");
@@ -50,7 +50,7 @@ void InputConfig::run(Runner runner) const {
     // Display
     std::cout << "== " << filename << '\n';
 
-    constexpr auto display_result = [](std::optional<int> expected, std::optional<int> computed) {
+    constexpr auto display_result = [](Output::Optional expected, Output::Optional computed) {
         if (!computed) {
             if (expected) {
                 std::cout << "NO DATA - Expected= "<< expected.value() << "\n";

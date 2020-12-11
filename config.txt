@@ -2,3 +2,5 @@
 1 inputs/01_real.txt      ?       ?
 2 inputs/02_example.txt   2       1
 2 inputs/02_real.txt      ?       ?
+3 inputs/03_example.txt   7       336
+3 inputs/03_real.txt      ?       ?

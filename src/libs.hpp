@@ -10,8 +10,11 @@
 #include <sstream>
 
 struct Output {
-    std::optional<int> part1 = std::nullopt;
-    std::optional<int> part2 = std::nullopt;
+    using Type = long long int;
+    using Optional = std::optional<Type>;
+    
+    Optional part1 = std::nullopt;
+    Optional part2 = std::nullopt;
 };
 
 class StringSplitter {
@@ -35,6 +38,68 @@ public:
         }
 
         return std::string(from, to);
+    }
+};
+
+struct Board {
+    std::vector<std::vector<char>> m_board;
+
+public:
+    explicit Board(const std::vector<std::string> & lines) {
+        for (const auto & line : lines) {
+            m_board.emplace_back(line.begin(), line.end());
+        }
+    }
+
+    [[nodiscard]] size_t height() const { return m_board.size(); }
+
+    // Board should not be empty
+    [[nodiscard]] size_t width() const { return m_board[0].size(); }
+
+    [[nodiscard]] std::optional<char> get_at(size_t x, size_t y) const {
+        if (x >= width()) return std::nullopt;
+        if (y >= height()) return std::nullopt;
+        return m_board[y][x];
+    }
+
+    void set_at(size_t x, size_t y, char c) {
+        m_board[y][x] = c;
+    }
+
+    [[nodiscard]] int normalize_x(int x) const { return x % width();  }
+    [[nodiscard]] int normalize_y(int y) const { return y % height(); }
+};
+
+class BoardPosition {
+    size_t m_x;       bool loop_x;
+    size_t m_y;       bool loop_y;
+    Board * board;
+
+    static void offset_helper(size_t & i, int offset, size_t length, bool is_looped) {
+        if (!is_looped) {
+            i += offset;
+            return;
+        }
+
+        int i_as_int = (static_cast<int>(i) + offset) % length;
+        i = static_cast<size_t>(i_as_int);
+    }
+
+public:
+    BoardPosition(Board & pBoard, size_t x = 0, size_t y = 0, bool pLoop_x = false, bool pLoop_y = false)
+    : m_x(x), loop_x(pLoop_x), m_y(y), loop_y(pLoop_y), board(&pBoard) {}
+
+    [[nodiscard]] std::optional<char> operator*() const {
+        return board->get_at(m_x, m_y);
+    }
+
+    void set(char c) {
+        board->set_at(m_x, m_y, c);
+    }
+
+    void offset(int x, int y) {
+        offset_helper(m_x, x, board->width() , loop_x);
+        offset_helper(m_y, y, board->height(), loop_y);
     }
 };
 

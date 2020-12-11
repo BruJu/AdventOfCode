@@ -31,7 +31,7 @@ InputConfig InputConfig::from_line(std::string_view line) {
         if (s == "?") {
             return std::nullopt;
         } else {
-            return std::stoi(s);
+            return std::stoll(s);
         }
     };
 
