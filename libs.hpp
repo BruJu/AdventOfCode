@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <optional>
 
 #include <fstream>
@@ -13,19 +14,38 @@ struct InputConfig {
 
     InputConfig(std::string pFileName, std::optional<int> pPart1, std::optional<int> pPart2)
     : filename(pFileName), expectedPart1(pPart1), expectedPart2(pPart2) {}
+
+    static std::vector<InputConfig> read_configuration(const char * path = "config.txt");
+    static InputConfig from_line(std::string_view line);
 };
 
 using InputsConfig = std::vector<InputConfig>;
 
-[[nodiscard]] inline std::vector<std::string> split(std::string line) {
-    std::vector<std::string> retval;
-    retval.push_back("input.tt");
-    retval.push_back("7");
-    retval.push_back("10");
-    return retval;
-}
+class StringSplitter {
+    std::string_view::const_iterator pos;
+    std::string_view::const_iterator end;
 
-inline InputsConfig readConfig() {
+public:
+    explicit StringSplitter(const std::string_view & str) : pos(str.begin()), end(str.end()) {}
+
+    std::string operator()() {
+        const auto from = pos;
+
+        while (pos != end && *pos != ' ') {
+            ++pos;
+        }
+
+        const auto to = pos;
+
+        while (pos != end && *pos == ' ') {
+            ++pos;
+        }
+
+        return std::string(from, to);
+    }
+};
+
+InputConfig InputConfig::from_line(std::string_view line) {
     constexpr auto toExpected = [](const std::string & s) -> std::optional<int> {
         if (s == "?") {
             return std::nullopt;
@@ -34,14 +54,22 @@ inline InputsConfig readConfig() {
         }
     };
 
+    StringSplitter splitter = StringSplitter(line);
+    std::string filename = splitter();
+    std::optional<int> expected1 = toExpected(splitter());
+    std::optional<int> expected2 = toExpected(splitter());
+    return InputConfig(filename, expected1, expected2);
+}
+
+inline InputsConfig InputConfig::read_configuration(const char * path) {
+
     InputsConfig configs;
 
-    std::ifstream file("config.txt");
+    std::ifstream file(path);
 
     std::string line;
     while (std::getline(file, line)) {
-        std::vector<std::string> splitted = split(line);
-        configs.emplace_back(splitted[0], toExpected(splitted[1]), toExpected(splitted[2]));
+        configs.emplace_back(from_line(line));
     }
 
     return configs;
