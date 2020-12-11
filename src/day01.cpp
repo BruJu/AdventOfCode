@@ -1,6 +1,8 @@
 #include <array>
 #include "libs.hpp"
 
+// https://adventofcode.com/2020/day/1
+
 namespace day01 {
     std::optional<std::pair<int, int>> find_sum(
         const int target,
@@ -49,18 +51,18 @@ namespace day01 {
         return { -1, -1, -1 };
     }
 
-    std::vector<int> start(const std::vector<std::string> & lines) {
-        std::vector<int> retval;
+    Output start(const std::vector<std::string> & lines) {
+        Output output;
 
         std::vector<int> numbers = lines_transform::to_ints(lines);
         std::sort(numbers.begin(), numbers.end());
 
         auto r1 = find_sum(2020, numbers.begin(), numbers.end());
-        retval.push_back(r1->first * r1->second);
+        output.part1 = r1->first * r1->second;
 
         auto r2 = find_sum_three_values(2020, numbers.begin(), numbers.end());
-        retval.push_back(r2[0] * r2[1] * r2[2]);
+        output.part2 = r2[0] * r2[1] * r2[2];
 
-        return retval;
+        return output;
     }
 }

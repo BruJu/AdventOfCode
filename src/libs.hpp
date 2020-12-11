@@ -9,6 +9,11 @@
 #include <fstream>
 #include <sstream>
 
+struct Output {
+    std::optional<int> part1 = std::nullopt;
+    std::optional<int> part2 = std::nullopt;
+};
+
 class StringSplitter {
     std::string_view::const_iterator pos;
     std::string_view::const_iterator end;

@@ -1,6 +1,8 @@
 #include "libs.hpp"
 #include <regex>
 
+// https://adventofcode.com/2020/day/2
+
 namespace day02 {
     struct PolicyPassword {
         size_t first;
@@ -8,10 +10,10 @@ namespace day02 {
         char key;
         std::string password;
 
-        static PolicyPassword from_string(std::string str);
+        [[nodiscard]] static PolicyPassword from_string(const std::string & str);
     };
 
-    PolicyPassword PolicyPassword::from_string(std::string str) {
+    PolicyPassword PolicyPassword::from_string(const std::string & str) {
         constexpr const char * const PATTERN = R"(^([0-9]+)-([0-9]+) ([a-zA-Z]): ([a-z0-9A-Z]*)$)";
         std::regex pattern { PATTERN };
 
@@ -23,12 +25,12 @@ namespace day02 {
             exit(EXIT_FAILURE);
         }
 
-        PolicyPassword retval;
-        retval.first    = std::stoul(matches[1].str());
-        retval.second   = std::stoul(matches[2].str());
-        retval.key      = matches[3].str()[0];
-        retval.password = matches[4].str();
-        return retval;
+        return PolicyPassword {
+            .first    = std::stoul(matches[1].str()),
+            .second   = std::stoul(matches[2].str()),
+            .key      = matches[3].str()[0],
+            .password = matches[4].str()
+        };
     }
 
     static bool match_ruleset1(const PolicyPassword & pp) {
@@ -47,18 +49,18 @@ namespace day02 {
         return check_position(pp.first) ^ check_position(pp.second);
     }
 
-    std::vector<int> start(const std::vector<std::string> & lines) {
+    Output start(const std::vector<std::string> & lines) {
         const std::vector<PolicyPassword> policies = 
             lines_transform::map<PolicyPassword>(lines, PolicyPassword::from_string);
 
-        const auto count_valid = [](const auto & policies, auto predicate) {
+        constexpr auto count_valid = [](const auto & policies, auto predicate) {
             return static_cast<int>(std::count_if(policies.begin(), policies.end(), predicate));
         };
 
         const int ruleset1 = count_valid(policies, match_ruleset1);
         const int ruleset2 = count_valid(policies, match_ruleset2);
 
-        return {ruleset1, ruleset2};
+        return Output { ruleset1, ruleset2 };
     }
 
 }

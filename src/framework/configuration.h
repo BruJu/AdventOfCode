@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../libs.hpp"
 #include <iostream>
 #include <fstream>
 #include <optional>
@@ -44,26 +45,21 @@ void InputConfig::run(Runner runner) const {
         // free file
     }
 
-        
-    std::vector<int> result = runner(lines);
+    Output result = runner(lines);
 
     // Display
     std::cout << "== " << filename << '\n';
-    if (result.size() > 2) {
-        std::cout << "/!\\ More than 2 results (" << result.size()  << ")\n";
-    }
-    const auto display_result = [&result](std::optional<int> expected, size_t pos) {
-        if (pos >= result.size()) {
+
+    constexpr auto display_result = [](std::optional<int> expected, std::optional<int> computed) {
+        if (!computed) {
             if (expected) {
                 std::cout << "NO DATA - Expected= "<< expected.value() << "\n";
             }
             return;
         }
 
-        int computed = result[pos];
-
         if (expected) {
-            if (expected.value() == computed) {
+            if (expected.value() == computed.value()) {
                 std::cout << " OK  ";
             } else {
                 std::cout << "FAIL ";
@@ -72,18 +68,17 @@ void InputConfig::run(Runner runner) const {
             std::cout << "RSLT ";
         }
 
-        std::cout << computed;
+        std::cout << computed.value();
 
-        if (expected && expected.value() != computed) {
+        if (expected && expected.value() != computed.value()) {
             std::cout << " - Expected= " << expected.value() << "\n";
         } else {
             std::cout << "\n";
         }
-
     };
 
-    display_result(expectedPart1, 0);
-    display_result(expectedPart2, 1);
+    display_result(expectedPart1, result.part1);
+    display_result(expectedPart2, result.part2);
     std::cout << "\n";
 }
 

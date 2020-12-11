@@ -2,8 +2,8 @@
 #include "framework/configuration.h"
 #include <algorithm>
 
-namespace day01 { std::vector<int> start(const std::vector<std::string> & lines); }
-namespace day02 { std::vector<int> start(const std::vector<std::string> & lines); }
+namespace day01 { Output start(const std::vector<std::string> & lines); }
+namespace day02 { Output start(const std::vector<std::string> & lines); }
 
 
 void dispatch(const InputConfig & config) {
