@@ -55,7 +55,7 @@ void InputConfig::run(Runner runner) const {
     const auto display_result = [&result](std::optional<int> expected, size_t pos) {
         if (pos >= result.size()) {
             if (expected) {
-                std::cout << "NO DATA (Expected= "<< expected.value() << ")\n";
+                std::cout << "NO DATA - Expected= "<< expected.value() << "\n";
             }
             return;
         }
@@ -75,7 +75,7 @@ void InputConfig::run(Runner runner) const {
         std::cout << computed;
 
         if (expected && expected.value() != computed) {
-            std::cout << " - Expected= " << expected.value() << ")\n";
+            std::cout << " - Expected= " << expected.value() << "\n";
         } else {
             std::cout << "\n";
         }

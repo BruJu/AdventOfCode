@@ -3,11 +3,13 @@
 #include <algorithm>
 
 namespace day01 { std::vector<int> start(const std::vector<std::string> & lines); }
+namespace day02 { std::vector<int> start(const std::vector<std::string> & lines); }
 
 
 void dispatch(const InputConfig & config) {
     switch (config.day) {
         case  1: config.run(day01::start); return;
+        case  2: config.run(day02::start); return;
 
 
 
@@ -23,7 +25,7 @@ int main(int argc, const char * argv[]) {
     int required_day;
     if (argc <= 1) {
         required_day = std::max_element(configs.begin(), configs.end(),
-            [](const auto & lhs, const auto & rhs) { return lhs.day > rhs.day; }
+            [](const auto & lhs, const auto & rhs) { return lhs.day < rhs.day; }
         )->day;
     } else {
         required_day = std::stoi(argv[1]);

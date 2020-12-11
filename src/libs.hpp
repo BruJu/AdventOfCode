@@ -43,5 +43,17 @@ namespace lines_transform {
 
         return values;
     }
+
+    template <typename T, typename Mapper>
+    std::vector<T> map(const std::vector<std::string> & lines, Mapper mapper) {
+        std::vector<T> retval;
+
+        for (const std::string & line : lines) {
+            retval.emplace_back(mapper(line));
+        }
+
+        return retval;
+    }
+
 }
 
