@@ -6,6 +6,7 @@
 #include <optional>
 
 #include <fstream>
+#include <sstream>
 
 struct InputConfig {
     std::string filename;
@@ -17,7 +18,101 @@ struct InputConfig {
 
     static std::vector<InputConfig> read_configuration(const char * path = "config.txt");
     static InputConfig from_line(std::string_view line);
+
+    template <typename Runner>
+    void run(Runner runner) const;
+
+    [[nodiscard]] std::string to_string() const;
 };
+
+
+std::string InputConfig::to_string() const {
+    std::ostringstream stringbuilder;
+
+    stringbuilder << '<' << filename << "> ";
+
+    const auto write_opt = [&](std::optional<int> v) {
+        stringbuilder << '<';
+        if (v) {
+            stringbuilder << v.value();
+        } else {
+            stringbuilder << '?';
+        }
+
+        stringbuilder << '>';
+    };
+
+    write_opt(expectedPart1);
+    stringbuilder << ' ';
+    write_opt(expectedPart2);
+    
+    return stringbuilder.str();
+}
+
+
+template <typename Runner> // runner(const std::vector<std::string> & lines) -> std::vector<int>
+void InputConfig::run(Runner runner) const {
+    // Task
+    std::vector<std::string> lines;
+
+    {
+        std::ifstream file(filename);
+
+        std::string line;
+        while (std::getline(file, line)) {
+            lines.emplace_back(line);
+        }
+        // free file
+    }
+
+    std::vector<int> result = runner(lines);
+
+    // Display
+
+    std::cout << "== " << filename << '\n';
+    if (result.size() > 2) {
+        std::cout << "/!\\ More than 2 results (" << result.size()  << ")\n";
+    }
+
+    //if (result.empty()) {
+    //    std::cout << "/!\\ No result\n";
+    //}
+
+    const auto display_result = [&result](std::optional<int> expected, size_t pos) {
+        if (pos >= result.size()) {
+            if (expected) {
+                std::cout << "NO DATA (Expected= "<< expected.value() << ")\n";
+            }
+            return;
+        }
+
+        int computed = result[pos];
+
+        if (expected) {
+            if (expected.value() == computed) {
+                std::cout << " OK  ";
+            } else {
+                std::cout << "FAIL ";
+            }
+        } else {
+            std::cout << "RSLT ";
+        }
+
+        std::cout << computed;
+
+        if (expected && expected.value() != computed) {
+            std::cout << " - Expected= " << expected.value() << ")\n";
+        } else {
+            std::cout << "\n";
+        }
+
+    };
+
+    display_result(expectedPart1, 0);
+    display_result(expectedPart2, 1);
+    std::cout << "\n";
+}
+
 
 using InputsConfig = std::vector<InputConfig>;
 
@@ -62,7 +157,6 @@ InputConfig InputConfig::from_line(std::string_view line) {
 }
 
 inline InputsConfig InputConfig::read_configuration(const char * path) {
-
     InputsConfig configs;
 
     std::ifstream file(path);
@@ -73,5 +167,20 @@ inline InputsConfig InputConfig::read_configuration(const char * path) {
     }
 
     return configs;
+}
+
+namespace lines_transform {
+
+    inline std::vector<int> to_ints(const std::vector<std::string> & lines) {
+        std::vector<int> values;
+
+        for (const std::string & line : lines) {
+            values.emplace_back(std::stoi(line));
+        }
+
+        return values;
+    }
+
+
 }
 
