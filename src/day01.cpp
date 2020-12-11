@@ -1,7 +1,5 @@
-#include <iostream>
-#include "../libs.hpp"
 #include <array>
-
+#include "libs.hpp"
 
 namespace day01 {
     std::optional<std::pair<int, int>> find_sum(
@@ -66,13 +64,3 @@ namespace day01 {
         return retval;
     }
 }
-
-int main() {
-    auto configs = InputConfig::read_configuration();
-
-    for (const auto & config : configs) {
-        // std::cout << config.to_string() << "\n";
-        config.run(day01::start);
-    }
-}
-
