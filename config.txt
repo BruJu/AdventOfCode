@@ -10,3 +10,5 @@
 4 inputs/04_real.txt      ?       ?
 5 inputs/05_example.txt   820     _
 5 inputs/05_real.txt      ?       ?
+6 inputs/06_example.txt   11      6
+6 inputs/06_real.txt      ?       ?

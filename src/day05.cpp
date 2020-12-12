@@ -30,8 +30,8 @@ struct Seat {
     int column;
 
     explicit Seat(std::string s)
-    : row   (Interval::str_to_int(line.substr(0, 7), 'F'))
-    , column(Interval::str_to_int(line.substr(7, 3), 'L'))
+    : row   (Interval::str_to_int(s.substr(0, 7), 'F'))
+    , column(Interval::str_to_int(s.substr(7, 3), 'L')) {}
 
     [[nodiscard]] int to_id() const noexcept { return row * 8 + column; }
 };

@@ -3,26 +3,25 @@
 #include <algorithm>
 #include "colors.h"
 
-namespace day01 { Output start(const std::vector<std::string> & lines); }
-namespace day02 { Output start(const std::vector<std::string> & lines); }
-                  Output day03(const std::vector<std::string> & lines);
-                  Output day04(const std::vector<std::string> & lines);
-                  Output day05(const std::vector<std::string> & lines);
+using DayEntryPoint = Output(const std::vector<std::string> & lines);
+
+Output day01(const std::vector<std::string> & lines);
+Output day02(const std::vector<std::string> & lines);
+Output day03(const std::vector<std::string> & lines);
+Output day04(const std::vector<std::string> & lines);
+Output day05(const std::vector<std::string> & lines);
+Output day06(const std::vector<std::string> & lines);
 
 
 void dispatch(const InputConfig & config, TestScore & ts) {
-    switch (config.day) {
-        case  1: ts += config.run(day01::start); return;
-        case  2: ts += config.run(day02::start); return;
-        case  3: ts += config.run(day03       ); return;
-        case  4: ts += config.run(day04       ); return;
-        case  5: ts += config.run(day05       ); return;
+    static constexpr std::array<DayEntryPoint *, 30> days {
+        &day01, &day02, &day03, &day04, &day05, &day06, nullptr
+    };
 
-
-
-        default:
-            std::cout << "No program for day " << config.day << "\n";
-            break;
+    if (DayEntryPoint * day = days[config.day - 1]) {
+        ts += config.run(day);
+    } else {
+        std::cout << "No program for day " << config.day << "\n";
     }
 }
 
