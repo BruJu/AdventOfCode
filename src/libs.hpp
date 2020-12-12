@@ -68,6 +68,10 @@ public:
 
     [[nodiscard]] int normalize_x(int x) const { return x % width();  }
     [[nodiscard]] int normalize_y(int y) const { return y % height(); }
+
+    [[nodiscard]] bool operator==(const Board & other) const {
+        return m_board == other.m_board;
+    }
 };
 
 class BoardPosition {

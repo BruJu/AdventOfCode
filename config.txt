@@ -22,3 +22,5 @@
 10 inputs/10_small.txt     35      8
 10 inputs/10_medium.txt    220     19208
 10 inputs/10_tosolve.txt   ?       ?
+11 inputs/11_example.txt   37      26
+11 inputs/11_tosolve.txt   ?       ?

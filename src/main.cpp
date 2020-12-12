@@ -15,12 +15,13 @@ Output day07(const std::vector<std::string> & lines);
 Output day08(const std::vector<std::string> & lines);
 Output day09(const std::vector<std::string> & lines);
 Output day10(const std::vector<std::string> & lines);
+Output day11(const std::vector<std::string> & lines);
 
 
 void dispatch(const InputConfig & config, TestScore & ts) {
     static constexpr std::array<DayEntryPoint *, 30> days {
         &day01, &day02, &day03, &day04, &day05, &day06, &day07,
-        &day08, &day09, &day10, nullptr
+        &day08, &day09, &day10, &day11, nullptr
     };
 
     if (DayEntryPoint * day = days[config.day - 1]) {
