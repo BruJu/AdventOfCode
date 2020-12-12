@@ -98,7 +98,6 @@ unsigned int figure_empty_seats(Board board, Function slot_changer) {
     }
 }
 
-
 Output day11(const std::vector<std::string> & lines) {
     Board board = Board(lines);
 

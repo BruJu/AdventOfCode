@@ -2,6 +2,7 @@
 
 // https://adventofcode.com/2020/day/9
 
+
 using UUINT = long long unsigned int;
 using Values = std::vector<UUINT>;
 using ValuesIter = Values::const_iterator;
