@@ -8,3 +8,5 @@
 4 inputs/04_valid.txt     _       4
 4 inputs/04_invalid.txt   _       0
 4 inputs/04_real.txt      ?       ?
+5 inputs/05_example.txt   820     _
+5 inputs/05_real.txt      ?       ?
