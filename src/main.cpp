@@ -1,6 +1,7 @@
 #include <iostream>
 #include "framework/configuration.h"
 #include <algorithm>
+#include "colors.h"
 
 namespace day01 { Output start(const std::vector<std::string> & lines); }
 namespace day02 { Output start(const std::vector<std::string> & lines); }
@@ -52,9 +53,10 @@ int main(int argc, const char * argv[]) {
         }
     }
 
-    std::cout << "\nTotal  = " << testScore.total()
-              << "\nSuccess= " << testScore.success
-              << "\nFailed = " << testScore.failed << '\n';
+    std::cout << "\x1B[1m"
+              << "\nTotal  = " << testScore.total()
+              << "\n" KGRN "Success= " << testScore.success
+              << "\n" KRED "Failed = " << testScore.failed << RST << '\n';
 
     return 0;
 }

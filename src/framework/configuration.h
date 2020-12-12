@@ -8,6 +8,8 @@
 #include <cstring>
 #include <vector>
 
+#include "../colors.h"
+
 struct TestScore {
     unsigned int success = 0;
     unsigned int failed  = 0;
@@ -97,7 +99,7 @@ TestScore InputConfig::run(Runner runner) const {
         if (!computed) {
             if (expected) {
                 SPRINTF_STRCAT2("NO DATA - Expected= %lld", expected.value());
-                std::cout << text << '\n';
+                std::cout << "\x1B[1m" << KRED << text << RST << '\n';
             }
             return false;
         }
@@ -123,7 +125,11 @@ TestScore InputConfig::run(Runner runner) const {
             SPRINTF_STRCAT2(" - Expected= %lld", expected.value());
         }
 
-        std::cout << text << '\n';
+        if (!result)             std::cout << "\x1B[1m" << KBLU;
+        else if (result.value()) std::cout << "\x1B[1m" << KGRN;
+        else                     std::cout << "\x1B[1m" << KRED;
+
+        std::cout << text << RST << '\n';
         return result;
     };
 
