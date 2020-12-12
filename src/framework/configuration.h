@@ -10,6 +10,23 @@
 
 #include "../colors.h"
 
+inline auto && getline_cleaned(std::ifstream & file, std::string & line) {
+    auto && b = std::getline(file, line);
+
+    if (b) {
+        auto it = line.begin();
+        while (it != line.end()) {
+            if (*it == '\r') {
+                it = line.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    return b;
+}
+
 struct TestScore {
     unsigned int success = 0;
     unsigned int failed  = 0;
@@ -72,7 +89,7 @@ TestScore InputConfig::run(Runner runner) const {
         }
 
         std::string line;
-        while (std::getline(file, line)) {
+        while (getline_cleaned(file, line)) {
             lines.emplace_back(line);
         }
         // free file

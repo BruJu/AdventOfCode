@@ -49,7 +49,7 @@ InputsConfig InputConfig::read_configuration(const char * path) {
     std::ifstream file(path);
 
     std::string line;
-    while (std::getline(file, line)) {
+    while (getline_cleaned(file, line)) {
         if (line.substr(0, 2) != "//") {
             configs.emplace_back(from_line(line));
         }
