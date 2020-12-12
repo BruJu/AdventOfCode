@@ -17,3 +17,5 @@
 7 inputs/07_tosolve.txt   ?       ?
 8 inputs/08_example.txt   5       8
 8 inputs/08_tosolve.txt   ?       ?
+9 inputs/09_example.txt   127     62
+9 inputs/09_tosolve.txt   ?       ?
