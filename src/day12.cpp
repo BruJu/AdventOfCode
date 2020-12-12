@@ -65,13 +65,21 @@ class Individual {
     static constexpr const char * const Directions = "NESW";
     int direction_id = 1;
 public:
+    [[nodiscard]] static int normalize_direction(int direction) {
+        while (direction < 0) {
+            direction += 4;
+        }
+
+        return direction % 4;
+    }
+
     [[nodiscard]] int manhattan() const noexcept { return self.manhattan(); }
 
     void operator()(Command command) {
         if (command.command == 'L') {
-            direction_id = (direction_id - command.value / 90) % 4;
+            direction_id = normalize_direction(direction_id - command.value / 90);
         } else if (command.command == 'R') {
-            direction_id = (direction_id + command.value / 90) % 4;
+            direction_id = normalize_direction(direction_id + command.value / 90);
         } else if (command.command == 'F') {
             self.move(Directions[direction_id], command.value);
         } else {
@@ -89,9 +97,9 @@ public:
 
     void operator()(Command command) {
         if (command.command == 'L') {
-            waypoint.rotateLeft();
+            for (int i = 0 ; i != command.value / 90 ; ++i) waypoint.rotateLeft();
         } else if (command.command == 'R') {
-            waypoint.rotateRight();
+            for (int i = 0 ; i != command.value / 90 ; ++i) waypoint.rotateRight();
         } else if (command.command == 'F') {
             self.advance(waypoint, command.value);
         } else {
