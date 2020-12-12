@@ -24,7 +24,7 @@ Output day10(const std::vector<std::string> & lines) {
         }
     }
 
-    std::vector<unsigned int> number_of_ways_to_reach(voltage.size(), 0);
+    std::vector<long long unsigned int> number_of_ways_to_reach(voltage.size(), 0);
 
     number_of_ways_to_reach[0] = 1;
 
