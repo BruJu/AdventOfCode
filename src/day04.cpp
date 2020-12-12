@@ -3,14 +3,12 @@
 
 // https://adventofcode.com/2020/day/4
 
-
 class ValidationRules {
     using Validator = std::function<bool (std::string)>;
 
     std::map<std::string, Validator> m_validators;
 
 public:
-
     static std::function<bool (std::string)> four_digits(int min, int max) {
         return [min, max](std::string s) {
             static constexpr const char * PATTERN = "^([0-9]{4})$";
@@ -69,7 +67,6 @@ class Passport {
 
     std::map<std::string, std::string> m_content;
 public:
-
     explicit Passport(std::string passport) {
         std::regex pattern { PATTERN };
 
@@ -112,7 +109,6 @@ public:
         return builder.str();
     }
 };
-
 
 Output day04(const std::vector<std::string> & lines) {
     const std::vector<Passport> passports = lines_transform::group<Passport, std::string>(
