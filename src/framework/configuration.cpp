@@ -27,19 +27,19 @@ std::string InputConfig::to_string() const {
 
 
 InputConfig InputConfig::from_line(std::string_view line) {
-    constexpr auto toExpected = [](const std::string & s) -> std::optional<int> {
-        if (s == "?") {
-            return std::nullopt;
+    constexpr auto toExpected = [](const std::string & s) -> ExpectedType {
+        if (s == "?" || s == "_") {
+            return ExpectedType(std::nullopt, s == "?");
         } else {
-            return std::stoll(s);
+            return ExpectedType(std::stoll(s), true);
         }
     };
 
     StringSplitter splitter = StringSplitter(line);
     const int day = std::stoi(splitter());
     const std::string filename = splitter();
-    const std::optional<int> expected1 = toExpected(splitter());
-    const std::optional<int> expected2 = toExpected(splitter());
+    const ExpectedType expected1 = toExpected(splitter());
+    const ExpectedType expected2 = toExpected(splitter());
     return InputConfig(day, filename, expected1, expected2);
 }
 
