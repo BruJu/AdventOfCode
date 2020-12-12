@@ -15,9 +15,9 @@ Architecture is a bit wonky: the goal is to have an easy to compile / run proces
 ## Adding new days
 
 - Add input files in `inputs/`
-- `config.txt` : For each input, add a line `DAYID input_path part1_result part2_result`. Write ? instead of a number if unknown
-- `src/main.cpp` : add function declaration for `dayXX { start() }` and add in `dispatch()` the handler
-- Create a `src/dayXX.cpp` file. "`main`" function is start.
+- `config.txt` : For each input, add a line `DAYID input_path part1_result part2_result`. Write ? instead of a number if unknown. Write `\_ for tests which result is unknwon and not required.
+- `src/main.cpp` : add function declaration for `dayXX() ` and add in `dispatch()` the handler
+- Create a `src/dayXX.cpp` file.
 
 ## License
 
