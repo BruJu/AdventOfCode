@@ -50,7 +50,9 @@ InputsConfig InputConfig::read_configuration(const char * path) {
 
     std::string line;
     while (std::getline(file, line)) {
-        configs.emplace_back(from_line(line));
+        if (line.substr(0, 2) != "//") {
+            configs.emplace_back(from_line(line));
+        }
     }
 
     return configs;

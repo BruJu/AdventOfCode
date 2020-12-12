@@ -11,17 +11,20 @@ Output day03(const std::vector<std::string> & lines);
 Output day04(const std::vector<std::string> & lines);
 Output day05(const std::vector<std::string> & lines);
 Output day06(const std::vector<std::string> & lines);
+Output day07(const std::vector<std::string> & lines);
 
 
 void dispatch(const InputConfig & config, TestScore & ts) {
     static constexpr std::array<DayEntryPoint *, 30> days {
-        &day01, &day02, &day03, &day04, &day05, &day06, nullptr
+        &day01, &day02, &day03, &day04, &day05, &day06, &day07,
+        nullptr
     };
 
     if (DayEntryPoint * day = days[config.day - 1]) {
         ts += config.run(day);
     } else {
-        std::cout << "No program for day " << config.day << "\n";
+        std::cout << "\x1B[1m" KRED "-- No handler for day " << config.day
+                << ": Required for " << config.filename << RST "\n";
     }
 }
 

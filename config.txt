@@ -12,3 +12,6 @@
 5 inputs/05_real.txt      ?       ?
 6 inputs/06_example.txt   11      6
 6 inputs/06_real.txt      ?       ?
+7 inputs/07_example.txt   4       32
+7 inputs/07_example2.txt  _       126
+7 inputs/07_tosolve.txt   ?       ?
