@@ -15,7 +15,7 @@ test::Expected::Expected(std::string line) {
     if (line == "?") {
         type  = Type::Wanted;
         value = 0;
-    } else if (line == "_") {
+    } else if (line == "_" || line.substr(0, 5) == "nope_") {
         type  = Type::Ignore;
         value = 0;
     } else if (line[0] == '?') {
@@ -45,6 +45,15 @@ InputsConfig InputConfig::read_configuration(const char * path) {
     while (getline_cleaned(file, line)) {
         if (line.substr(0, 2) != "//") {
             configs.emplace_back(from_line(line));
+        }
+    }
+
+    for (auto it = configs.begin(); it != configs.end();) {
+        if (it->m_expected_part_1.type == test::Expected::Type::Ignore
+            && it->m_expected_part_2.type == test::Expected::Type::Ignore) {
+            it = configs.erase(it);
+        } else {
+            ++it;
         }
     }
 
