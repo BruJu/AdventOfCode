@@ -17,13 +17,14 @@ Output day09(const std::vector<std::string> & lines);
 Output day10(const std::vector<std::string> & lines);
 Output day11(const std::vector<std::string> & lines);
 Output day12(const std::vector<std::string> & lines);
+Output day13(const std::vector<std::string> & lines);
 
 void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
 void dispatch(const InputConfig & config, test::Score & ts) {
     static constexpr std::array<DayEntryPoint *, 30> days {
         &day01, &day02, &day03, &day04, &day05, &day06, &day07,
-        &day08, &day09, &day10, &day11, &day12, nullptr
+        &day08, &day09, &day10, &day11, &day12, &day13, nullptr
     };
 
     if (DayEntryPoint * day = days[config.day - 1]) {
@@ -54,6 +55,7 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
         for (const auto part_result : r->parts) {
             if (!part_result) {
                 std::sprintf(buffer, "%-35s ", " ");
+                std::cout << buffer;
                 continue;
             }
 

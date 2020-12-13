@@ -146,25 +146,29 @@ struct Output {
 class StringSplitter {
     std::string_view::const_iterator pos;
     std::string_view::const_iterator end;
+    char split_character;
 
 public:
-    explicit StringSplitter(const std::string_view & str) : pos(str.begin()), end(str.end()) {}
+    explicit StringSplitter(const std::string_view & str, char split_character = ' ')
+    : pos(str.begin()), end(str.end()), split_character(split_character) {}
 
     std::string operator()() {
         const auto from = pos;
 
-        while (pos != end && *pos != ' ') {
+        while (pos != end && *pos != split_character) {
             ++pos;
         }
 
         const auto to = pos;
 
-        while (pos != end && *pos == ' ') {
+        while (pos != end && *pos == split_character) {
             ++pos;
         }
 
         return std::string(from, to);
     }
+
+    [[nodiscard]] operator bool() const { return pos != end; }
 };
 
 struct Board {
