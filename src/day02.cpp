@@ -59,5 +59,5 @@ Output day02(const std::vector<std::string> & lines) {
     const int ruleset1 = count_valid(policies, match_ruleset1);
     const int ruleset2 = count_valid(policies, match_ruleset2);
 
-    return Output { ruleset1, ruleset2 };
+    return Output(ruleset1, ruleset2);
 }

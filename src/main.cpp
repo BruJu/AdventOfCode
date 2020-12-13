@@ -18,19 +18,62 @@ Output day10(const std::vector<std::string> & lines);
 Output day11(const std::vector<std::string> & lines);
 Output day12(const std::vector<std::string> & lines);
 
+void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
-void dispatch(const InputConfig & config, TestScore & ts) {
+void dispatch(const InputConfig & config, test::Score & ts) {
     static constexpr std::array<DayEntryPoint *, 30> days {
         &day01, &day02, &day03, &day04, &day05, &day06, &day07,
         &day08, &day09, &day10, &day11, &day12, nullptr
     };
 
     if (DayEntryPoint * day = days[config.day - 1]) {
-        ts += config.run(day);
+        std::optional<test::RunResult> r = config.run(day);
+        print(config, r);
+        ts += r;
     } else {
-        std::cout << "\x1B[1m" KRED "-- No handler for day " << config.day
-                << ": Required for " << config.filename << RST "\n";
+        print(config, std::nullopt);
     }
+}
+
+void print(const InputConfig & config, const std::optional<test::RunResult> & r) {
+    // I really hate std::ostream, and std::format is not yet available in g++
+    // So let's pretend it's C even thought that's unsafe
+
+    // Macro because with a lambda, g++ is unhappy about buffer being a variable
+    char buffer[512];
+    // --
+    test::TestValidation overall = r ? r->get_overall() : test::TestValidation::Fail;
+    std::cout << "\x1B[1m" << test::get_color(overall) << "-- ";
+
+    std::sprintf(buffer, "Day %02d %-30s ", config.day, config.filename.c_str());
+    std::cout << buffer;
+
+    if (!r) {
+        std::cout << KRED << "No handler";
+    } else {
+        for (const auto part_result : r->parts) {
+            if (!part_result) {
+                std::sprintf(buffer, "%-35s ", " ");
+                continue;
+            }
+
+            switch (part_result->type) {
+                case test::TestValidation::Success:
+                    std::sprintf(buffer, KGRN "%-35lld ", part_result->computed);
+                    break;
+                case test::TestValidation::Computed:
+                    std::sprintf(buffer, KBLU "%-35lld ", part_result->computed);
+                    break;
+                case test::TestValidation::Fail:
+                    std::sprintf(buffer, KRED "%-15lld EXP=%-15lld ", part_result->computed, part_result->expected);
+                    break;
+            }
+
+            std::cout << buffer;
+        }
+    }
+
+    std::cout << RST "\n";
 }
 
 int main(int argc, const char * argv[]) {
@@ -45,7 +88,7 @@ int main(int argc, const char * argv[]) {
         required_day = std::stoi(argv[1]);
     }
 
-    TestScore testScore;
+    test::Score testScore;
 
     std::optional<int> last_seen_day = std::nullopt;
 

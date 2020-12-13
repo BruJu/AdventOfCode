@@ -1,5 +1,5 @@
 1  inputs/01_example.txt   514579  241861950
-1  inputs/01_real.txt      ?       ?
+1  inputs/01_real.txt      ?974304 ?
 2  inputs/02_example.txt   2       1
 2  inputs/02_real.txt      ?       ?
 3  inputs/03_example.txt   7       336

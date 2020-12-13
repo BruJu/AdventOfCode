@@ -45,5 +45,5 @@ Output day06(const std::vector<std::string> & lines) {
         return std::accumulate(per_group.begin(), per_group.end(), 0);
     };
 
-    return Output { compute(union_op), compute(intersection_op) };
+    return Output(compute(union_op), compute(intersection_op));
 }

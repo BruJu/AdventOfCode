@@ -140,5 +140,5 @@ Output day07(const std::vector<std::string> & lines) {
         }
     }
 
-    return Output { shiny_gold_containers, all_bags["shiny gold"].get_number_of_bags() };
+    return Output(shiny_gold_containers, all_bags["shiny gold"].get_number_of_bags());
 }

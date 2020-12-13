@@ -6,40 +6,33 @@ std::string InputConfig::to_string() const {
     std::ostringstream stringbuilder;
 
     stringbuilder << "Day " << day << " <" << filename << "> ";
-
-    const auto write_opt = [&](std::optional<int> v) {
-        stringbuilder << '<';
-        if (v) {
-            stringbuilder << v.value();
-        } else {
-            stringbuilder << '?';
-        }
-
-        stringbuilder << '>';
-    };
-
-    write_opt(expectedPart1);
-    stringbuilder << ' ';
-    write_opt(expectedPart2);
+    stringbuilder << '<' << m_expected_part_1 << "> <" << m_expected_part_2 << '>';
     
     return stringbuilder.str();
 }
 
+test::Expected::Expected(std::string line) {
+    if (line == "?") {
+        type  = Type::Wanted;
+        value = 0;
+    } else if (line == "_") {
+        type  = Type::Ignore;
+        value = 0;
+    } else if (line[0] == '?') {
+        type  = Type::WantedKnown;
+        value = std::stoll(line.substr(1));
+    } else {
+        type  = Type::Known;
+        value = std::stoll(line);
+    }
+}
 
 InputConfig InputConfig::from_line(std::string_view line) {
-    constexpr auto toExpected = [](const std::string & s) -> ExpectedType {
-        if (s == "?" || s == "_") {
-            return ExpectedType(std::nullopt, s == "?");
-        } else {
-            return ExpectedType(std::stoll(s), true);
-        }
-    };
-
     StringSplitter splitter = StringSplitter(line);
     const int day = std::stoi(splitter());
     const std::string filename = splitter();
-    const ExpectedType expected1 = toExpected(splitter());
-    const ExpectedType expected2 = toExpected(splitter());
+    const test::Expected expected1 = test::Expected(splitter());
+    const test::Expected expected2 = test::Expected(splitter());
     return InputConfig(day, filename, expected1, expected2);
 }
 

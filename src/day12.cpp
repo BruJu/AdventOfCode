@@ -114,8 +114,8 @@ public:
 Output day12(const std::vector<std::string> & lines) {
     const std::vector<Command> commands = lines_transform::map<Command>(lines, Command::from_string);
 
-    return Output {
+    return Output(
         the_ferry_hype_has_no_brakes<Individual>(commands),
         the_ferry_hype_has_no_brakes<Waypoint>(commands)
-    };
+    );
 }

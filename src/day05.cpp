@@ -58,5 +58,5 @@ Output day05(const std::vector<std::string> & lines) {
         ++i;
     }
 
-    return Output { max, seats[i] - 1 };
+    return Output(max, seats[i] - 1);
 }

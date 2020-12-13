@@ -102,5 +102,5 @@ Output day08(const std::vector<std::string> & lines) {
         }
     }
 
-    return Output { accumulator_loop, accumulator_decorrupted };
+    return Output(accumulator_loop, accumulator_decorrupted);
 }

@@ -129,5 +129,5 @@ Output day04(const std::vector<std::string> & lines) {
         [&](const Passport & p) { return p.has_all_fields() && p.has_valid_fields(rules); }
     );
 
-    return Output { passports_with_all_fields, passports_with_valid_fields };
+    return Output(passports_with_all_fields, passports_with_valid_fields);
 }

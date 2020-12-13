@@ -104,5 +104,5 @@ Output day11(const std::vector<std::string> & lines) {
     const unsigned int empty_seats_A = figure_empty_seats(board, around);
     const unsigned int empty_seats_B = figure_empty_seats(board, line_vision);
 
-    return Output { empty_seats_A, empty_seats_B };
+    return Output(empty_seats_A, empty_seats_B);
 }

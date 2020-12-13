@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <variant>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -9,13 +11,137 @@
 #include <fstream>
 #include <sstream>
 
-struct Output {
-    using Type = long long int;
-    using Optional = std::optional<Type>;
+#include "colors.h"
+
+
+namespace test {
+    using Value = long long int;
+
+    struct Expected {
+        enum class Type { /* _ */ Ignore, /* 123 */ Known, /* ? */ Wanted, /* ?123 */ WantedKnown };
+
+        Type  type;
+        Value value;
+
+        explicit Expected(std::string line);
+
+        friend std::ostream & operator<<(std::ostream & stream, const Expected & expected) {
+            if (expected.type == Type::Ignore) {
+                stream << 'X';
+            } else if (expected.type == Type::Known) {
+                stream << "Expect" << expected.value;
+            } else if (expected.type == Type::WantedKnown) {
+                stream << "?" << expected.value;
+            } else {
+                stream << "?";
+            }
+
+            return stream;
+        }
+    };
     
-    Optional part1 = std::nullopt;
-    Optional part2 = std::nullopt;
+    enum class TestValidation { Success, Fail, Computed };
+
+    inline TestValidation validation_reduce(std::optional<TestValidation> lhs, std::optional<TestValidation> rhs) {
+        if (!lhs && !rhs) return TestValidation::Computed;
+        if ( lhs && !rhs) return *lhs;
+        if (!lhs &&  rhs) return *rhs;
+        if (*lhs == TestValidation::Fail || *rhs == TestValidation::Fail) return TestValidation::Fail;
+
+        return *lhs;
+    }
+
+    struct PartResult {
+        TestValidation type; // Ignore, Known or Wanted
+        Value computed;
+        Value expected;
+
+        [[nodiscard]] bool is_valid() const noexcept { return computed == expected; }
+        
+        static std::optional<PartResult> from(test::Value computed, test::Expected expected) {
+            PartResult p;
+            p.computed = computed;
+            p.expected = expected.value;
+
+            switch (expected.type) {
+                case Expected::Type::Ignore: 
+                    return std::nullopt;
+                case Expected::Type::Known:
+                    p.type = p.computed == p.expected ? TestValidation::Success : TestValidation::Fail;
+                    break;
+                case Expected::Type::WantedKnown:
+                    p.type = p.computed == p.expected ? TestValidation::Computed : TestValidation::Fail;
+                    break;
+                case Expected::Type::Wanted:
+                    p.type = TestValidation::Computed;
+                    break;
+            }
+
+            return p;
+        }
+    };
+
+    inline const char * get_color(std::optional<TestValidation> test_validation) {
+        if (!test_validation) return KCYN;
+
+        switch (*test_validation) {
+            case TestValidation::Success : return KGRN;
+            case TestValidation::Fail    : return KRED;
+            case TestValidation::Computed: return KBLU;
+            default:                       return KCYN;
+        }
+    }
+
+    struct RunResult {
+        std::array<std::optional<PartResult>, 2> parts;
+
+        [[nodiscard]] TestValidation get_overall() const noexcept;
+    };
+
+    inline TestValidation RunResult::get_overall() const noexcept {
+        const std::optional<TestValidation> a = parts[0] ? std::optional<TestValidation>(parts[0]->type) : std::nullopt;
+        const std::optional<TestValidation> b = parts[1] ? std::optional<TestValidation>(parts[1]->type) : std::nullopt;
+        return validation_reduce(a, b);
+    }
+    
+    struct Score {
+        unsigned int success = 0;
+        unsigned int failed  = 0;
+
+        Score & operator+=(const std::optional<RunResult> & run_result) {
+            if (!run_result) return *this;
+
+            for (const auto & part_result : run_result->parts) {
+                if (part_result) {
+                    *this += part_result->type;
+                }
+            }
+
+            return *this;
+        }
+
+        Score & operator+=(TestValidation test_validation) {
+            if (test_validation == TestValidation::Success) {
+                ++success;
+            } else if (test_validation == TestValidation::Fail) {
+                ++failed;
+            }
+
+            return *this;
+        }
+
+
+        [[nodiscard]] unsigned int total() const noexcept { return success + failed; }
+    };
+}
+
+struct Output {
+    test::Value part_a;
+    test::Value part_b;
+    
+    Output(test::Value a, test::Value b) : part_a(a), part_b(b) {}
 };
+
 
 class StringSplitter {
     std::string_view::const_iterator pos;

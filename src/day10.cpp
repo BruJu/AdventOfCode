@@ -37,5 +37,5 @@ Output day10(const std::vector<std::string> & lines) {
         }
     }
     
-    return Output { oneJoltDiff * threeJoltDifference, number_of_ways_to_reach.back() };
+    return Output(oneJoltDiff * threeJoltDifference, number_of_ways_to_reach.back());
 }

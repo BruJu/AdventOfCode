@@ -72,5 +72,5 @@ Output day09(const std::vector<std::string> & lines) {
     const auto [begin, end] = get_contiguous_sum(values, values[position_of_invalid]);
     const auto [min, max] = std::minmax_element(begin, end);
     
-    return Output { values[position_of_invalid], *min + *max };
+    return Output(values[position_of_invalid], *min + *max);
 }
