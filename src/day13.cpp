@@ -74,16 +74,10 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
 }
 
 [[maybe_unused]] static Int wolframalpha(const std::vector<Bus> & buses) {
-    struct Mods {
-        Int remainder;
-        Int mod;
-    };
-
-    std::vector<Mods> mods;
     for (const auto & bus : buses) {
-        mods.push_back(Mods { bus.id, bus.period });
         std::printf("(n+%lld)%%%lld = 0,", bus.id, bus.period);
     }
+    
     std::printf("\n");
     std::printf("https://www.wolframalpha.com\n");
 
