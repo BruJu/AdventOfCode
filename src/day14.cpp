@@ -51,7 +51,7 @@ public:
     using Ram = std::unordered_map<Word, Word>;
 private:
     Ram m_ram;
-    std::optional<MaskChanger> m_mask_changer = std::nullopt;
+    const MaskChanger * m_mask_changer = nullptr;
     const std::vector<Instruction> * m_instructions;
     size_t m_pc = 0;
 
@@ -72,7 +72,7 @@ public:
             Affecter & affecter;
 
             void operator()(const MaskChanger & changer) {
-                that->m_mask_changer = changer;
+                that->m_mask_changer = &changer;
             }
 
             void operator()(const UnknownOperation &) {}
@@ -107,11 +107,11 @@ public:
     }
 };
 
-void value_masker(ProgramExecutor::Ram & ram, Word address, Word value, MaskChanger mask) {
+void value_masker(ProgramExecutor::Ram & ram, Word address, Word value, const MaskChanger & mask) {
     ram[address] = (value & mask.zero_setter) | mask.one_setter;
 }
 
-void address_masker(ProgramExecutor::Ram & ram, Word address, Word value, MaskChanger mask) {
+void address_masker(ProgramExecutor::Ram & ram, Word address, Word value, const MaskChanger & mask) {
     address |= mask.one_setter;
 
     Word init_mask = ~0; // All bit at 1
