@@ -2,8 +2,6 @@
 
 My answers to https://adventofcode.com/2020 written in C++
 
-I don't actually compete in C++ when I first do the challenges, but I thought it would be nice to at least have a C++ public repository on Github.
-
 Architecture is a bit wonky: the goal is to have an easy to compile / run process by using only one command line.
 
 ## Test / Compile / Run
