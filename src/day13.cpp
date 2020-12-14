@@ -97,6 +97,8 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
         std::printf("(n+%lld)%%%lld = 0,", bus.id, bus.period);
     }
 
+    std::cout << "\n";
+
     //mods.push_back(Mods{ 2, 3 });
     //mods.push_back(Mods{ 3, 5 });
     //mods.push_back(Mods{ 2, 7 });
@@ -114,7 +116,7 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
         std::cout << " ^= " << hatted_mod;
 
         Int times_hatted = 1;
-        while (hatted_mod * times_hatted % mod.mod != 1) {
+        while ((hatted_mod * times_hatted) % mod.mod != 1) {
             ++times_hatted;
         }
         std::cout << "times= " << times_hatted;
@@ -129,16 +131,23 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
     std::cout << x << "\n";
     std::cout << x % product << "\n";
 
+    if (mods[0].remainder == 0) {
+        return x;
+    } else {
+        // TODO
+        return 0;
+    }
+
     return x % product;
 
 }
 
-Output day13(const std::vector<std::string> & lines) {
+Output day13(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const Int timestamp = std::stoll(lines[0]);
     const std::vector<Bus> buses = read_buses(lines[1]);
 
     return Output(
         find_departure_timestamp(timestamp, buses),
-        0
+        0 //chinese_remainder(buses)
     );
 }

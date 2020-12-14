@@ -50,7 +50,7 @@ static std::array<int, 3> find_sum_three_values(
     return { -1, -1, -1 };
 }
 
-Output day01(const std::vector<std::string> & lines) {
+Output day01(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> numbers = lines_transform::to_ints(lines);
     std::sort(numbers.begin(), numbers.end());
 

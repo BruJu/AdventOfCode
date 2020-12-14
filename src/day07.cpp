@@ -113,7 +113,7 @@ void Bag::ensure_is_transitively_closed(Bag::All & all_bags) {
     is_transitively_closed = true;
 }
 
-Output day07(const std::vector<std::string> & lines) {
+Output day07(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::regex regex_bag_contains { BAGS_CONTAIN };
     std::regex regex_contained   { CONTAINED_BAG };
 

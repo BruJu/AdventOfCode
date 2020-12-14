@@ -36,7 +36,7 @@ struct Seat {
     [[nodiscard]] int to_id() const noexcept { return row * 8 + column; }
 };
 
-Output day05(const std::vector<std::string> & lines) {
+Output day05(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> seats;
     for (const auto & line : lines) {
         seats.emplace_back(Seat(line).to_id());

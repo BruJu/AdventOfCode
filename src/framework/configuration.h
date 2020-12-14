@@ -66,7 +66,12 @@ std::optional<test::RunResult> InputConfig::run(Runner runner) const {
         // free file
     }
 
-    Output result = runner(lines);
+    DayExtraInfo day_extra_info {
+        .can_skip_part_A = m_expected_part_1.type == test::Expected::Type::Ignore,
+        .can_skip_part_B = m_expected_part_2.type == test::Expected::Type::Ignore,
+    };
+
+    Output result = runner(lines, day_extra_info);
 
     return test::RunResult {
         .parts = std::array<std::optional<test::PartResult>, 2>({

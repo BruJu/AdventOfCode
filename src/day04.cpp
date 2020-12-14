@@ -110,7 +110,7 @@ public:
     }
 };
 
-Output day04(const std::vector<std::string> & lines) {
+Output day04(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<Passport> passports = lines_transform::group<Passport, std::string>(
         lines,
         lines_transform::map_identity<std::string>,

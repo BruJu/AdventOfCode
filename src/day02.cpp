@@ -48,7 +48,7 @@ static bool match_ruleset2(const PolicyPassword & pp) {
     return check_position(pp.first) ^ check_position(pp.second);
 }
 
-Output day02(const std::vector<std::string> & lines) {
+Output day02(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<PolicyPassword> policies = 
         lines_transform::map<PolicyPassword>(lines, PolicyPassword::from_string);
 

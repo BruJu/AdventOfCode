@@ -111,7 +111,7 @@ public:
 
 // Main
 
-Output day12(const std::vector<std::string> & lines) {
+Output day12(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<Command> commands = lines_transform::map<Command>(lines, Command::from_string);
 
     return Output(

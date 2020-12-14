@@ -142,6 +142,10 @@ struct Output {
     Output(test::Value a, test::Value b) : part_a(a), part_b(b) {}
 };
 
+struct DayExtraInfo {
+    bool can_skip_part_A = false;
+    bool can_skip_part_B = false;
+};
 
 class StringSplitter {
     std::string_view::const_iterator pos;

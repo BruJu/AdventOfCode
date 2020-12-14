@@ -32,7 +32,7 @@ static std::set<char> intersection_op(const std::set<char> & lhs, const std::set
     return retval;
 }
 
-Output day06(const std::vector<std::string> & lines) {
+Output day06(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto compute = [&](auto reducer) {
         const std::vector<size_t> per_group =
             lines_transform::group<size_t, std::set<char>>(

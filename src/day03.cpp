@@ -20,7 +20,7 @@ static auto count_trees_on_slope(Board board, size_t x, size_t y, int dX, int dY
     return count;
 }
 
-Output day03(const std::vector<std::string> & lines) {
+Output day03(const std::vector<std::string> & lines, const DayExtraInfo &) {
     Board board = Board(lines);
 
     const auto        slope_1_1 = count_trees_on_slope(board, 0, 0, 1, 1);
