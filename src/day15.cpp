@@ -1,17 +1,16 @@
 #include "libs.hpp"
+#include <unordered_map>
 #include <vector>
-#include <map>
 
 // https://adventofcode.com/2020/day/15
-
 
 struct Occurrences {
     int lastTurn;
     int beforeTurn;
 
-    [[nodiscard]] std::optional<int> get_turn_difference() const noexcept {
+    [[nodiscard]] int get_turn_difference() const noexcept {
         if (beforeTurn == 0) {
-            return std::nullopt;
+            return 0;
         } else {
             return lastTurn - beforeTurn;
         }
@@ -19,11 +18,10 @@ struct Occurrences {
 };
 
 class RambunctiousRecitation {
-    std::map<int, Occurrences> m_occurences;
+    std::unordered_map<int, Occurrences> m_occurences;
     int m_turn_id = 0;
     int m_last_number = 0;
 public:
-    
     void add(int number) {
         ++m_turn_id;
 
@@ -40,23 +38,15 @@ public:
 
     void next() {
         const auto it = m_occurences.find(m_last_number);
-        const auto diff = it->second.get_turn_difference();
-        if (!diff) {
-            add(0);
-        } else {
-            add(*diff);
-        }
+        add(it->second.get_turn_difference());
     }
-
 
     [[nodiscard]] bool is_turn(int turn_id) const noexcept {
         return m_turn_id == turn_id;
     }
 
     [[nodiscard]] int last_number() const noexcept { return m_last_number; }
-
 };
-
 
 Output day15(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
     StringSplitter splitter = StringSplitter(lines[0], ',');
@@ -71,15 +61,16 @@ Output day15(const std::vector<std::string> & lines, const DayExtraInfo & extra)
         instance.next();
     }
 
-    int _2020 = instance.last_number();
+    const int number_at_2020 = instance.last_number();
     
-
-    while (!instance.is_turn(30000000)) {
-        instance.next();
+    if (!extra.can_skip_part_B) {
+        while (!instance.is_turn(30000000)) {
+            instance.next();
+        }
     }
 
     return Output(
-        _2020,
+        number_at_2020,
         instance.last_number()
     );
 }
