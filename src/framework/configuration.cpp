@@ -36,6 +36,11 @@ InputConfig InputConfig::from_line(std::string_view line) {
     return InputConfig(day, filename, expected1, expected2);
 }
 
+static bool config_has_no_test(const InputConfig & config) {
+    return config.m_expected_part_1.is_ignore()
+        && config.m_expected_part_2.is_ignore();
+}
+
 InputsConfig InputConfig::read_configuration(const char * path) {
     InputsConfig configs;
 
@@ -48,14 +53,7 @@ InputsConfig InputConfig::read_configuration(const char * path) {
         }
     }
 
-    for (auto it = configs.begin(); it != configs.end();) {
-        if (it->m_expected_part_1.type == test::Expected::Type::Ignore
-            && it->m_expected_part_2.type == test::Expected::Type::Ignore) {
-            it = configs.erase(it);
-        } else {
-            ++it;
-        }
-    }
+    std::erase_if(configs, config_has_no_test);
 
     return configs;
 }

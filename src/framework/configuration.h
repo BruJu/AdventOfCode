@@ -7,6 +7,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <type_traits>
 
 #include "../colors.h"
 
@@ -46,7 +47,8 @@ struct InputConfig {
     [[nodiscard]] std::string to_string() const;
 };
 
-template <typename Runner> // runner(const std::vector<std::string> & lines) -> std::vector<int>
+template <typename Runner>
+// requires (std::is_invocable_r<Output, Fn, const std::vector<std::string> &, const DayExtraInfo &>::value)
 std::optional<test::RunResult> InputConfig::run(Runner runner) const {
     // Task
     std::vector<std::string> lines;

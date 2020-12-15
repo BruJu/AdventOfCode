@@ -38,6 +38,8 @@ namespace test {
 
             return stream;
         }
+
+        [[nodiscard]] bool is_ignore() const noexcept { return type == Type::Ignore; }
     };
     
     enum class TestValidation { Success, Fail, Computed };
