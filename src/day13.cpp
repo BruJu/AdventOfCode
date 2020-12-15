@@ -4,10 +4,8 @@
 // https://adventofcode.com/2020/day/13
 
 // https://en.wikipedia.org/wiki/Chinese_remainder_theorem
-// I figured out myself that it was related to congruences... the algorithm
-// is not easy to implement and get it right if you don't know it already,
-// and to me, Advent of Code is a quick exercice everyday, so I'm going to
-// pass on it atm.
+// I figured out myself that it was related to congruences...
+// Found it was CRT on the internet.
 
 using Int = long long int;
 
@@ -84,8 +82,8 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
     return 0;
 }
 
-[[maybe_unused]] static Int chinese_remainder(const std::vector<Bus> & buses) {
-    // Doesn't work
+static Int chinese_remainder(const std::vector<Bus> & buses) {
+    // https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_des_restes_chinois#Exemple
     struct Mods {
         Int remainder;
         Int mod;
@@ -93,15 +91,14 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
 
     std::vector<Mods> mods;
     for (const auto & bus : buses) {
-        mods.push_back(Mods { bus.id, bus.period });
-        std::printf("(n+%lld)%%%lld = 0,", bus.id, bus.period);
+        Int remainder = -bus.id;
+        while (remainder < 0) {
+            remainder += bus.period;
+        }
+
+        mods.push_back(Mods { remainder, bus.period });
     }
 
-    std::cout << "\n";
-
-    //mods.push_back(Mods{ 2, 3 });
-    //mods.push_back(Mods{ 3, 5 });
-    //mods.push_back(Mods{ 2, 7 });
 
     Int product = 1;
     for (const auto & mod : mods) {
@@ -111,35 +108,24 @@ static bool is_contiguous_start(Int now, const std::vector<Bus> & buses) {
     Int x = 0;
 
     for (auto & mod : mods) {
-        std::cout << "n = " << mod.mod;
         Int hatted_mod = product / mod.mod;
-        std::cout << " ^= " << hatted_mod;
 
         Int times_hatted = 1;
         while ((hatted_mod * times_hatted) % mod.mod != 1) {
             ++times_hatted;
         }
-        std::cout << "times= " << times_hatted;
 
         Int e = times_hatted * hatted_mod;
-        std::cout << "e= " << e;
 
         x += mod.remainder * e;
-        std::cout << "\n";
     }
 
-    std::cout << x << "\n";
-    std::cout << x % product << "\n";
-
     if (mods[0].remainder == 0) {
-        return x;
+        return x % product;
     } else {
         // TODO
         return 0;
     }
-
-    return x % product;
-
 }
 
 Output day13(const std::vector<std::string> & lines, const DayExtraInfo &) {
@@ -148,6 +134,6 @@ Output day13(const std::vector<std::string> & lines, const DayExtraInfo &) {
 
     return Output(
         find_departure_timestamp(timestamp, buses),
-        0 //chinese_remainder(buses)
+        chinese_remainder(buses)
     );
 }
