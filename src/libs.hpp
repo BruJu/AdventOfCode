@@ -175,6 +175,18 @@ public:
     }
 
     [[nodiscard]] operator bool() const { return pos != end; }
+
+    template<typename T, typename Mapper>
+    static std::vector<T> line_to_vector(std::string_view line, Mapper mapper, char separator = ' ') {
+        std::vector<T> retval;
+        StringSplitter splitter = StringSplitter(line, separator);
+
+        while (splitter) {
+            retval.emplace_back(mapper(splitter()));
+        }
+
+        return retval;
+    }
 };
 
 struct Board {

@@ -46,3 +46,6 @@
 15 inputs/15_ex_321.txt    438              nope_18
 15 inputs/15_ex_312.txt    1836             nope_362
 15 inputs/15_tosolve.txt   ?                ?1437692
+16 inputs/16_example1.txt  71               _
+16 inputs/16_example2.txt  _                132
+16 inputs/16_tosolve.txt   ?22977           ?998358379943
