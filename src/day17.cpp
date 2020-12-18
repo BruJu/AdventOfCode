@@ -1,10 +1,13 @@
 #include "libs.hpp"
-#include <unordered_map>
-#include <vector>
-#include <set>
-#include <map>
-#include <regex>
+
 #include <algorithm>
+#include <unordered_map>
+#include <map>
+#include <unordered_set>
+#include <set>
+#include <vector>
+#include <functional>
+
 
 // https://adventofcode.com/2020/day/17
 
@@ -14,6 +17,12 @@ struct Position {
     std::array<int, NB_DIM> m_coordinate;
 
     Position() { m_coordinate.fill(0); }
+
+    Position(int x, int y) /* requires NB_DIM >= 2 */ {
+        m_coordinate.fill(0);
+        m_coordinate[1] = x;
+        m_coordinate[0] = y;
+    }
 
     [[nodiscard]] constexpr bool operator<(const Position & other) const {
         for (size_t i = 0 ; i != NB_DIM ; ++i) {
@@ -42,7 +51,7 @@ struct Position {
     }
 
     friend std::ostream & operator<<(std::ostream & stream, const Position<NB_DIM> & position) {
-        stream << '('
+        stream << '(';
         for (size_t i = 0 ; i != NB_DIM ; ++i) {
             if (i != 0) stream << ", ";
             stream << position.m_coordinate[i];
@@ -89,6 +98,17 @@ struct Position {
     }
 };
 
+namespace std {
+    template <size_t NB_DIM> struct hash<Position<NB_DIM>> {
+        std::size_t operator()(const Position<NB_DIM> & pos) const noexcept {
+            size_t h = 0;
+            for (size_t i = 0 ; i != NB_DIM ; ++i) {
+                h = h * 31 + std::hash<int>()(pos.m_coordinate[i]);
+            }
+            return h;
+        }
+    };
+}
 
 namespace vector_implementation {
     // Hard coding 3D / 4D is too mainstream.
@@ -234,24 +254,77 @@ namespace vector_implementation {
         m_symbols = next_symbols;
         m_spacesize = next_spacesize;
     }
-
-    /// What the exercice was again?
-    template<size_t NB_DIM>
-    static test::Value occupied_after_six_iterations(const std::vector<std::string> & lines) {
-        Field<NB_DIM> field { lines };
-
-        for (size_t i = 0 ; i != 6 ; ++i) field.next();
-
-        return field.count_occupied();
-    }
 }
 
-using namespace vector_implementation;
+namespace map_implementation {
+    template <size_t NB_DIM>
+    class Field {
+        // using Set = std::set<Position<NB_DIM>>;
+        // using Map = std::map<Position<NB_DIM>, size_t>;
+
+        using Set = std::unordered_set<Position<NB_DIM>>;
+        using Map = std::unordered_map<Position<NB_DIM>, size_t>;
+
+        Set occupied_slots;
+
+    public:
+        explicit Field(const std::vector<std::string> & lines) {
+            for (size_t y = 0 ; y != lines.size() ; ++y) {
+                for (size_t x = 0 ; x != lines[y].size() ; ++x) {
+                    if (lines[y][x] == '#') {
+                        occupied_slots.insert(Position<NB_DIM>(x, y));
+                    }
+                }
+            }
+        }
+
+        [[nodiscard]] test::Value count_occupied() const noexcept {
+            return occupied_slots.size();
+        }
+
+        void next() {
+            Map activated_neighbours;
+
+            for (const auto & occupied_position : occupied_slots) {
+                occupied_position.for_each_neighbour_position(
+                    [&](Position<NB_DIM> neighbour) {
+                        ++activated_neighbours[neighbour];
+                    }
+                );
+            }
+
+            Set new_occupation;
+
+            for (const auto & [position, occupied_neighbours] : activated_neighbours) {
+                if (occupied_slots.contains(position)) {
+                    if (occupied_neighbours == 2 || occupied_neighbours == 3) {
+                        new_occupation.insert(position);
+                    }
+                } else {
+                    if (                            occupied_neighbours == 3) {
+                        new_occupation.insert(position);
+                    }
+                }
+            }
+
+            occupied_slots = std::move(new_occupation);
+        }
+    };
+}
+
+template<typename FieldClass>
+static test::Value occupied_after_six_iterations(const std::vector<std::string> & lines) {
+    FieldClass field { lines };
+
+    for (size_t i = 0 ; i != 6 ; ++i) field.next();
+
+    return field.count_occupied();
+}
 
 /// 3D / 4D game of life
 Output day17(const std::vector<std::string> & lines, const DayExtraInfo &) {
     return Output(
-        occupied_after_six_iterations<3>(lines),
-        occupied_after_six_iterations<4>(lines)
+        occupied_after_six_iterations<map_implementation::Field<3>>(lines),
+        occupied_after_six_iterations<map_implementation::Field<4>>(lines)
     );
 }
