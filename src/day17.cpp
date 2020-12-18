@@ -62,6 +62,10 @@ struct Position {
 
     template <typename Consumer>
     void for_each_neighbour_position(Consumer consumer) const {
+        // Instead of searching recursively in a tree structure, we could reuse
+        // vector_implementation::SpaceSize to have a mapping between 0 -> 3^NB_DIM -1 values
+        // and offset positions
+
         Position offset;
         offset.m_coordinate.fill(-1);
 
