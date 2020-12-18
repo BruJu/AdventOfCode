@@ -51,3 +51,6 @@
 16 inputs/16_tosolve.txt   ?22977           ?998358379943
 17 inputs/17_example.txt   112              848
 17 inputs/17_tosolve.txt   ?333             ?2676
+18 inputs/18_example1.txt  71               231
+18 inputs/18_examples.txt  26386            693942
+18 inputs/18_input.txt     ?                ?
