@@ -1,17 +1,10 @@
 #include "libs.hpp"
 
-#include <algorithm>
-#include <unordered_map>
-#include <map>
-#include <unordered_set>
-#include <set>
 #include <vector>
 #include <variant>
 #include <memory>
 
 // https://adventofcode.com/2020/day/18
-
-// TODO : improve the code with std::move / rvalue references
 
 using Value = long long int;
 
@@ -23,17 +16,10 @@ class Expression {
 private:
     std::variant<Value, std::unique_ptr<Operation>> m_content;
 public:
-    Value evaluate() const;
+    [[nodiscard]] Value evaluate() const;
 
     Expression(Value v) : m_content(v) {}
-    Expression(const Operation & c);
-
-    Expression(const Expression & other) : m_content(0) { *this = other; }
-    Expression & operator=(const Expression & other);
-
-    Expression(Expression && e) : m_content(std::move(e.m_content)) {}
-    Expression & operator=(Expression && e) { if (this != &e) { m_content = std::move(e.m_content); } return *this; } 
-    ~Expression() = default;
+    Expression(Operation c);
 };
 
 class Operation {
@@ -42,8 +28,8 @@ private:
     Operator m_operator;
     Expression m_rhs;
 public:
-    Operation(const Expression & left, Operator operator_, const Expression & right)
-    : m_lhs(left), m_operator(operator_), m_rhs(right) {}
+    Operation(Expression left, Operator operator_, Expression right)
+    : m_lhs(std::move(left)), m_operator(operator_), m_rhs(std::move(right)) {}
 
     [[nodiscard]] Value evaluate() const {
         Value val_lhs = m_lhs.evaluate();
@@ -59,27 +45,7 @@ public:
 
 // -- Expression missing implementations (depends on Operation)
 
-Expression::Expression(const Operation & c) : m_content(std::make_unique<Operation>(c)) {}
-
-Expression & Expression::operator=(const Expression & other) {
-    if (this == &other) return *this;
-
-    struct Copist {
-        Expression * e;
-
-        void operator()(Value v) {
-            e->m_content = v;
-        }
-
-        void operator()(const std::unique_ptr<Operation> & c) {
-            e->m_content = std::make_unique<Operation>(*c);
-        }
-    };
-
-    std::visit(Copist{ this }, other.m_content);
-
-    return *this;
-}
+Expression::Expression(Operation c) : m_content(std::make_unique<Operation>(std::move(c))) {}
 
 Value Expression::evaluate() const {
     struct Evaluator {
@@ -97,10 +63,10 @@ Value Expression::evaluate() const {
 
 struct NoOperatorPriority {
     [[nodiscard]] Expression operator()(std::vector<Expression> expressions, std::vector<Operator> operators) const {
-        Expression expr = expressions[0];
+        Expression expr = std::move(expressions[0]);
 
         for (size_t i = 0 ; i != operators.size() ; ++i) {
-            expr = Operation(expr, operators[i], expressions[i + 1]);
+            expr = Operation(std::move(expr), operators[i], std::move(expressions[i + 1]));
         }
 
         return expr;
@@ -111,7 +77,7 @@ struct PlusPriority {
     [[nodiscard]] Expression operator()(std::vector<Expression> expressions, std::vector<Operator> operators) const {
         for (size_t i = 0 ; i != operators.size() ; ++i) {
             if (operators[i] == Operator::Plus) {
-                Operation operation = Operation(expressions[i], operators[i], expressions[i + 1] );
+                Operation operation = Operation(std::move(expressions[i]), operators[i], std::move(expressions[i + 1]) );
                 
                 expressions[i] = std::move(operation);
 
@@ -122,10 +88,10 @@ struct PlusPriority {
             }
         }
 
-        Expression expr = expressions[0];
+        Expression expr = std::move(expressions[0]);
 
         for (size_t i = 0 ; i != operators.size() ; ++i) {
-            expr = Operation(expr, operators[i], expressions[i + 1]);
+            expr = Operation(std::move(expr), operators[i], std::move(expressions[i + 1]));
         }
 
         return expr;
@@ -160,7 +126,7 @@ Expression read_line(const std::string & line, size_t & i) {
         }
     }
 
-    return ExpressionListResolver()(expressions, operators);
+    return ExpressionListResolver()(std::move(expressions), std::move(operators));
 }
 
 template<typename ExpressionListResolver>
