@@ -255,6 +255,20 @@ public:
     }
 };
 
+template <typename Ts, typename Streamer>
+std::ostream & into_stream(std::ostream & stream, const Ts & values, const char * separator, Streamer streamer) {
+    bool first = true;
+
+    for (const auto & value : values) {
+        if (!first) stream << separator;
+        first = false;
+
+        streamer(stream, value);
+    }
+
+    return stream;
+}
+
 namespace lines_transform {
     inline std::vector<int> to_ints(const std::vector<std::string> & lines) {
         std::vector<int> values;

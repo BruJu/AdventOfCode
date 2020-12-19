@@ -9,25 +9,11 @@
 
 // https://adventofcode.com/2020/day/19
 
-
 static const char * const RULE_DESCRIPTION = R"(^([0-9]*): (.*)$)";
 
+// ============================================================================
+
 using RuleNumber = int;
-
-
-template <typename Ts, typename Streamer>
-std::ostream & into_stream(std::ostream & stream, const Ts & values, const char * separator, Streamer streamer) {
-    bool first = true;
-
-    for (const auto & value : values) {
-        if (!first) stream << separator;
-        first = false;
-
-        streamer(stream, value);
-    }
-
-    return stream;
-}
 
 struct ComplexRule {
     std::vector<std::vector<RuleNumber>> next_rules;
@@ -73,6 +59,7 @@ void in_stream(std::ostream & stream, const Rule & rule) {
 
 using Ruleset = std::map<RuleNumber, Rule>;
 
+// ============================================================================
 
 struct DeterministicState {
     std::vector<RuleNumber> next_rules;
@@ -92,6 +79,7 @@ struct DeterministicState {
     }
 };
 
+// No deterministic
 class State {
     const Ruleset & m_rules;
     std::vector<DeterministicState> m_inner_states;
@@ -162,6 +150,8 @@ public:
     }
 };
 
+// ============================================================================
+
 class Automata {
     Ruleset m_rules;
 
@@ -222,8 +212,7 @@ public:
     }
 };
 
-
-
+// ============================================================================
 
 Output day19(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto [automata, words] = Automata::make(lines);
@@ -232,8 +221,5 @@ Output day19(const std::vector<std::string> & lines, const DayExtraInfo &) {
         [&](const std::string & word) { return automata.match(word); }
     );
     
-    return Output(
-        matching_words,
-        0
-    );
+    return Output(matching_words, matching_words);
 }
