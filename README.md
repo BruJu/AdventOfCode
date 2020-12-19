@@ -6,9 +6,14 @@ Architecture is a bit wonky: the goal is to have an easy to compile / run proces
 
 ## Test / Compile / Run
 
+**The bash way**
 - `./run.sh` will run the last day
 - `./run.sh 0` will run every day
 - `./run.sh x` will run day x
+
+**The standard way**
+- You can also compile with `make`.
+- And run with `./main ([0-9]+)?`
 
 ## Adding new days
 
@@ -20,3 +25,5 @@ Architecture is a bit wonky: the goal is to have an easy to compile / run proces
 ## License
 
 WTFPL ¯\\\_( ツ )\_/¯
+
+Generic Makefile distributed under the MIT License (see https://github.com/mbcrawfo/GenericMakefile for more information)
