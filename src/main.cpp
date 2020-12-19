@@ -28,14 +28,14 @@ Output day19(const std::vector<std::string> & lines, const DayExtraInfo &);
 void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
 void dispatch(const InputConfig & config, test::Score & ts) {
-    //static constexpr std::array<DayEntryPoint *, 30> days {
-    //    &day01, &day02, &day03, &day04, &day05, &day06, &day07,
-    //    &day08, &day09, &day10, &day11, &day12, &day13, &day14,
-    //    &day15, &day16, &day17, &day18, &day19, nullptr
-    //};
+    static constexpr std::array<DayEntryPoint *, 30> days {
+        &day01, &day02, &day03, &day04, &day05, &day06, &day07,
+        &day08, &day09, &day10, &day11, &day12, &day13, &day14,
+        &day15, &day16, &day17, &day18, &day19, nullptr
+    };
 
-    std::array<DayEntryPoint *, 30> days { nullptr };
-    days[18] = &day19;
+    //std::array<DayEntryPoint *, 30> days { nullptr };
+    //days[18] = &day19;
 
     if (DayEntryPoint * day = days[config.day - 1]) {
         std::optional<test::RunResult> r = config.run(day);

@@ -89,7 +89,6 @@ public:
         push_states_from(start_state, {});
     }
 
-
     void push_states_from(RuleNumber rule_number, std::vector<RuleNumber> followed_by) {
         const Rule & rule = m_rules.find(rule_number)->second;
 
