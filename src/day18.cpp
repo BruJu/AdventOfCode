@@ -61,48 +61,71 @@ Value Expression::evaluate() const {
 
 // ======================================================
 
-struct NoOperatorPriority {
-    [[nodiscard]] Expression operator()(std::vector<Expression> expressions, std::vector<Operator> operators) const {
-        Expression expr = std::move(expressions[0]);
+struct ExpressionComputer {
+    std::vector<Expression> expressions;
+    std::vector<Operator>   operators;
+    std::vector<size_t>     stack_pointers;
+    
+    template<typename ExpressionListResolver>
+    Expression terminate() {
+        // assert(stack_pointers.empty());
+        ExpressionListResolver()(*this, 0);
+        return std::move(expressions[0]);
+    }
 
-        for (size_t i = 0 ; i != operators.size() ; ++i) {
-            expr = Operation(std::move(expr), operators[i], std::move(expressions[i + 1]));
+    void open_parenthesis() {
+        stack_pointers.push_back(expressions.size());
+    }
+
+    template<typename ExpressionListResolver>
+    void close_parenthesis() {
+        ExpressionListResolver()(*this, stack_pointers.back());
+        stack_pointers.pop_back();
+    }
+
+    [[nodiscard]] size_t size() const noexcept { return expressions.size(); }
+
+    template <typename Predicate>
+    void make_operation_from_if(size_t sp, Predicate predicate) {
+        while (size() != sp + 1) {
+            if (predicate(operators[sp])) {
+                make_operation(sp);
+            } else {
+                ++sp;
+            }
         }
+    }
+    
+    void make_operation(size_t position) {
+        expressions[position] = Operation(
+            std::move(expressions[position]),
+            operators[position],
+            std::move(expressions[position + 1])
+        );
 
-        return expr;
+        operators  .erase(operators  .begin() + position);
+        expressions.erase(expressions.begin() + position + 1);
+    }
+};
+
+struct NoOperatorPriority {
+    void operator()(ExpressionComputer & computer, size_t sp) const {
+        computer.make_operation_from_if(sp, [](Operator) { return true; });
     }
 };
 
 struct PlusPriority {
-    [[nodiscard]] Expression operator()(std::vector<Expression> expressions, std::vector<Operator> operators) const {
-        for (size_t i = 0 ; i != operators.size() ; ++i) {
-            if (operators[i] == Operator::Plus) {
-                Operation operation = Operation(std::move(expressions[i]), operators[i], std::move(expressions[i + 1]) );
-                
-                expressions[i] = std::move(operation);
-
-                expressions.erase(expressions.begin() + i + 1);
-                operators.erase(operators.begin() + i);
-
-                --i;
-            }
-        }
-
-        Expression expr = std::move(expressions[0]);
-
-        for (size_t i = 0 ; i != operators.size() ; ++i) {
-            expr = Operation(std::move(expr), operators[i], std::move(expressions[i + 1]));
-        }
-
-        return expr;
+    void operator()(ExpressionComputer & computer, size_t sp) const {
+        computer.make_operation_from_if(sp, [](Operator op) { return op == Operator::Plus; });
+        computer.make_operation_from_if(sp, [](Operator)    { return true; });
     }
 };
 
 
 template<typename ExpressionListResolver>
-Expression read_line(const std::string & line, size_t & i) {
-    std::vector<Expression> expressions;
-    std::vector<Operator> operators;
+Expression read_line(std::string_view line) {
+    ExpressionComputer s;
+    size_t i = 0;
 
     while (true) {
         if (i == line.size()) break;
@@ -110,10 +133,10 @@ Expression read_line(const std::string & line, size_t & i) {
         char c = line[i];
         ++i;
 
-               if (c == ')') { break;
-        } else if (c == '(') { expressions.push_back(read_line<ExpressionListResolver>(line, i));
-        } else if (c == '+') { operators.push_back(Operator::Plus);
-        } else if (c == '*') { operators.push_back(Operator::Times);
+               if (c == ')') { s.close_parenthesis<ExpressionListResolver>();
+        } else if (c == '(') { s.open_parenthesis();
+        } else if (c == '+') { s.operators.push_back(Operator::Plus);
+        } else if (c == '*') { s.operators.push_back(Operator::Times);
         } else {
             // a number
             --i;
@@ -122,11 +145,11 @@ Expression read_line(const std::string & line, size_t & i) {
                 acc += (line[i] - '0');
                 ++i;
             }
-            expressions.push_back(Expression { acc });
+            s.expressions.push_back(Expression { acc });
         }
     }
 
-    return ExpressionListResolver()(std::move(expressions), std::move(operators));
+    return s.terminate<ExpressionListResolver>();
 }
 
 template<typename ExpressionListResolver>
@@ -138,8 +161,8 @@ Expression mapper(const std::string & line) {
             cleaned_line += c;
         }
     }
-    size_t i = 0;
-    return read_line<ExpressionListResolver>(cleaned_line, i);
+
+    return read_line<ExpressionListResolver>(cleaned_line);
 }
 
 
