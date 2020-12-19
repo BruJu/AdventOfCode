@@ -23,6 +23,7 @@ Output day15(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day16(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day17(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day18(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day19(const std::vector<std::string> & lines, const DayExtraInfo &);
 
 void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
