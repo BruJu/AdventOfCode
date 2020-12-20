@@ -381,11 +381,112 @@ namespace part_a {
     }
 }
 
+namespace part_b {
+    constexpr const char * monster_t = "                  # ";
+    constexpr const char * monster_m = "#    ##    ##    ###";
+    constexpr const char * monster_b = " #  #  #  #  #  #   ";
+    constexpr size_t monster_width = 20;
+    constexpr size_t monster_height = 3;
+
+    using part_a::Tile;
+    using part_a::Raw;
+
+    Tile rebuild_tile(const part_a::Grid & grid) {
+        Tile tile { 0 };
+
+        const size_t tile_size = grid.m_raws[0][0].size();
+
+        for (const auto & line_of_raws : grid.m_raws) {
+            const size_t tile_y = tile.image.size();
+            for (size_t i = 0 ; i != tile_size - 2 ; ++i) {
+                tile.image.push_back({});
+            }
+
+            for (const auto & raw : line_of_raws) {
+
+                for (size_t y = 1 ; y != raw.size() - 1; ++y) {
+                    for (size_t x = 1 ; x != raw[y].size() - 1; ++x) {
+                        tile.image[tile_y + y - 1].emplace_back(raw[y][x]);
+                    }
+                }
+            }
+        }
+
+        return tile;
+    }
+
+    bool is_here(Raw & raw, size_t x, size_t y, bool replace = false) {
+        const auto point = [&](char & reality, char monster, bool replace) -> bool {
+            if (monster == ' ') {
+                return true;
+            }
+
+            if (reality == '#' || reality == 'R') {
+                if (replace) {
+                    reality = 'R';
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        for (size_t i = 0 ; i != monster_width ; ++i) {
+            if (!point(raw[y    ][x + i], monster_t[i], replace)) return false;
+            if (!point(raw[y + 1][x + i], monster_m[i], replace)) return false;
+            if (!point(raw[y + 2][x + i], monster_b[i], replace)) return false;
+        }
+
+        return true;
+    }
+
+    bool search_monster(Raw & raw, size_t x, size_t y) {
+        if (is_here(raw, x, y)) {
+            is_here(raw, x, y, true);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+   std::pair<size_t, Raw> search_monster(Raw raw) {
+        for (size_t x = 0 ; x + monster_width  != raw.size() ; ++x) {
+        for (size_t y = 0 ; y + monster_height != raw.size() ; ++y) {
+            search_monster(raw, x, y);
+        }}
+
+        size_t rought = 0;
+        for (const auto & line : raw) {
+            for (const char c : line) {
+                if (c == '#') {
+                    rought += 1;
+                }
+            }
+        }
+
+        return std::pair<size_t, Raw>(rought, raw);
+    }
+
+    size_t solve(const part_a::Grid & grid) {
+        Tile big_picture = rebuild_tile(grid);
+
+        part_a::AltereredTile other { big_picture };
+
+        size_t found = 9999999;
+        for (part_a::TileStateExplorer trans ; trans ; trans(other)) {
+            auto [found_monsters, raw] = search_monster(other.representation.image);
+            found = std::min(found, found_monsters);
+        }
+
+        return found;
+    }
+}
+
 Output day20(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::optional<part_a::Grid> grid = part_a::solve(lines);
-
     if (!grid) return Output(0, 0);
 
-
-    return Output(grid->corners(), 0);
+    const size_t roughness = part_b::solve(*grid);
+    return Output(grid->corners(), roughness);
 }
