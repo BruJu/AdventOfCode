@@ -253,11 +253,34 @@ struct TempGrid {
         return req;
     }
 
+    bool compatible(size_t x, size_t y) const {
+        if (x != 0 && m_grid[y][x - 1] && !m_grid[y][x - 1]->adjacent_left_to_right(*m_grid[y][x])) {
+            return false;
+        }
+
+        if (y != 0 && m_grid[y - 1][x] && !m_grid[y - 1][x]->adjacent_top_to_down(*m_grid[y][x])) {
+            return false;
+        }
+
+        if (x != m_size - 1 && m_grid[y][x + 1] && !m_grid[y][x]->adjacent_left_to_right(*m_grid[y][x + 1])) {
+            return false;
+        }
+
+        if (y != m_size - 1 && m_grid[y + 1][x] && !m_grid[y][x]->adjacent_top_to_down(*m_grid[y + 1][x])) {
+            return false;
+        }
+
+        return true;
+    }
+
     bool try_place_at(size_t x, size_t y) {
         if (y == m_size) return true;
-
         const size_t next_x = x != m_size - 1 ? x + 1 : 0;
         const size_t next_y = x != m_size - 1 ?     y : y + 1;
+
+        //if (x == m_size) return true;
+        //const size_t next_x = x != 0 ? x - 1 : y + 1;
+        //const size_t next_y = x != 0 ? y + 1 : 0;
 
         for (auto & [tile, used] : tiles) {
             if (used) continue;
@@ -273,11 +296,7 @@ struct TempGrid {
             m_grid[y][x] = AltereredTile { *tile };
 
             for (TileStateExplorer trans ; trans ; trans(*m_grid[y][x])) {
-                if (x != 0 && !m_grid[y][x - 1]->adjacent_left_to_right(*m_grid[y][x])) {
-                    continue;
-                }
-
-                if (y != 0 && !m_grid[y - 1][x]->adjacent_top_to_down(*m_grid[y][x])) {
+                if (!compatible(x, y)) {
                     continue;
                 }
 
@@ -286,6 +305,7 @@ struct TempGrid {
                 }
             }
 
+            m_grid[y][x] = std::nullopt;
             used = false;
         }
 
