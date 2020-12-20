@@ -16,8 +16,6 @@ using RawPixels = std::vector<std::vector<char>>;
 
 namespace part_a {
 
-    struct Path;
-
     struct Tile {
         int id;
         std::vector<std::vector<char>> image;
@@ -27,7 +25,7 @@ namespace part_a {
         [[nodiscard]] const std::vector<char> & operator[](size_t x) const { return image[x]; }
 
         friend std::ostream & operator<<(std::ostream & stream, const Tile & tile) {
-            stream << "== Tile " << tile.id << "\n";
+            stream << "== Tile " << tile.id << '\n';
 
             for (const auto & line : tile.image) {
                 for (const auto pixel : line) {
@@ -41,13 +39,8 @@ namespace part_a {
             return stream;
         }
 
-        [[nodiscard]] std::vector<Path> adjacent(const Tile & other_tile) const;
+        [[nodiscard]] bool adjacent(const Tile & other_tile) const;
     };
-
-    struct Path {};
-
-    using Paths = std::vector<Path>;
-    using AllPaths = std::map<int, std::map<int, Paths>>;
 
     struct AltereredTile {
         Tile representation;
@@ -113,7 +106,7 @@ namespace part_a {
     };
 
 
-    static bool connect(const std::vector<std::vector<char>> & lhs, const std::vector<std::vector<char>> & rhs) {
+    static bool connect(const RawPixels & lhs, const RawPixels & rhs) {
         for (size_t i = 0 ; i != lhs.size() ; ++i) {
             if (lhs[i].back() != rhs[i].front()) {
                 return false;
@@ -133,9 +126,7 @@ namespace part_a {
     }
 
 
-    std::vector<Path> Tile::adjacent(const Tile & other_tile) const {
-        std::vector<Path> paths;
-
+    bool Tile::adjacent(const Tile & other_tile) const {
         AltereredTile me { *this };
 
         std::set<RawPixels> my_raws;
@@ -155,13 +146,13 @@ namespace part_a {
                     other_raws.insert(other.representation.image);
 
                     if (connect(me.representation.image, other.representation.image)) {
-                        paths.push_back(Path {});
+                        return true;
                     }
                 }
             }
         }
 
-        return paths;
+        return false;
     }
 
 
@@ -186,6 +177,7 @@ namespace part_a {
         return retval;
     }
 
+    using AllPaths = std::map<int, std::set<int>>;
 
     struct TempGrid {
         struct TTile {
@@ -327,14 +319,13 @@ namespace part_a {
     std::optional<Grid> solve(const std::vector<std::string> & lines) {
         std::vector<Tile> tiles = to_tiles(lines);
 
-        std::map<int, std::map<int, Paths>> all_paths;
+        AllPaths all_paths;
 
         for (const auto & tile : tiles) {
             for (const auto & tile_ : tiles) {
                 if (&tile != &tile_) {
-                    const auto paths = tile.adjacent(tile_);
-                    if (!paths.empty()) {
-                        all_paths[tile.id][tile_.id] = paths;
+                    if (tile.adjacent(tile_)) {
+                        all_paths[tile.id].insert(tile_.id);
                     }
                 }
             }
