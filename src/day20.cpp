@@ -12,7 +12,168 @@
 
 // https://adventofcode.com/2020/day/20
 
-using RawPixels = std::vector<std::vector<char>>;
+struct Tile;
+
+class RawPixels {
+    std::vector<std::vector<char>> m_data;
+public:
+
+    [[nodiscard]] bool connect(const RawPixels & rhs) const {
+        for (size_t i = 0 ; i != m_data.size() ; ++i) {
+            if (m_data[i].back() != rhs.m_data[i].front()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    
+    [[nodiscard]] bool connect_top_to_down(const RawPixels & rhs) const {
+        return m_data.back() == rhs.m_data.front();
+    }
+
+    [[nodiscard]] bool operator==(const RawPixels & other) const { return m_data == other.m_data; }
+    [[nodiscard]] bool operator< (const RawPixels & other) const { return m_data < other.m_data; }
+
+
+    friend std::ostream & operator<<(std::ostream & stream, const RawPixels & pixels) {
+        for (const auto & line : pixels.m_data) {
+            for (const auto pixel : line) {
+                stream << pixel;
+            }
+            stream << '\n';
+        }
+
+        return stream;
+    }
+
+    void flip_left_right() {
+        for (auto & line : m_data) {
+            std::vector<char> new_line { line.rbegin(), line.rend() };
+            line = std::move(new_line);
+        }
+    }
+
+    void flip_bottom_up() {
+        std::vector<std::vector<char>> image { m_data.rbegin(), m_data.rend() };
+        m_data = std::move(image);
+    }
+
+    void rotate_right() {
+        std::vector<std::vector<char>> image;
+
+        for (size_t y = 0 ; y != m_data.size() ; ++y) {
+            image.push_back({});
+            for (size_t x = 0 ; x != m_data[y].size() ; ++x) {
+                image.back().push_back(m_data[m_data.size() - x - 1][y]);
+            }
+        }
+
+        m_data = std::move(image);
+    }
+
+    friend std::vector<Tile> to_tiles(const std::vector<std::string> & lines);
+
+    //const auto & operator[](size_t i) const { return m_data[i]; }
+
+
+    [[nodiscard]] static RawPixels assemble_mutiple(const std::vector<std::vector<RawPixels>> & raws) {
+        RawPixels pixels;
+
+        const size_t tile_size = raws[0][0].m_data.size();
+
+        for (const auto & line_of_raws : raws) {
+
+            const size_t tile_y = pixels.m_data.size();
+            for (size_t i = 0 ; i != tile_size - 2 ; ++i) {
+                pixels.m_data.push_back({});
+            }
+
+            for (const auto & raw : line_of_raws) {
+
+                for (size_t y = 1 ; y != raw.m_data.size() - 1; ++y) {
+                    for (size_t x = 1 ; x != raw.m_data[y].size() - 1; ++x) {
+                        pixels.m_data[tile_y + y - 1].emplace_back(raw.m_data[y][x]);
+                    }
+                }
+            }
+        }
+
+        return pixels;
+    }
+
+    // -----------------
+    // Monster searching
+
+private:
+    static constexpr const char * monster_t = "                  # ";
+    static constexpr const char * monster_m = "#    ##    ##    ###";
+    static constexpr const char * monster_b = " #  #  #  #  #  #   ";
+    static constexpr size_t monster_width = 20;
+    static constexpr size_t monster_height = 3;
+
+    bool search_monster_at_and(size_t x, size_t y, bool replace = false) {
+        const auto point = [&](char & reality, char monster, bool replace) -> bool {
+            if (monster == ' ') {
+                return true;
+            }
+
+            if (reality == '#' || reality == 'R') {
+                if (replace) {
+                    reality = 'R';
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        for (size_t i = 0 ; i != monster_width ; ++i) {
+            if (!point(m_data[y    ][x + i], monster_t[i], replace)) return false;
+            if (!point(m_data[y + 1][x + i], monster_m[i], replace)) return false;
+            if (!point(m_data[y + 2][x + i], monster_b[i], replace)) return false;
+        }
+
+        return true;
+    }
+
+    bool search_monster_at(size_t x, size_t y) {
+        if (search_monster_at_and(x, y)) {
+            search_monster_at_and(x, y, true);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+   [[nodiscard]] size_t search_monster_() {
+        for (size_t x = 0 ; x + monster_width  != m_data.size() ; ++x) {
+        for (size_t y = 0 ; y + monster_height != m_data.size() ; ++y) {
+            search_monster_at(x, y);
+        }}
+
+        size_t rought = 0;
+        for (const auto & line : m_data) {
+            for (const char c : line) {
+                if (c == '#') {
+                    rought += 1;
+                }
+            }
+        }
+
+        return rought;
+   }
+
+
+public:
+   [[nodiscard]] size_t search_monster() const {
+       RawPixels copy = *this;
+       return copy.search_monster_();
+   }
+
+
+};
 
 
 struct Tile {
@@ -20,71 +181,50 @@ struct Tile {
     RawPixels image;
 
     explicit Tile(int id) : id(id) {}
+    explicit Tile(int id, RawPixels image) : id(id), image(std::move(image)) {}
 
-    [[nodiscard]] const std::vector<char> & operator[](size_t x) const { return image[x]; }
+    //[[nodiscard]] const std::vector<char> & operator[](size_t x) const { return image[x]; }
 
     friend std::ostream & operator<<(std::ostream & stream, const Tile & tile) {
-        stream << "== Tile " << tile.id << '\n';
-
-        for (const auto & line : tile.image) {
-            for (const auto pixel : line) {
-                stream << pixel;
-            }
-
-            stream << '\n';
-        }
-
-        stream << '\n';
-        return stream;
+        return stream << "== Tile " << tile.id << '\n' << tile.image << '\n';
     }
 
     [[nodiscard]] bool adjacent(const Tile & other_tile) const;
+
+    [[nodiscard]] bool adjacent_left_to_right(const Tile & other_tile) const {
+        return image.connect(other_tile.image);
+    }
+
+    [[nodiscard]] bool adjacent_top_to_down(const Tile & other_tile) const {
+        return image.connect_top_to_down(other_tile.image);
+    }
 };
+
+std::vector<Tile> to_tiles(const std::vector<std::string> & lines) {
+    std::vector<Tile> retval;
+
+    for (const auto & line : lines) {
+        if (line == "") continue;
+
+        if (line.rfind("Tile ", 0) == 0) {
+            std::string id { line.begin() + 5, line.end() - 1 };
+            retval.emplace_back(std::stoi(id));
+        } else {
+            retval.back().image.m_data.emplace_back();
+
+            for (const auto c : line) {
+                retval.back().image.m_data.back().emplace_back(c);
+            }
+        }
+    }
+
+    return retval;
+}
+
 
 namespace part_a {
 
-    // TODO : Tile == AlteredTile
-    struct AltereredTile {
-        Tile representation;
-
-        AltereredTile(Tile tile) : representation(std::move(tile)) {}
-
-        // ok
-        void flip_left_right() {
-            for (auto & line : representation.image) {
-                std::vector<char> new_line { line.rbegin(), line.rend() };
-                line = std::move(new_line);
-            }
-        }
-
-        // ok
-        void flip_bottom_up() {
-            std::vector<std::vector<char>> image { representation.image.rbegin(), representation.image.rend() };
-            representation.image = std::move(image);
-        }
-
-        // ok
-        void rotate_right() {
-            std::vector<std::vector<char>> image;
-
-            for (size_t y = 0 ; y != representation.image.size() ; ++y) {
-                image.push_back({});
-                for (size_t x = 0 ; x != representation.image[y].size() ; ++x) {
-                    image.back().push_back(representation[representation.image.size() - x - 1][y]);
-                }
-            }
-
-            representation.image = std::move(image);
-        }
-
-        friend std::ostream & operator<<(std::ostream & stream, const AltereredTile & tile) {
-            stream << tile.representation << "\n\n";
-            return stream;
-        }
-
-        [[nodiscard]] bool adjacent_left_to_right(const AltereredTile & other_tile) const;
-        [[nodiscard]] bool adjacent_top_to_down(const AltereredTile & other_tile) const;
-    };
+    using AltereredTile = Tile;
 
     // TODO : A tile can generate a list of tiles it can transform into
     struct TileStateExplorer {
@@ -94,14 +234,14 @@ namespace part_a {
             return i != 2 * 2 * 4;
         }
 
-        void operator()(AltereredTile & tile) {
-            tile.rotate_right();
+        void operator()(Tile & tile) {
+            tile.image.rotate_right();
 
             if (i % 4 == 0) {
-                tile.flip_left_right();
+                tile.image.flip_left_right();
             }
             if (i % 8 == 0) {
-                tile.flip_bottom_up();
+                tile.image.flip_bottom_up();
             }
 
             ++i;
@@ -109,47 +249,6 @@ namespace part_a {
     };
 
 
-    static bool connect(const RawPixels & lhs, const RawPixels & rhs) {
-        for (size_t i = 0 ; i != lhs.size() ; ++i) {
-            if (lhs[i].back() != rhs[i].front()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    bool AltereredTile::adjacent_left_to_right(const AltereredTile & other_tile) const {
-        return connect(representation.image, other_tile.representation.image);
-    }
-
-    bool AltereredTile::adjacent_top_to_down(const AltereredTile & other_tile) const {
-        return representation.image.back() == other_tile.representation.image.front();
-    }
-
-
-    std::vector<Tile> to_tiles(const std::vector<std::string> & lines) {
-        std::vector<Tile> retval;
-
-        for (const auto & line : lines) {
-            if (line == "") continue;
-
-            if (line.rfind("Tile ", 0) == 0) {
-                std::string id { line.begin() + 5, line.end() - 1 };
-                retval.emplace_back(std::stoi(id));
-            } else {
-                retval.back().image.emplace_back();
-
-                for (const auto c : line) {
-                    retval.back().image.back().emplace_back(c);
-                }
-            }
-        }
-
-        return retval;
-    }
-
-    using AllPaths = std::map<int, std::set<int>>;
 
     struct TempGrid {
         struct TTile {
@@ -252,8 +351,8 @@ namespace part_a {
                 m_grid.emplace_back();
                 m_raws.emplace_back();
                 for (const auto & value : line) {
-                    m_grid.back().emplace_back(value->representation.id);
-                    m_raws.back().emplace_back(value->representation.image);
+                    m_grid.back().emplace_back(value->id);
+                    m_raws.back().emplace_back(value->image);
                 }
             }
         }
@@ -280,14 +379,12 @@ namespace part_a {
     std::optional<Grid> solve(const std::vector<std::string> & lines) {
         std::vector<Tile> tiles = to_tiles(lines);
 
-        AllPaths all_paths;
+        std::map<int, std::set<int>> all_paths;
 
         for (const auto & tile : tiles) {
             for (const auto & tile_ : tiles) {
-                if (&tile != &tile_) {
-                    if (tile.adjacent(tile_)) {
-                        all_paths[tile.id].insert(tile_.id);
-                    }
+                if (&tile != &tile_ && tile.adjacent(tile_)) {
+                    all_paths[tile.id].insert(tile_.id);
                 }
             }
         }
@@ -312,21 +409,21 @@ bool Tile::adjacent(const Tile & other_tile) const {
 
     std::set<RawPixels> my_raws;
 
-    for (size_t i = 0 ; i != 4 ; ++i, me.rotate_right()) {
-        if (my_raws.contains(me.representation.image)) {
+    for (size_t i = 0 ; i != 4 ; ++i, me.image.rotate_right()) {
+        if (my_raws.contains(me.image)) {
             continue;
         }
 
-        my_raws.insert(me.representation.image);
+        my_raws.insert(me.image);
 
         std::set<RawPixels> other_raws;
         part_a::AltereredTile other { other_tile };
 
         for (part_a::TileStateExplorer trans ; trans ; trans(other)) {
-            if (!other_raws.contains(other.representation.image)) {
-                other_raws.insert(other.representation.image);
+            if (!other_raws.contains(other.image)) {
+                other_raws.insert(other.image);
 
-                if (part_a::connect(me.representation.image, other.representation.image)) {
+                if (me.image.connect(other.image)) {
                     return true;
                 }
             }
@@ -338,101 +435,16 @@ bool Tile::adjacent(const Tile & other_tile) const {
 
 
 namespace part_b {
-    constexpr const char * monster_t = "                  # ";
-    constexpr const char * monster_m = "#    ##    ##    ###";
-    constexpr const char * monster_b = " #  #  #  #  #  #   ";
-    constexpr size_t monster_width = 20;
-    constexpr size_t monster_height = 3;
-
-    Tile rebuild_tile(const part_a::Grid & grid) {
-        Tile tile { 0 };
-
-        const size_t tile_size = grid.m_raws[0][0].size();
-
-        for (const auto & line_of_raws : grid.m_raws) {
-            const size_t tile_y = tile.image.size();
-            for (size_t i = 0 ; i != tile_size - 2 ; ++i) {
-                tile.image.push_back({});
-            }
-
-            for (const auto & raw : line_of_raws) {
-
-                for (size_t y = 1 ; y != raw.size() - 1; ++y) {
-                    for (size_t x = 1 ; x != raw[y].size() - 1; ++x) {
-                        tile.image[tile_y + y - 1].emplace_back(raw[y][x]);
-                    }
-                }
-            }
-        }
-
-        return tile;
-    }
-
-    bool is_here(RawPixels & raw, size_t x, size_t y, bool replace = false) {
-        const auto point = [&](char & reality, char monster, bool replace) -> bool {
-            if (monster == ' ') {
-                return true;
-            }
-
-            if (reality == '#' || reality == 'R') {
-                if (replace) {
-                    reality = 'R';
-                }
-
-                return true;
-            } else {
-                return false;
-            }
-        };
-
-        for (size_t i = 0 ; i != monster_width ; ++i) {
-            if (!point(raw[y    ][x + i], monster_t[i], replace)) return false;
-            if (!point(raw[y + 1][x + i], monster_m[i], replace)) return false;
-            if (!point(raw[y + 2][x + i], monster_b[i], replace)) return false;
-        }
-
-        return true;
-    }
-
-    bool search_monster(RawPixels & raw, size_t x, size_t y) {
-        if (is_here(raw, x, y)) {
-            is_here(raw, x, y, true);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-   std::pair<size_t, RawPixels> search_monster(RawPixels raw) {
-        for (size_t x = 0 ; x + monster_width  != raw.size() ; ++x) {
-        for (size_t y = 0 ; y + monster_height != raw.size() ; ++y) {
-            search_monster(raw, x, y);
-        }}
-
-        size_t rought = 0;
-        for (const auto & line : raw) {
-            for (const char c : line) {
-                if (c == '#') {
-                    rought += 1;
-                }
-            }
-        }
-
-        return std::pair<size_t, RawPixels>(rought, raw);
-    }
-
     size_t solve(const part_a::Grid & grid) {
-        Tile big_picture = rebuild_tile(grid);
+        Tile big_picture = Tile(0, RawPixels::assemble_mutiple(grid.m_raws));
 
-        part_a::AltereredTile other { big_picture };
-
-        size_t found = 9999999;
-        for (part_a::TileStateExplorer trans ; trans ; trans(other)) {
-            auto [found_monsters, raw] = search_monster(other.representation.image);
-            found = std::min(found, found_monsters);
+        std::optional<size_t> found = std::nullopt;
+        for (part_a::TileStateExplorer trans ; trans ; trans(big_picture)) {
+            const auto found_monsters = big_picture.image.search_monster();
+            found = found ? std::min(*found, found_monsters) : found_monsters;
         }
 
-        return found;
+        return *found;
     }
 }
 
