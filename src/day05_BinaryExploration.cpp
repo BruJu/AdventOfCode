@@ -42,21 +42,16 @@ Output day05(const std::vector<std::string> & lines, const DayExtraInfo &) {
         seats.emplace_back(Seat(line).to_id());
     }
 
-    // Part A :
-    // const int max = *std::max_element(seats.begin(), seats.end());
+    const auto [min, max] = std::minmax_element(seats.begin(), seats.end());
 
-    // Part B :
-    // Dichotomic search is possible but only on a sorted array
-    // As sorting is O(n logn) ... let's just use a O(n) algorithm
+    int missing_seat = *max;
 
-    std::sort(seats.begin(), seats.end());
-
-    const int max = seats.back();
-
-    size_t i = 1;
-    while (i < seats.size() && seats[i] == seats[i - 1] + 1) {
-        ++i;
+    for (size_t i = 0 ; i != seats.size() ; ++i) {
+        // If seats[i] == *min + i, this does nothing
+        // If they are different, seats[0] + i == seats[i - 1]
+        missing_seat ^= seats[i];
+        missing_seat ^= *min + i;
     }
 
-    return Output(max, seats[i] - 1);
+    return Output(*max, missing_seat);
 }
