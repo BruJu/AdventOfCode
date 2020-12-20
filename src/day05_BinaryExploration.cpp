@@ -10,7 +10,7 @@ struct Interval {
         if (c == cLeft) {
             right = left + (right - left) / 2;
         } else {
-            left = left  + (right - left) / 2;
+            left  = left + (right - left) / 2;
         }
     }
 

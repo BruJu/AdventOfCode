@@ -3,14 +3,15 @@
 
 // https://adventofcode.com/2020/day/3
 
+constexpr char TREE = '#';
+
 static auto count_trees_on_slope(Board board, size_t x, size_t y, int dX, int dY) {
     test::Value count = 0;
 
     BoardPosition pos = BoardPosition(board, x, y, true, false);
 
     while (auto something = *pos) {
-        if (*something == '#') {
-            // tree
+        if (*something == TREE) {
             ++count;
         }
 

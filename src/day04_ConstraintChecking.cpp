@@ -11,8 +11,7 @@ class ValidationRules {
 public:
     static std::function<bool (std::string)> four_digits(int min, int max) {
         return [min, max](std::string s) {
-            static constexpr const char * PATTERN = "^([0-9]{4})$";
-            std::regex pattern { PATTERN };
+            std::regex pattern { R"(^([0-9]{4})$)" };
             std::smatch matches;
 
             const auto rs = std::regex_search(s, matches, pattern);
