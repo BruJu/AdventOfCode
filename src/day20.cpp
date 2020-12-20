@@ -214,12 +214,21 @@ std::vector<Tile> to_tiles(const std::vector<std::string> & lines) {
 
 
 struct TempGrid {
+    struct TTile {
+        const Tile * tile;
+        bool used = false;
+    };
+
     std::vector<std::vector<std::optional<AltereredTile>>> m_grid;
-    const std::vector<Tile> & tiles;
+    std::vector<TTile> tiles;
     const AllPaths & all_paths;
     size_t m_size;
 
-    explicit TempGrid(const std::vector<Tile> & tiles, const AllPaths & all_paths) : tiles(tiles), all_paths(all_paths) {
+    explicit TempGrid(const std::vector<Tile> & p_tiles, const AllPaths & all_paths) : all_paths(all_paths) {
+        for (const auto & tile : p_tiles) {
+            tiles.push_back(TTile { &tile, false });
+        }
+
         const size_t size = static_cast<size_t>(std::sqrt(tiles.size()));
 
         for (size_t i = 0 ; i != size; ++i) {
@@ -232,33 +241,36 @@ struct TempGrid {
     }
 
     bool resolve() {
-        std::set<int> used_tiles;
-        return try_place_at(0, 0, used_tiles);
+        return try_place_at(0, 0);
     }
 
-    bool try_place_at(size_t x, size_t y, std::set<int> & used_tiles) {
+    [[nodiscard]] size_t min_required_path(size_t x, size_t y) {
+        size_t req = 2;
+
+        if (x != 0 && x != m_size) ++req;
+        if (y != 0 && y != m_size) ++req;
+
+        return req;
+    }
+
+    bool try_place_at(size_t x, size_t y) {
         if (y == m_size) return true;
 
         const size_t next_x = x != m_size - 1 ? x + 1 : 0;
         const size_t next_y = x != m_size - 1 ?     y : y + 1;
 
-        const auto no_hope = [&](int me, int adjacent) {
-            const auto it = all_paths.find(adjacent);
-            const auto it2 = it->second.find(me);
+        for (auto & [tile, used] : tiles) {
+            if (used) continue;
 
-            return it2 == it->second.end();
-        };
+            used = true;
 
-        for (const Tile & tile : tiles) {
-            if (used_tiles.contains(tile.id)) continue;
+            //const size_t number_of_paths = all_paths.find(tile.id)->second.size();
+            //if (min_required_path(x, y) > number_of_paths) continue;
 
             //if (x != 0 && m_grid[y][x - 1] && no_hope(tile.id, m_grid[y][x - 1]->representation.id)) continue;
             //if (y != 0 && m_grid[y - 1][x] && no_hope(tile.id, m_grid[y - 1][x]->representation.id)) continue;
 
-            used_tiles.insert(tile.id);
-
-            m_grid[y][x] = AltereredTile { tile };
-
+            m_grid[y][x] = AltereredTile { *tile };
 
             for (TileStateExplorer trans ; trans ; trans(*m_grid[y][x])) {
                 if (x != 0 && !m_grid[y][x - 1]->adjacent_left_to_right(*m_grid[y][x])) {
@@ -269,12 +281,12 @@ struct TempGrid {
                     continue;
                 }
 
-                if (try_place_at(next_x, next_y, used_tiles)) {
+                if (try_place_at(next_x, next_y)) {
                     return true;
                 }
             }
 
-            used_tiles.erase(tile.id);
+            used = false;
         }
 
         return false;
