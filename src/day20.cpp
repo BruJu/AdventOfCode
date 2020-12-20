@@ -12,21 +12,9 @@
 
 // https://adventofcode.com/2020/day/20
 
+using RawPixels = std::vector<std::vector<char>>;
+
 namespace part_a {
-    using Raw = std::vector<std::vector<char>>;
-
-    struct Transformations {
-        bool is_flipped_left_right = false;
-        bool is_flipped_bottom_up = false;
-        int is_rotate_right = 0;
-
-        friend std::ostream & operator<<(std::ostream & stream, const Transformations & trans) {
-            stream << "FlippedRL=" << trans.is_flipped_left_right
-                << " ; FlippedTB=" << trans.is_flipped_bottom_up
-                << " ; rotate= " << trans.is_rotate_right;
-            return stream;
-        }
-    };
 
     struct Path;
 
@@ -56,29 +44,18 @@ namespace part_a {
         [[nodiscard]] std::vector<Path> adjacent(const Tile & other_tile) const;
     };
 
-    struct Path {
-        int my_rotation;
-        Transformations his_transformations;
-
-        friend std::ostream & operator<<(std::ostream & stream, const Path & path) {
-            stream << "left= " << path.my_rotation << " ; " << path.his_transformations;
-            return stream;
-        }
-    };
+    struct Path {};
 
     using Paths = std::vector<Path>;
     using AllPaths = std::map<int, std::map<int, Paths>>;
 
     struct AltereredTile {
         Tile representation;
-        Transformations transformations;
 
         AltereredTile(Tile tile) : representation(std::move(tile)) {}
 
         // ok
         void flip_left_right() {
-            transformations.is_flipped_left_right = !transformations.is_flipped_left_right;
-
             for (auto & line : representation.image) {
                 std::vector<char> new_line { line.rbegin(), line.rend() };
                 line = std::move(new_line);
@@ -87,16 +64,12 @@ namespace part_a {
 
         // ok
         void flip_bottom_up() {
-            transformations.is_flipped_bottom_up = !transformations.is_flipped_bottom_up;
-
             std::vector<std::vector<char>> image { representation.image.rbegin(), representation.image.rend() };
             representation.image = std::move(image);
         }
 
         // ok
         void rotate_right() {
-            transformations.is_rotate_right = (transformations.is_rotate_right + 1) % 4;
-
             std::vector<std::vector<char>> image;
 
             for (size_t y = 0 ; y != representation.image.size() ; ++y) {
@@ -110,7 +83,7 @@ namespace part_a {
         }
 
         friend std::ostream & operator<<(std::ostream & stream, const AltereredTile & tile) {
-            stream << tile.representation << tile.transformations << "\n\n";
+            stream << tile.representation << "\n\n";
             return stream;
         }
 
@@ -165,7 +138,7 @@ namespace part_a {
 
         AltereredTile me { *this };
 
-        std::set<Raw> my_raws;
+        std::set<RawPixels> my_raws;
 
         for (size_t i = 0 ; i != 4 ; ++i, me.rotate_right()) {
             if (my_raws.contains(me.representation.image)) {
@@ -174,7 +147,7 @@ namespace part_a {
 
             my_raws.insert(me.representation.image);
 
-            std::set<Raw> other_raws;
+            std::set<RawPixels> other_raws;
             AltereredTile other { other_tile };
 
             for (TileStateExplorer trans ; trans ; trans(other)) {
@@ -182,7 +155,7 @@ namespace part_a {
                     other_raws.insert(other.representation.image);
 
                     if (connect(me.representation.image, other.representation.image)) {
-                        paths.push_back(Path { me.transformations.is_rotate_right, other.transformations });
+                        paths.push_back(Path {});
                     }
                 }
             }
@@ -319,7 +292,7 @@ namespace part_a {
 
     struct Grid {
         std::vector<std::vector<int>> m_grid;
-        std::vector<std::vector<Raw>> m_raws;
+        std::vector<std::vector<RawPixels>> m_raws;
 
         explicit Grid(const TempGrid & temp_grid) {
             for (const auto & line : temp_grid.m_grid) {
@@ -389,7 +362,6 @@ namespace part_b {
     constexpr size_t monster_height = 3;
 
     using part_a::Tile;
-    using part_a::Raw;
 
     Tile rebuild_tile(const part_a::Grid & grid) {
         Tile tile { 0 };
@@ -415,7 +387,7 @@ namespace part_b {
         return tile;
     }
 
-    bool is_here(Raw & raw, size_t x, size_t y, bool replace = false) {
+    bool is_here(RawPixels & raw, size_t x, size_t y, bool replace = false) {
         const auto point = [&](char & reality, char monster, bool replace) -> bool {
             if (monster == ' ') {
                 return true;
@@ -441,7 +413,7 @@ namespace part_b {
         return true;
     }
 
-    bool search_monster(Raw & raw, size_t x, size_t y) {
+    bool search_monster(RawPixels & raw, size_t x, size_t y) {
         if (is_here(raw, x, y)) {
             is_here(raw, x, y, true);
             return true;
@@ -450,7 +422,7 @@ namespace part_b {
         }
     }
 
-   std::pair<size_t, Raw> search_monster(Raw raw) {
+   std::pair<size_t, RawPixels> search_monster(RawPixels raw) {
         for (size_t x = 0 ; x + monster_width  != raw.size() ; ++x) {
         for (size_t y = 0 ; y + monster_height != raw.size() ; ++y) {
             search_monster(raw, x, y);
@@ -465,7 +437,7 @@ namespace part_b {
             }
         }
 
-        return std::pair<size_t, Raw>(rought, raw);
+        return std::pair<size_t, RawPixels>(rought, raw);
     }
 
     size_t solve(const part_a::Grid & grid) {
