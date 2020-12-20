@@ -254,15 +254,16 @@ namespace part_a {
         struct TTile {
             const Tile * tile;
             bool used = false;
+            size_t connection_rank;
         };
 
         std::vector<std::vector<std::optional<AltereredTile>>> m_grid;
         std::vector<TTile> tiles;
         size_t m_size;
 
-        explicit TempGrid(const std::vector<Tile> & p_tiles) {
+        explicit TempGrid(const std::vector<Tile> & p_tiles, const std::map<int, size_t> & connections) {
             for (const auto & tile : p_tiles) {
-                tiles.push_back(TTile { &tile, false });
+                tiles.push_back(TTile { &tile, false, connections.find(tile.id)->second });
             }
 
             const size_t size = static_cast<size_t>(std::sqrt(tiles.size()));
@@ -283,8 +284,8 @@ namespace part_a {
         [[nodiscard]] size_t min_required_path(size_t x, size_t y) {
             size_t req = 2;
 
-            if (x != 0 && x != m_size) ++req;
-            if (y != 0 && y != m_size) ++req;
+            if (x != 0 && x != m_size - 1) ++req;
+            if (y != 0 && y != m_size - 1) ++req;
 
             return req;
         }
@@ -317,8 +318,11 @@ namespace part_a {
                 return try_place_at(next_x, next_y);
             }
 
-            for (auto & [tile, used] : tiles) {
+            const size_t position_connection_rank = min_required_path(x, y);
+
+            for (auto & [tile, used, connection_rank] : tiles) {
                 if (used) continue;
+                if (position_connection_rank != connection_rank) continue;
 
                 used = true;
 
@@ -365,8 +369,8 @@ namespace part_a {
         }
 
 
-        static std::optional<Grid> make(const std::vector<Tile> & tiles) {
-            TempGrid temp_grid { tiles };
+        static std::optional<Grid> make(const std::vector<Tile> & tiles, const std::map<int, size_t> & connections) {
+            TempGrid temp_grid { tiles, connections };
 
             if (temp_grid.resolve()) {
                 return Grid(temp_grid);
@@ -390,16 +394,25 @@ namespace part_a {
         }
 
         // Heuristic : We should start with pieces that are connected to few others
-        std::sort(tiles.begin(), tiles.end(), 
-            [&](const Tile & lhs, const Tile & rhs) {
-                size_t lhs_score = all_paths[lhs.id].size();
-                size_t rhs_score = all_paths[rhs.id].size();
+        // std::sort(tiles.begin(), tiles.end(), 
+        //     [&](const Tile & lhs, const Tile & rhs) {
+        //         size_t lhs_score = all_paths[lhs.id].size();
+        //         size_t rhs_score = all_paths[rhs.id].size();
+        // 
+        //         return lhs_score < rhs_score;
+        //     }
+        // );
 
-                return lhs_score < rhs_score;
-            }
-        );
+        // It is actually useless because both in the example and the problem to solve,
+        // there are exactly 4 pieces with only 2 possible neighbour and (size - 2) * 4
+        // pieces with only 3 possible neighbour
 
-        return Grid::make(tiles);
+        std::map<int, size_t> connections;
+        for (const auto & [tile_id, connected_to] : all_paths) {
+            connections[tile_id] = connected_to.size();
+        }
+
+        return Grid::make(tiles, connections);
     }
 }
 
