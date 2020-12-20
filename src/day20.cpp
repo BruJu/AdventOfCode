@@ -14,34 +14,36 @@
 
 using RawPixels = std::vector<std::vector<char>>;
 
-namespace part_a {
 
-    struct Tile {
-        int id;
-        std::vector<std::vector<char>> image;
+struct Tile {
+    int id;
+    RawPixels image;
 
-        explicit Tile(int id) : id(id) {}
+    explicit Tile(int id) : id(id) {}
 
-        [[nodiscard]] const std::vector<char> & operator[](size_t x) const { return image[x]; }
+    [[nodiscard]] const std::vector<char> & operator[](size_t x) const { return image[x]; }
 
-        friend std::ostream & operator<<(std::ostream & stream, const Tile & tile) {
-            stream << "== Tile " << tile.id << '\n';
+    friend std::ostream & operator<<(std::ostream & stream, const Tile & tile) {
+        stream << "== Tile " << tile.id << '\n';
 
-            for (const auto & line : tile.image) {
-                for (const auto pixel : line) {
-                    stream << pixel;
-                }
-
-                stream << '\n';
+        for (const auto & line : tile.image) {
+            for (const auto pixel : line) {
+                stream << pixel;
             }
 
             stream << '\n';
-            return stream;
         }
 
-        [[nodiscard]] bool adjacent(const Tile & other_tile) const;
-    };
+        stream << '\n';
+        return stream;
+    }
 
+    [[nodiscard]] bool adjacent(const Tile & other_tile) const;
+};
+
+namespace part_a {
+
+    // TODO : Tile == AlteredTile
     struct AltereredTile {
         Tile representation;
 
@@ -84,6 +86,7 @@ namespace part_a {
         [[nodiscard]] bool adjacent_top_to_down(const AltereredTile & other_tile) const;
     };
 
+    // TODO : A tile can generate a list of tiles it can transform into
     struct TileStateExplorer {
         int i = 0;
 
@@ -116,43 +119,12 @@ namespace part_a {
         return true;
     }
 
-
     bool AltereredTile::adjacent_left_to_right(const AltereredTile & other_tile) const {
         return connect(representation.image, other_tile.representation.image);
     }
 
     bool AltereredTile::adjacent_top_to_down(const AltereredTile & other_tile) const {
         return representation.image.back() == other_tile.representation.image.front();
-    }
-
-
-    bool Tile::adjacent(const Tile & other_tile) const {
-        AltereredTile me { *this };
-
-        std::set<RawPixels> my_raws;
-
-        for (size_t i = 0 ; i != 4 ; ++i, me.rotate_right()) {
-            if (my_raws.contains(me.representation.image)) {
-                continue;
-            }
-
-            my_raws.insert(me.representation.image);
-
-            std::set<RawPixels> other_raws;
-            AltereredTile other { other_tile };
-
-            for (TileStateExplorer trans ; trans ; trans(other)) {
-                if (!other_raws.contains(other.representation.image)) {
-                    other_raws.insert(other.representation.image);
-
-                    if (connect(me.representation.image, other.representation.image)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 
 
@@ -187,10 +159,9 @@ namespace part_a {
 
         std::vector<std::vector<std::optional<AltereredTile>>> m_grid;
         std::vector<TTile> tiles;
-        const AllPaths & all_paths;
         size_t m_size;
 
-        explicit TempGrid(const std::vector<Tile> & p_tiles, const AllPaths & all_paths) : all_paths(all_paths) {
+        explicit TempGrid(const std::vector<Tile> & p_tiles) {
             for (const auto & tile : p_tiles) {
                 tiles.push_back(TTile { &tile, false });
             }
@@ -240,10 +211,6 @@ namespace part_a {
         }
 
         bool try_place_at(size_t x, size_t y) {
-            //if (y == m_size) return true;
-            //const size_t next_x = x != m_size - 1 ? x + 1 : 0;
-            //const size_t next_y = x != m_size - 1 ?     y : y + 1;
-
             if (x == m_size * 2 + 1) return true;
             const size_t next_x = x != 0 ? x - 1 : y + 1;
             const size_t next_y = x != 0 ? y + 1 : 0;
@@ -255,12 +222,6 @@ namespace part_a {
                 if (used) continue;
 
                 used = true;
-
-                //const size_t number_of_paths = all_paths.find(tile.id)->second.size();
-                //if (min_required_path(x, y) > number_of_paths) continue;
-
-                //if (x != 0 && m_grid[y][x - 1] && no_hope(tile.id, m_grid[y][x - 1]->representation.id)) continue;
-                //if (y != 0 && m_grid[y - 1][x] && no_hope(tile.id, m_grid[y - 1][x]->representation.id)) continue;
 
                 m_grid[y][x] = AltereredTile { *tile };
 
@@ -305,8 +266,8 @@ namespace part_a {
         }
 
 
-        static std::optional<Grid> make(const std::vector<Tile> & tiles, const AllPaths & all_paths) {
-            TempGrid temp_grid { tiles, all_paths };
+        static std::optional<Grid> make(const std::vector<Tile> & tiles) {
+            TempGrid temp_grid { tiles };
 
             if (temp_grid.resolve()) {
                 return Grid(temp_grid);
@@ -341,9 +302,40 @@ namespace part_a {
             }
         );
 
-        return Grid::make(tiles, all_paths);
+        return Grid::make(tiles);
     }
 }
+
+
+bool Tile::adjacent(const Tile & other_tile) const {
+    part_a::AltereredTile me { *this };
+
+    std::set<RawPixels> my_raws;
+
+    for (size_t i = 0 ; i != 4 ; ++i, me.rotate_right()) {
+        if (my_raws.contains(me.representation.image)) {
+            continue;
+        }
+
+        my_raws.insert(me.representation.image);
+
+        std::set<RawPixels> other_raws;
+        part_a::AltereredTile other { other_tile };
+
+        for (part_a::TileStateExplorer trans ; trans ; trans(other)) {
+            if (!other_raws.contains(other.representation.image)) {
+                other_raws.insert(other.representation.image);
+
+                if (part_a::connect(me.representation.image, other.representation.image)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 
 namespace part_b {
     constexpr const char * monster_t = "                  # ";
@@ -351,8 +343,6 @@ namespace part_b {
     constexpr const char * monster_b = " #  #  #  #  #  #   ";
     constexpr size_t monster_width = 20;
     constexpr size_t monster_height = 3;
-
-    using part_a::Tile;
 
     Tile rebuild_tile(const part_a::Grid & grid) {
         Tile tile { 0 };
