@@ -254,16 +254,24 @@ namespace part_a {
         struct TTile {
             const Tile * tile;
             bool used = false;
-            size_t connection_rank;
         };
 
         std::vector<std::vector<std::optional<AltereredTile>>> m_grid;
         std::vector<TTile> tiles;
+        std::map<size_t, std::vector<TTile *>> m_exploration_order;
         size_t m_size;
 
         explicit TempGrid(const std::vector<Tile> & p_tiles, const std::map<int, size_t> & connections) {
             for (const auto & tile : p_tiles) {
-                tiles.push_back(TTile { &tile, false, connections.find(tile.id)->second });
+                tiles.push_back(TTile { &tile, false });
+            }
+
+            for (auto & tile : tiles) {
+                const size_t rank = connections.find(tile.tile->id)->second;
+
+                m_exploration_order[2].push_back(&tile);
+                if (rank >= 3) m_exploration_order[3].push_back(&tile);
+                if (rank >= 4) m_exploration_order[4].push_back(&tile);
             }
 
             const size_t size = static_cast<size_t>(std::sqrt(tiles.size()));
@@ -275,7 +283,32 @@ namespace part_a {
                 }
             }
             m_size = size;
+
+            for (size_t i = 2 ; i <= 4 ; ++i) {
+                std::sort(m_exploration_order[i].begin(), m_exploration_order[i].end(),
+                    [&](const TTile * lhs, const TTile * rhs) {
+                        const size_t l = connections.find(lhs->tile->id)->second;
+                        const size_t r = connections.find(rhs->tile->id)->second;
+
+                        if (l == r) {
+                            return lhs->tile->id < rhs->tile->id;
+                        } else {
+                            if (l == i) return true;
+                            if (r == i) return false;
+                            return l < r;
+                        }
+                    }
+                );
+            }
         }
+
+        // Non copyable, movable because of `m_exploration_order`
+        TempGrid(const TempGrid &) = delete;
+        TempGrid & operator=(const TempGrid &) = delete;
+        TempGrid(TempGrid &&) = default;
+        TempGrid & operator=(TempGrid &&) = default;
+        ~TempGrid() = default;
+        // ---
 
         bool resolve() {
             return try_place_at(0, 0);
@@ -320,9 +353,9 @@ namespace part_a {
 
             const size_t position_connection_rank = min_required_path(x, y);
 
-            for (auto & [tile, used, connection_rank] : tiles) {
+            for (const auto & ptr_tile : m_exploration_order[position_connection_rank]) {
+                auto & [tile, used] = *ptr_tile;
                 if (used) continue;
-                if (position_connection_rank != connection_rank) continue;
 
                 used = true;
 
@@ -417,29 +450,17 @@ namespace part_a {
         return retval;
     }
 
-    std::optional<Grid> solve(const std::vector<std::string> & lines) {
-        std::vector<Tile> tiles = to_tiles(lines);
-
-        std::map<int, std::set<int>> all_paths = compute_paths(tiles);
-
-        // Heuristic : We should start with pieces that are connected to few others
-        // std::sort(tiles.begin(), tiles.end(), 
-        //     [&](const Tile & lhs, const Tile & rhs) {
-        //         size_t lhs_score = all_paths[lhs.id].size();
-        //         size_t rhs_score = all_paths[rhs.id].size();
-        // 
-        //         return lhs_score < rhs_score;
-        //     }
-        // );
-
-        // It is actually useless because both in the example and the problem to solve,
-        // there are exactly 4 pieces with only 2 possible neighbour and (size - 2) * 4
-        // pieces with only 3 possible neighbour
-
+    std::map<int, size_t> count_paths(const std::map<int, std::set<int>> & all_paths) {
         std::map<int, size_t> connections;
         for (const auto & [tile_id, connected_to] : all_paths) {
             connections[tile_id] = connected_to.size();
         }
+        return connections;
+    }
+
+    std::optional<Grid> solve(const std::vector<std::string> & lines) {
+        std::vector<Tile> tiles = to_tiles(lines);
+        std::map<int, size_t> connections = count_paths(compute_paths(tiles));
 
         return Grid::make(tiles, connections);
     }
