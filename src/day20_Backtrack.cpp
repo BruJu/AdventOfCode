@@ -380,18 +380,47 @@ namespace part_a {
         }
     };
 
-    std::optional<Grid> solve(const std::vector<std::string> & lines) {
-        std::vector<Tile> tiles = to_tiles(lines);
-
-        std::map<int, std::set<int>> all_paths;
-
+    std::map<int, std::set<int>> compute_paths(const std::vector<Tile> & tiles) {
+        std::vector<std::pair<int, RawPixels>> rotations;
+        std::vector<std::pair<int, RawPixels>> variants;
+        
         for (const auto & tile : tiles) {
-            for (const auto & tile_ : tiles) {
-                if (&tile != &tile_ && tile.adjacent(tile_)) {
-                    all_paths[tile.id].insert(tile_.id);
+            // Rotations
+            RawPixels image = tile.image;
+            for (size_t i = 0 ; i != 4 ; ++i) {
+                rotations.emplace_back(tile.id, image);
+                image.rotate_right();
+            }
+
+            // Variants
+            for (size_t i = 0 ; i != 16 ; ++i) {
+                variants.emplace_back(tile.id, image);
+                image.rotate_right();
+                if (i % 4 == 0) image.flip_bottom_up();
+                if (i % 8 == 0) image.flip_left_right();
+            }
+        }
+
+        std::map<int, std::set<int>> retval;
+
+        for (const auto & [tile_id, rotation] : rotations) {
+            for (const auto & [var_id, variant] : variants) {
+                if (tile_id <= var_id) continue;
+
+                if (rotation.connect(variant)) {
+                    retval[tile_id].insert(var_id);
+                    retval[var_id].insert(tile_id);
                 }
             }
         }
+
+        return retval;
+    }
+
+    std::optional<Grid> solve(const std::vector<std::string> & lines) {
+        std::vector<Tile> tiles = to_tiles(lines);
+
+        std::map<int, std::set<int>> all_paths = compute_paths(tiles);
 
         // Heuristic : We should start with pieces that are connected to few others
         // std::sort(tiles.begin(), tiles.end(), 
