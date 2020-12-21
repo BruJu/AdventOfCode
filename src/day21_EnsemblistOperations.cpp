@@ -57,9 +57,9 @@ std::map<Alergen, std::set<Ingredient>> make_initial_mapping(const std::set<Ingr
 }
 
 void restraint_from_known(std::map<Alergen, std::set<Ingredient>> & mapping, const std::vector<ReaderRetVal> & read) {
-    for (const auto & read_value : read) {
-        for (const auto & alergen : read_value.second) {
-            mapping.find(alergen)->second &= read_value.first;
+    for (const auto & [ingredients, alergens] : read) {
+        for (const auto & alergen : alergens) {
+            mapping.find(alergen)->second &= ingredients;
         }
     }
 }
@@ -70,43 +70,10 @@ std::set<Ingredient> get_safe_ingredients(
 
     std::set<Ingredient> contaminated;
     for (const auto & [alergen, ingredients] : mapping) {
-        for (const auto & ing : ingredients) {
-            contaminated.insert(ing);
-        }
+        contaminated.insert(ingredients.begin(), ingredients.end());
     }
 
     return set::difference(all_ingredients, contaminated);
-}
-
-std::set<Ingredient> find_alone_ingredients(std::map<Alergen, std::set<Ingredient>> & mapping) {
-    std::set<Ingredient> retval;
-    for (auto & [alergen, ingredient_list] : mapping) {
-        if (ingredient_list.size() == 1) {
-            retval.insert(ingredient_list.begin(), ingredient_list.end());
-        }
-    }
-    return retval;
-}
-
-void constrain_1_to_1(std::map<Alergen, std::set<Ingredient>> & mapping) {
-    bool stable;
-    do {
-        stable = true;
-
-        std::set<Ingredient> alone = find_alone_ingredients(mapping);
-
-        for (auto & [alergen, ingredient_list] : mapping) {
-            if (ingredient_list.size() == 1) continue;
-
-            const size_t before = ingredient_list.size();
-            ingredient_list ^= alone;
-            
-            if (before != ingredient_list.size()) {
-                stable = false;
-            }
-        }
-
-    } while (!stable);
 }
 
 }
@@ -118,7 +85,7 @@ Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
     
     std::map<Alergen, std::set<Ingredient>> mapping = make_initial_mapping(all_ingredients, all_alergens);
     restraint_from_known(mapping, read);
-    constrain_1_to_1(mapping);
+    set::resolve_key_to_value(mapping);
 
     std::set<Ingredient> safe_ingredients = get_safe_ingredients(mapping, all_ingredients);
 
@@ -128,11 +95,9 @@ Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
     }
 
     std::string r2 = "";
-    for (const auto & [x, y] : mapping) {
-        if (!safe_ingredients.contains(x)) {
-            if (!r2.empty()) r2 += ',';
-            r2 += *y.begin();
-        }
+    for (const auto & [alergen, ingredient] : mapping) {
+        if (!r2.empty()) r2 += ',';
+        r2 += *ingredient.begin();
     }
     
     //std::cout << r2 << "\n";

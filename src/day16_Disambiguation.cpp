@@ -1,4 +1,6 @@
 #include "libs.hpp"
+#include "libs_ensemblist.hpp"
+
 #include <unordered_map>
 #include <vector>
 #include <set>
@@ -120,55 +122,34 @@ public:
     }
 
     void deduce_fields() {
-        std::vector<std::vector<size_t>> possibilitiess = [](size_t size) {
-            std::vector<std::vector<size_t>> retval;
+        std::map<size_t, std::set<size_t>> possibilitiess = [](size_t size) {
+            std::map<size_t, std::set<size_t>> retval;
+
+            std::set<size_t> all_values;
+            for (size_t j = 0 ; j != size ; ++j) {
+                all_values.insert(j);
+            }
 
             for (size_t i = 0 ; i != size ; ++i) {
-                retval.push_back({});
-                for (size_t j = 0 ; j != size ; ++j) {
-                    retval.back().push_back(j);
-                }
+                retval[i] = all_values;
             }
 
             return retval;
         }(m_field_names.size());
         
         for (const Ticket & ticket : m_other_tickets) {
-            for (size_t c = 0 ; c != possibilitiess.size() ; ++c) {
-                std::vector<size_t> & allowed_fields = possibilitiess[c];
-
+            for (auto & [ticket_id, allowed_fields] : possibilitiess) {
                 std::erase_if(allowed_fields, [&](size_t field_id) {
-                    return !Restriction::match_restriction_2(m_restrictions[field_id], ticket[c]);
+                    return !Restriction::match_restriction_2(m_restrictions[field_id], ticket[ticket_id]);
                 });
             }
         }
-
-        // There are more efficient way to do it, but there are only 20 elements
-        // so let's go for a O(n²) complexity
-        std::set<size_t> singletons;
-        for (const auto & column : possibilitiess) {
-            if (column.size() == 1) singletons.insert(column[0]);
-        }
         
-        size_t singletons_size;
-        do {
-            singletons_size = singletons.size();
+        set::resolve_key_to_value(possibilitiess);
 
-            for (auto & column : possibilitiess) {
-                if (column.size() == 1) continue;
-                
-                std::erase_if(column, [&](size_t field_id) { return singletons.contains(field_id); });
-
-                if (column.size() == 1) {
-                    singletons.insert(column[0]);
-                }
-            }
-
-        } while (singletons_size != singletons.size());
-        
         m_position_in_ticket_to_field = std::vector<size_t>();
-        for (const auto & column : possibilitiess) {
-            m_position_in_ticket_to_field->push_back(column[0]);
+        for (const auto & [_column_id, values] : possibilitiess) {
+            m_position_in_ticket_to_field->push_back(*values.begin());
         }
     }
 
