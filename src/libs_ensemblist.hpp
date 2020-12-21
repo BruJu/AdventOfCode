@@ -4,8 +4,8 @@
 #include <set>
 
 /// Removes from lhs the elements that are not in rhs
-template <typename T>
-std::set<T> & operator&=(std::set<T> & lhs, const std::set<T> & rhs) {
+template <typename T, typename OtherTs>
+std::set<T> & operator&=(std::set<T> & lhs, const OtherTs & rhs) {
     auto it = lhs.begin();
     while (it != lhs.end()) {
         if (rhs.contains(*it)) {
@@ -18,8 +18,8 @@ std::set<T> & operator&=(std::set<T> & lhs, const std::set<T> & rhs) {
 }
 
 /// Removes from lhs the elements in rhs
-template <typename T>
-std::set<T> & operator^=(std::set<T> & lhs, const std::set<T> & rhs) {
+template <typename T, typename OtherTs>
+std::set<T> & operator^=(std::set<T> & lhs, const OtherTs & rhs) {
     auto it = lhs.begin();
     while (it != lhs.end()) {
         if (!rhs.contains(*it)) {
@@ -31,8 +31,8 @@ std::set<T> & operator^=(std::set<T> & lhs, const std::set<T> & rhs) {
     return lhs;
 }
 
-template <typename T>
-std::set<T> & operator|=(std::set<T> & lhs, const std::set<T> & rhs) {
+template <typename T, typename OtherTs>
+std::set<T> & operator|=(std::set<T> & lhs, const OtherTs & rhs) {
     lhs.insert(rhs.begin(), rhs.end());
     return lhs;
 }
@@ -69,6 +69,17 @@ namespace set {
             }
         }
         return set;
+    }
+
+    template <typename Ts>
+    auto to_set(const Ts & map) {
+        std::set<typename Ts::key_type> retval;
+
+        for (const auto & [key, _value] : map) {
+            retval.insert(key);
+        }
+
+        return retval;
     }
 
     /// Resolve the 1 Key = 1 Value mapping

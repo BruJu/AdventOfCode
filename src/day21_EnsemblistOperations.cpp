@@ -37,9 +37,8 @@ ReaderRetVal reader(const std::string & line) {
 }
 
 struct InitialValues {
-    std::set<Ingredient> all_ingredients;
-    std::map<Alergen, std::set<Ingredient>> alergens;
     std::map<Ingredient, size_t> ingredients_occurrences;
+    std::map<Alergen, std::set<Ingredient>> alergens;
 };
 
 InitialValues read(const std::vector<std::string> & lines) {
@@ -47,7 +46,6 @@ InitialValues read(const std::vector<std::string> & lines) {
 
     for (const auto & line : lines) {
         const auto [ingredients, alergens] = reader(line);
-        retval.all_ingredients |= ingredients;
 
         for (const auto & alergen : alergens) {
             const auto it = retval.alergens.find(alergen);
@@ -67,15 +65,13 @@ InitialValues read(const std::vector<std::string> & lines) {
     return retval;
 }
 
-
-
 std::set<Ingredient> get_safe_ingredients(
     const std::map<Alergen, std::set<Ingredient>> & mapping,
     const std::set<Ingredient> & all_ingredients) {
 
     std::set<Ingredient> contaminated;
     for (const auto & [alergen, ingredients] : mapping) {
-        contaminated.insert(ingredients.begin(), ingredients.end());
+        contaminated |= ingredients;
     }
 
     return set::difference(all_ingredients, contaminated);
@@ -84,10 +80,10 @@ std::set<Ingredient> get_safe_ingredients(
 }
 
 Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
-    auto [all_ingredients, mapping, ingredients_occurrences] = read(lines);
+    auto [ingredients_occurrences, mapping] = read(lines);
     set::resolve_key_to_value(mapping);
 
-    std::set<Ingredient> safe_ingredients = get_safe_ingredients(mapping, all_ingredients);
+    std::set<Ingredient> safe_ingredients = get_safe_ingredients(mapping, set::to_set(ingredients_occurrences));
 
     test::Value r1 = 0;
     for (const auto & safe : safe_ingredients) {
