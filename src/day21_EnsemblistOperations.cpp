@@ -36,33 +36,38 @@ ReaderRetVal reader(const std::string & line) {
     return ReaderRetVal(std::move(ingredients), std::move(alergens));
 }
 
-std::pair<std::set<Ingredient>, std::set<Alergen>> find_components(const std::vector<ReaderRetVal> & all) {
-    std::pair<std::set<Ingredient>, std::set<Alergen>> retval;
+struct InitialValues {
+    std::set<Ingredient> all_ingredients;
+    std::map<Alergen, std::set<Ingredient>> alergens;
+    std::map<Ingredient, size_t> ingredients_occurrences;
+};
 
-    for (const auto & read_values : all) {
-        retval.first .insert(read_values.first .begin(), read_values.first .end());
-        retval.second.insert(read_values.second.begin(), read_values.second.end());
-    }
+InitialValues read(const std::vector<std::string> & lines) {
+    InitialValues retval;
 
-    return retval;
-}
+    for (const auto & line : lines) {
+        const auto [ingredients, alergens] = reader(line);
+        retval.all_ingredients |= ingredients;
 
-
-std::map<Alergen, std::set<Ingredient>> make_initial_mapping(const std::set<Ingredient> & ingredients, const std::set<Alergen> & alergens) {
-    std::map<Alergen, std::set<Ingredient>> retval;
-    for (const auto & alergen : alergens) {
-        retval[alergen] = ingredients;
-    }
-    return retval;
-}
-
-void restraint_from_known(std::map<Alergen, std::set<Ingredient>> & mapping, const std::vector<ReaderRetVal> & read) {
-    for (const auto & [ingredients, alergens] : read) {
         for (const auto & alergen : alergens) {
-            mapping.find(alergen)->second &= ingredients;
+            const auto it = retval.alergens.find(alergen);
+
+            if (it == retval.alergens.end()) {
+                retval.alergens[alergen] = ingredients;
+            } else {
+                it->second &= ingredients;
+            }
+        }
+        
+        for (const auto & ingredient : ingredients) {
+            ++retval.ingredients_occurrences[ingredient];
         }
     }
+
+    return retval;
 }
+
+
 
 std::set<Ingredient> get_safe_ingredients(
     const std::map<Alergen, std::set<Ingredient>> & mapping,
@@ -79,19 +84,14 @@ std::set<Ingredient> get_safe_ingredients(
 }
 
 Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
-    const std::vector<ReaderRetVal> read = lines_transform::map<ReaderRetVal>(lines, reader);
-
-    const auto [all_ingredients, all_alergens] = find_components(read);
-    
-    std::map<Alergen, std::set<Ingredient>> mapping = make_initial_mapping(all_ingredients, all_alergens);
-    restraint_from_known(mapping, read);
+    auto [all_ingredients, mapping, ingredients_occurrences] = read(lines);
     set::resolve_key_to_value(mapping);
 
     std::set<Ingredient> safe_ingredients = get_safe_ingredients(mapping, all_ingredients);
 
     test::Value r1 = 0;
-    for (const auto & [recipy_ingredients, _] : read) {
-        r1 += set::intersection(recipy_ingredients, safe_ingredients).size();
+    for (const auto & safe : safe_ingredients) {
+        r1 += ingredients_occurrences.find(safe)->second;
     }
 
     std::string r2 = "";

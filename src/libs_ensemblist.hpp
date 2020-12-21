@@ -31,6 +31,13 @@ std::set<T> & operator^=(std::set<T> & lhs, const std::set<T> & rhs) {
     return lhs;
 }
 
+template <typename T>
+std::set<T> & operator|=(std::set<T> & lhs, const std::set<T> & rhs) {
+    lhs.insert(rhs.begin(), rhs.end());
+    return lhs;
+}
+
+
 namespace set {
     /// result = lhs intersection rhs
     template <typename T>
