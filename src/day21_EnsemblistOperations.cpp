@@ -135,7 +135,7 @@ Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
         }
     }
     
-    std::cout << r2 << "\n";
+    //std::cout << r2 << "\n";
 
-    return Output(r1, 0);
+    return Output(r1, r2.size());
 }
