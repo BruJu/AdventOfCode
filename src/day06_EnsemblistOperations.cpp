@@ -1,34 +1,16 @@
 #include "libs.hpp"
+#include "libs_ensemblist.hpp"
 
 #include <numeric>
 #include <set>
 
 // https://adventofcode.com/2020/day/6
 
-
 static std::set<char> to_set(const std::string & x) {
     std::set<char> retval;
     for (char xx : x) {
         retval.insert(xx);
     }
-    return retval;
-}
-
-static std::set<char> union_op(const std::set<char> & lhs, const std::set<char> & rhs) {
-    std::set<char> retval = lhs;
-    retval.insert(rhs.begin(), rhs.end());
-    return retval;
-}
-
-static std::set<char> intersection_op(const std::set<char> & lhs, const std::set<char> & rhs) {
-    std::set<char> retval;
-
-    for (char x : lhs) {
-        if (rhs.contains(x)) {
-            retval.insert(x);
-        }
-    }
-
     return retval;
 }
 
@@ -45,5 +27,5 @@ Output day06(const std::vector<std::string> & lines, const DayExtraInfo &) {
         return std::accumulate(per_group.begin(), per_group.end(), 0);
     };
 
-    return Output(compute(union_op), compute(intersection_op));
+    return Output(compute(set::union_<char>), compute(set::intersection<char>));
 }
