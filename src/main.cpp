@@ -121,10 +121,18 @@ int main(int argc, const char * argv[]) {
         }
     }
 
+    char time[256];
+    std::sprintf(time, "%02ld:%02ld:%03ld",
+        std::chrono::duration_cast<std::chrono::minutes>(testScore.total_time).count(),
+        std::chrono::duration_cast<std::chrono::seconds>(testScore.total_time).count() % 60,
+        std::chrono::duration_cast<std::chrono::milliseconds>(testScore.total_time).count() % 1000
+    );
+
     std::cout << "\x1B[1m"
               << "\nTotal  = " << testScore.total()
               << "\n" KGRN "Success= " << testScore.success
-              << "\n" KRED "Failed = " << testScore.failed << RST << '\n';
+              << "\n" KRED "Failed = " << testScore.failed << RST << '\n'
+              << "\n\x1B[1m" KCYN     "Time = " << time << '\n';
 
     return 0;
 }

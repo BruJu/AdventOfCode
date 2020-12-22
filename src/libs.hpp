@@ -111,6 +111,7 @@ namespace test {
     struct Score {
         unsigned int success = 0;
         unsigned int failed  = 0;
+        std::chrono::duration<double> total_time;
 
         Score & operator+=(const std::optional<RunResult> & run_result) {
             if (!run_result) return *this;
@@ -120,6 +121,8 @@ namespace test {
                     *this += part_result->type;
                 }
             }
+
+            total_time += run_result->elapsed_time;
 
             return *this;
         }
