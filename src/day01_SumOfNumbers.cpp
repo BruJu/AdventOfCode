@@ -1,25 +1,35 @@
-#include <array>
 #include "libs.hpp"
+
+#include <array>
+#include <unordered_set>
 
 // https://adventofcode.com/2020/day/1
 
-static std::optional<std::pair<int, int>> find_sum(
+static std::array<int, 2> find_sum_two(int target, const std::vector<int> & values) {
+    std::unordered_set<int> expected_values;
+
+    for (int value : values) {
+        if (expected_values.contains(target - value)) {
+            return { value , target - value };
+        }
+
+        expected_values.insert(value);
+    }
+
+    return { -1, -1 };
+}
+
+static std::optional<std::pair<int, int>> find_sum_three_values_(
     const int target,
     std::vector<int>::iterator left,
     std::vector<int>::iterator right,
-    const std::optional<std::vector<int>::iterator> forbidden = std::nullopt
+    std::vector<int>::iterator forbidden
 ) {
     --right;
 
     while (true) {
-        if (left == right) {
+        if (forbidden == left || forbidden == right) {
             return std::nullopt;
-        }
-
-        if (forbidden) {
-            if (*forbidden == left || *forbidden == right) {
-                return std::nullopt;
-            }
         }
 
         const int sum = *left + *right;
@@ -40,7 +50,7 @@ static std::array<int, 3> find_sum_three_values(
     std::vector<int>::iterator right
 ) {
     for (auto middle = left ; middle != right ; ++middle) {
-        auto f = find_sum(target - *middle, left, right, middle);
+        auto f = find_sum_three_values_(target - *middle, left, right, middle);
 
         if (f) {
             return std::array<int, 3>{f->first, f->second, *middle};
@@ -52,10 +62,11 @@ static std::array<int, 3> find_sum_three_values(
 
 Output day01(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> numbers = lines_transform::to_ints(lines);
+    
+    const auto r1 = find_sum_two(2020, numbers);
+
     std::sort(numbers.begin(), numbers.end());
+    const auto r2 = find_sum_three_values(2020, numbers.begin(), numbers.end());
 
-    auto r1 = find_sum(2020, numbers.begin(), numbers.end());
-    auto r2 = find_sum_three_values(2020, numbers.begin(), numbers.end());
-
-    return Output(r1->first * r1->second, r2[0] * r2[1] * r2[2]);
+    return Output(r1[0] * r1[1], r2[0] * r2[1] * r2[2]);
 }

@@ -132,7 +132,7 @@ int main(int argc, const char * argv[]) {
               << "\nTotal  = " << testScore.total()
               << "\n" KGRN "Success= " << testScore.success
               << "\n" KRED "Failed = " << testScore.failed << RST << '\n'
-              << "\n\x1B[1m" KCYN     "Time = " << time << '\n';
+              << "\n\x1B[1m" KCYN     "Time = " << time << RST << '\n';
 
     return 0;
 }
