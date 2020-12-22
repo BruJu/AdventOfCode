@@ -63,3 +63,5 @@
 20 inputs/20_tosolve.txt   ?                ?
 21 inputs/21_example.txt   5                19
 21 inputs/21_tosolve.txt   ?                ?
+22 inputs/22_example.txt   306              291
+22 inputs/22_tosolve.txt   ?                ?
