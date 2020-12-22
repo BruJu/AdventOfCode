@@ -1,18 +1,14 @@
 #include "libs.hpp"
-#include "libs_ensemblist.hpp"
 
-#include <array>
 #include <vector>
-#include <map>
 #include <set>
-#include <deque>
 
 // https://adventofcode.com/2020/day/22
 
 class Game {
 private:
     using Card = size_t;
-    using Deck = std::deque<Card>;
+    using Deck = std::vector<Card>;     // std::vector is faster than std::deque
     using PreviousRoundKey = std::pair<Deck, Deck>;
     Deck m_player_1;
     Deck m_player_2;
@@ -77,8 +73,8 @@ public:
 
         m_previous_rounds.insert(key);
 
-        const Card card_1 = m_player_1.front();    m_player_1.pop_front();
-        const Card card_2 = m_player_2.front();    m_player_2.pop_front();
+        const Card card_1 = m_player_1.front();    m_player_1.erase(m_player_1.begin());
+        const Card card_2 = m_player_2.front();    m_player_2.erase(m_player_2.begin());
 
         const bool player_1_win = winner_rule(*this, card_1, card_2);
 
