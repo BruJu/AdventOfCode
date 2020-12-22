@@ -17,24 +17,10 @@ private:
     Deck m_player_2;
 
     std::set<std::pair<Deck, Deck>> m_previous_rounds;
-    static std::map<std::pair<Deck, Deck>, bool> m_past_experiences;
 
-    [[nodiscard]] bool already_saw_this() {
+    [[nodiscard]] bool already_saw_this() const {
         const auto situation = std::pair<Deck, Deck>(m_player_1, m_player_2);
-        if (m_previous_rounds.contains(situation)) {
-            m_player_2.clear();
-            return true;
-        }/* else if (m_past_experiences.contains(situation)) {
-            if (m_past_experiences.find(situation)->second) {
-                m_player_2.clear();
-            } else {
-                m_player_1.clear();
-            }
-
-            return true;
-        }*/
-
-        return false;
+        return m_previous_rounds.contains(situation);
     }
 
 public:
@@ -83,18 +69,16 @@ public:
     template <typename WinnerRule>
     void play(WinnerRule winner_rule) {
         if (already_saw_this()) {
+            m_player_2.clear();
             return;
         }
 
-        const auto key = std::pair(m_player_1, m_player_2);
-        m_previous_rounds.insert(key);
+        m_previous_rounds.insert(std::pair(m_player_1, m_player_2));
 
         const Card card_1 = m_player_1.front();    m_player_1.pop_front();
         const Card card_2 = m_player_2.front();    m_player_2.pop_front();
 
         const bool player_1_win = winner_rule(*this, card_1, card_2);
-
-        //m_past_experiences[key] = player_1_win;
 
         if (player_1_win) {
             m_player_1.push_back(card_1);
@@ -122,10 +106,6 @@ public:
         }
     }
 };
-
-
-std::map<std::pair<Game::Deck, Game::Deck>, bool> Game::m_past_experiences;
-
 
 Output day22(const std::vector<std::string> & lines, const DayExtraInfo &) {
     Game game { lines };
