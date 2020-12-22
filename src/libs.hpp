@@ -7,6 +7,7 @@
 #include <string_view>
 #include <optional>
 #include <iostream>
+#include <chrono>
 
 #include <fstream>
 #include <sstream>
@@ -96,6 +97,7 @@ namespace test {
 
     struct RunResult {
         std::array<std::optional<PartResult>, 2> parts;
+        std::chrono::duration<double> elapsed_time;
 
         [[nodiscard]] TestValidation get_overall() const noexcept;
     };

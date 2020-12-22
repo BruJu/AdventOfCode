@@ -63,6 +63,9 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
     if (!r) {
         std::cout << KRED << "No handler";
     } else {
+        const auto t = static_cast<int>(r->elapsed_time.count() * 1000);
+        std::sprintf(buffer, "%5d ms   ", t); std::cout << buffer;
+
         for (const auto part_result : r->parts) {
             if (!part_result) {
                 std::sprintf(buffer, "%-35s ", " ");

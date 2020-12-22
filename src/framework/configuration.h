@@ -8,6 +8,7 @@
 #include <cstring>
 #include <vector>
 #include <type_traits>
+#include <chrono>
 
 #include "../colors.h"
 
@@ -73,13 +74,17 @@ std::optional<test::RunResult> InputConfig::run(Runner runner) const {
         .can_skip_part_B = m_expected_part_2.type == test::Expected::Type::Ignore,
     };
 
+    const auto start = std::chrono::steady_clock::now();
     Output result = runner(lines, day_extra_info);
+    const auto end = std::chrono::steady_clock::now();
+    const auto elapsed_time = end - start;
 
     return test::RunResult {
         .parts = std::array<std::optional<test::PartResult>, 2>({
             test::PartResult::from(result.part_a, m_expected_part_1),
             test::PartResult::from(result.part_b, m_expected_part_2)
-        })
+        }),
+        .elapsed_time = elapsed_time
     };
 }
 
