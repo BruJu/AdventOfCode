@@ -13,14 +13,14 @@ class Game {
 private:
     using Card = size_t;
     using Deck = std::deque<Card>;
+    using PreviousRoundKey = std::pair<Deck, Deck>;
     Deck m_player_1;
     Deck m_player_2;
 
-    std::set<std::pair<Deck, Deck>> m_previous_rounds;
+    std::set<PreviousRoundKey> m_previous_rounds;
 
-    [[nodiscard]] bool already_saw_this() const {
-        const auto situation = std::pair<Deck, Deck>(m_player_1, m_player_2);
-        return m_previous_rounds.contains(situation);
+    [[nodiscard]] bool already_saw_this(const PreviousRoundKey & key) const {
+        return m_previous_rounds.contains(key);
     }
 
 public:
@@ -68,12 +68,14 @@ public:
 
     template <typename WinnerRule>
     void play(WinnerRule winner_rule) {
-        if (already_saw_this()) {
+        const PreviousRoundKey key = std::pair(m_player_1, m_player_2);
+
+        if (already_saw_this(key)) {
             m_player_2.clear();
             return;
         }
 
-        m_previous_rounds.insert(std::pair(m_player_1, m_player_2));
+        m_previous_rounds.insert(key);
 
         const Card card_1 = m_player_1.front();    m_player_1.pop_front();
         const Card card_2 = m_player_2.front();    m_player_2.pop_front();
