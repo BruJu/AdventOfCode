@@ -27,6 +27,7 @@ Output day19(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day20(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day21(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day22(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day23(const std::vector<std::string> & lines, const DayExtraInfo &);
 
 void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
@@ -35,7 +36,7 @@ void dispatch(const InputConfig & config, test::Score & ts) {
         &day01, &day02, &day03, &day04, &day05, &day06, &day07,
         &day08, &day09, &day10, &day11, &day12, &day13, &day14,
         &day15, &day16, &day17, &day18, &day19, &day20, &day21,
-        &day22, nullptr
+        &day22, &day23, nullptr
     };
 
     if (DayEntryPoint * day = days[config.day - 1]) {
