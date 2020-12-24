@@ -67,3 +67,5 @@
 22 inputs/22_tosolve.txt   ?                ?
 23 inputs/23_example.txt   67384529         149245887792
 23 inputs/23_tosolve.txt   ?                ?
+24 inputs/24_example.txt   10               2208
+24 inputs/24_tosolve.txt   ?                ?
