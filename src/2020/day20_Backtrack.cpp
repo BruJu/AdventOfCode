@@ -394,13 +394,12 @@ namespace part_a {
             }
         }
 
-        [[nodiscard]] test::Value corners() const noexcept {
-            return test::Value(m_grid.front().front())
-                * test::Value(m_grid.front().back())
-                * test::Value(m_grid.back().front())
-                * test::Value(m_grid.back().back());
+        [[nodiscard]] long long int corners() const noexcept {
+            return static_cast<long long int>(m_grid.front().front())
+                *  static_cast<long long int>(m_grid.front().back())
+                *  static_cast<long long int>(m_grid.back().front())
+                *  static_cast<long long int>(m_grid.back().back());
         }
-
 
         static std::optional<Grid> make(const std::vector<Tile> & tiles, const std::map<int, size_t> & connections) {
             TempGrid temp_grid { tiles, connections };

@@ -58,13 +58,13 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
 
             switch (part_result->type) {
                 case test::TestValidation::Success:
-                    std::sprintf(buffer, KGRN "%-35lld ", part_result->computed);
+                    std::sprintf(buffer, KGRN "%-35s ", part_result->computed.c_str());
                     break;
                 case test::TestValidation::Computed:
-                    std::sprintf(buffer, KBLU "%-35lld ", part_result->computed);
+                    std::sprintf(buffer, KBLU "%-35s ", part_result->computed.c_str());
                     break;
                 case test::TestValidation::Fail:
-                    std::sprintf(buffer, KRED "%-15lld EXP=%-15lld ", part_result->computed, part_result->expected);
+                    std::sprintf(buffer, KRED "%-15s EXP=%-15s ", part_result->computed.c_str(), part_result->expected.c_str());
                     break;
             }
 

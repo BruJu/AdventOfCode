@@ -105,8 +105,8 @@ public:
         }
     }
 
-    test::Value remove_invalid_tickets() {
-        test::Value error_rate = 0;
+    auto remove_invalid_tickets() {
+        long long int error_rate = 0;
 
         std::erase_if(m_other_tickets,
             [&](const Ticket & ticket) {
@@ -153,12 +153,12 @@ public:
         }
     }
 
-    test::Value my_departure() const {
+    long long int my_departure() const {
         if (!m_position_in_ticket_to_field) {
-            return 0;
+            return 0ll;
         }
 
-        test::Value sum = 1;
+        long long int sum = 1;
 
         for (size_t pos = 0 ; pos != m_position_in_ticket_to_field->size() ; ++pos) {
             const size_t field_id = (*m_position_in_ticket_to_field)[pos];
@@ -207,7 +207,7 @@ public:
 Output day_2020_16(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
     TicketTranslation ticket_list = TicketTranslation(lines);
 
-    const test::Value error_rate = ticket_list.remove_invalid_tickets();
+    const auto error_rate = ticket_list.remove_invalid_tickets();
     
     if (extra.can_skip_part_B) {
         return Output(error_rate, 0);
@@ -215,6 +215,6 @@ Output day_2020_16(const std::vector<std::string> & lines, const DayExtraInfo & 
 
     ticket_list.deduce_fields();
 
-    const test::Value my_ticket_departure = ticket_list.my_departure();
+    const auto my_ticket_departure = ticket_list.my_departure();
     return Output(error_rate, my_ticket_departure);
 }

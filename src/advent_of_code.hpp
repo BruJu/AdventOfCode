@@ -16,13 +16,13 @@
 
 
 namespace test {
-    using Value = long long int;
+    //using Value = long long int;
 
     struct Expected {
         enum class Type { /* _ */ Ignore, /* 123 */ Known, /* ? */ Wanted, /* ?123 */ WantedKnown };
 
-        Type  type;
-        Value value;
+        Type        type;
+        std::string value;
 
         explicit Expected(std::string line);
 
@@ -56,12 +56,12 @@ namespace test {
 
     struct PartResult {
         TestValidation type; // Ignore, Known or Wanted
-        Value computed;
-        Value expected;
+        std::string computed;
+        std::string expected;
 
         [[nodiscard]] bool is_valid() const noexcept { return computed == expected; }
         
-        static std::optional<PartResult> from(test::Value computed, test::Expected expected) {
+        static std::optional<PartResult> from(const std::string & computed, const test::Expected & expected) {
             PartResult p;
             p.computed = computed;
             p.expected = expected.value;
@@ -143,10 +143,13 @@ namespace test {
 }
 
 struct Output {
-    test::Value part_a;
-    test::Value part_b;
+    std::string part_a;
+    std::string part_b;
     
-    Output(test::Value a, test::Value b) : part_a(a), part_b(b) {}
+    Output(long long int a, long long int b) : part_a(std::to_string(a)), part_b(std::to_string(b)) {}
+    Output(long long int a, std::string b  ) : part_a(std::to_string(a)), part_b(std::move(b))      {}
+    Output(std::string a  , long long int b) : part_a(std::move(a))     , part_b(std::to_string(b)) {}
+    Output(std::string a  , std::string b  ) : part_a(std::move(a))     , part_b(std::move(b))      {}
 };
 
 struct DayExtraInfo {

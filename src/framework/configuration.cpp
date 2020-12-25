@@ -14,16 +14,16 @@ std::string InputConfig::to_string() const {
 test::Expected::Expected(std::string line) {
     if (line == "?") {
         type  = Type::Wanted;
-        value = 0;
-    } else if (line == "_" || line.substr(0, 5) == "nope_") {
+        value = "";
+    } else if (line == "_" || line[0] == '$') {
         type  = Type::Ignore;
-        value = 0;
+        value = "";
     } else if (line[0] == '?') {
         type  = Type::WantedKnown;
-        value = std::stoll(line.substr(1));
+        value = line.substr(1);
     } else {
         type  = Type::Known;
-        value = std::stoll(line);
+        value = line;
     }
 }
 

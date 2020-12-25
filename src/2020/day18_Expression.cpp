@@ -169,8 +169,8 @@ Expression mapper(const std::string & line) {
 // ======================================================
 
 template <typename ExpressionListResolver>
-test::Value compute_sum_of_results(const std::vector<std::string> & lines) {
-    test::Value sum = 0;
+Value compute_sum_of_results(const std::vector<std::string> & lines) {
+    Value sum = 0;
     for (const Expression & e : lines_transform::map<Expression>(lines, mapper<ExpressionListResolver>)) {
         sum += e.evaluate();
     }

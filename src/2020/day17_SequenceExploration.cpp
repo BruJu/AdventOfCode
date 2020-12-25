@@ -196,7 +196,7 @@ namespace vector_implementation {
 
         void next();
 
-        [[nodiscard]] test::Value count_occupied() const noexcept {
+        [[nodiscard]] auto count_occupied() const noexcept {
             return std::count_if(m_symbols.begin(), m_symbols.end(), 
                 [](char c) { return c == '#'; }
             );
@@ -282,7 +282,7 @@ namespace map_implementation {
             }
         }
 
-        [[nodiscard]] test::Value count_occupied() const noexcept {
+        [[nodiscard]] auto count_occupied() const noexcept {
             return occupied_slots.size();
         }
 
@@ -317,7 +317,7 @@ namespace map_implementation {
 }
 
 template<typename FieldClass>
-static test::Value occupied_after_six_iterations(const std::vector<std::string> & lines) {
+static auto occupied_after_six_iterations(const std::vector<std::string> & lines) {
     FieldClass field { lines };
 
     for (size_t i = 0 ; i != 6 ; ++i) field.next();

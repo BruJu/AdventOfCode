@@ -52,10 +52,10 @@ public:
         return m_player_1.empty() || m_player_2.empty();
     }
 
-    [[nodiscard]] test::Value get_winner_score() const noexcept {
+    [[nodiscard]] auto get_winner_score() const noexcept {
         const auto & winner_deck = m_player_1.empty() ? m_player_2 : m_player_1;
 
-        test::Value s = 0;
+        long long int s = 0;
         for (size_t i = 0 ; i != winner_deck.size() ; ++i) {
             s += (winner_deck.size() - i) * winner_deck[i];
         }

@@ -19,7 +19,7 @@ static std::vector<Cup> read(const std::string & line) {
 
 // Part A and part B are the same algorithm but part B is more efficient
 
-static test::Value do_part_a(std::vector<Cup> cups, int rounds) {
+static auto do_part_a(std::vector<Cup> cups, int rounds) {
     const Cup min_cup = *std::min_element(cups.begin(), cups.end());
     const Cup max_cup = *std::max_element(cups.begin(), cups.end());
     
@@ -55,7 +55,7 @@ static test::Value do_part_a(std::vector<Cup> cups, int rounds) {
         cups.push_back(f);
     }
 
-    test::Value answer = 0;
+    long long int answer = 0;
 
     for (auto x : cups) {
         if (x == 1) continue;
@@ -122,7 +122,7 @@ static std::vector<size_t> to_linked_map(const std::vector<Cup> & cups, const Cu
     return linked_list;
 }
 
-static test::Value do_part_b(const std::vector<Cup> & cups, const Cup max_cup, size_t number_of_rounds) {
+static auto do_part_b(const std::vector<Cup> & cups, const Cup max_cup, size_t number_of_rounds) {
     std::vector<size_t> linked_list = to_linked_map(cups, max_cup);
 
     size_t i = 0;
@@ -153,10 +153,10 @@ Output day_2020_23(const std::vector<std::string> & lines, const DayExtraInfo &)
     const std::vector<Cup> cups = read(lines[0]);
     const int loops = std::stoi(lines[1]);
 
-    test::Value part_a = do_part_a(cups, loops);
+    const auto part_a = do_part_a(cups, loops);
 
     // do_part_b(cups, cups.size() + 1, 100); (for testing purpose)
-    test::Value part_b = do_part_b(cups, 1000000, 10000000);
+    const auto part_b = do_part_b(cups, 1000000, 10000000);
     
     return Output(part_a, part_b);
 }

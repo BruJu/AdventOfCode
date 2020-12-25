@@ -85,7 +85,7 @@ Output day_2020_21(const std::vector<std::string> & lines, const DayExtraInfo &)
 
     std::set<Ingredient> safe_ingredients = get_safe_ingredients(mapping, set::to_set(ingredients_occurrences));
 
-    test::Value r1 = 0;
+    long long int r1 = 0;
     for (const auto & safe : safe_ingredients) {
         r1 += ingredients_occurrences.find(safe)->second;
     }
@@ -96,7 +96,5 @@ Output day_2020_21(const std::vector<std::string> & lines, const DayExtraInfo &)
         r2 += *ingredient.begin();
     }
     
-    //std::cout << r2 << "\n";
-
-    return Output(r1, r2.size());
+    return Output(r1, r2);
 }
