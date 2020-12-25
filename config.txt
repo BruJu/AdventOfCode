@@ -69,3 +69,5 @@
 23 inputs/23_tosolve.txt   ?                ?
 24 inputs/24_example.txt   10               2208
 24 inputs/24_tosolve.txt   ?                ?
+25 inputs/25_example.txt   14897079         _
+25 inputs/25_tosolve.txt   ?                _
