@@ -31,9 +31,14 @@ InputConfig InputConfig::from_line(std::string_view line, const std::string & pr
     StringSplitter splitter = StringSplitter(line);
     const int day = std::stoi(splitter());
     const std::string filename = prefix + splitter();
-    const test::Expected expected1 = test::Expected(splitter());
-    const test::Expected expected2 = test::Expected(splitter());
-    return InputConfig(day, filename, expected1, expected2);
+    const std::string first_expected = splitter();
+    if (first_expected == "inline") {
+        return InputConfig(day, filename);
+    } else {
+        const test::Expected expected1 = test::Expected(first_expected);
+        const test::Expected expected2 = test::Expected(splitter());
+        return InputConfig(day, filename, expected1, expected2);
+    }
 }
 
 static bool config_has_no_test(const InputConfig & config) {

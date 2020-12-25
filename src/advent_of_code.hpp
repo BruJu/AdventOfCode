@@ -19,12 +19,13 @@ namespace test {
     //using Value = long long int;
 
     struct Expected {
-        enum class Type { /* _ */ Ignore, /* 123 */ Known, /* ? */ Wanted, /* ?123 */ WantedKnown };
+        enum class Type { /* _ */ Ignore, /* 123 */ Known, /* ? */ Wanted, /* ?123 */ WantedKnown, Inline };
 
         Type        type;
         std::string value;
 
         explicit Expected(std::string line);
+        explicit Expected(Type type) : type(type), value("") {}
 
         friend std::ostream & operator<<(std::ostream & stream, const Expected & expected) {
             if (expected.type == Type::Ignore) {
@@ -68,6 +69,7 @@ namespace test {
 
             switch (expected.type) {
                 case Expected::Type::Ignore: 
+                case Expected::Type::Inline:
                     return std::nullopt;
                 case Expected::Type::Known:
                     p.type = p.computed == p.expected ? TestValidation::Success : TestValidation::Fail;
@@ -80,6 +82,31 @@ namespace test {
                     break;
             }
 
+            return p;
+        }
+
+        static std::optional<PartResult> from(unsigned int valid, unsigned int total, const std::vector<std::string> & extra_message) {
+            PartResult p;
+            char buffer[256];
+            std::sprintf(buffer, "Infile unit tests: %u / %u", valid, total);
+            p.computed = buffer;
+
+            if (total == 0) {
+                return std::nullopt;
+            } else if (valid == total) {
+                p.expected = buffer;
+                p.type = TestValidation::Success;
+            } else {
+                // At this point, we don't care about design, we just want to debug easily.
+                p.expected = "";
+                
+                for (const auto & message : extra_message) {
+                    std::cerr << message << '\n';
+                }
+
+                p.type = TestValidation::Fail;
+            }
+            
             return p;
         }
     };

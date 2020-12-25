@@ -1,5 +1,6 @@
 #include <iostream>
 #include "framework/configuration.h"
+#include "2015/days.hpp"
 #include "2020/days.hpp"
 #include <algorithm>
 #include "colors.h"
@@ -7,6 +8,7 @@
 
 static auto get_all_handlers() {
     std::map<int, std::array<DayEntryPoint *, 25>> map;
+    map[2015] = days_2015;
     map[2020] = days_2020;
     return map;
 }
