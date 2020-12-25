@@ -1,8 +1,5 @@
 #include "../advent_of_code.hpp"
 
-#include <array>
-#include <unordered_set>
-
 // https://adventofcode.com/2015/day/1
 
 static std::pair<int, size_t> count(std::string_view line) {
