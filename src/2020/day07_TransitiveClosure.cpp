@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <regex>
 
 // https://adventofcode.com/2020/day/7
@@ -113,7 +113,7 @@ void Bag::ensure_is_transitively_closed(Bag::All & all_bags) {
     is_transitively_closed = true;
 }
 
-Output day07(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_07(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::regex regex_bag_contains { BAGS_CONTAIN };
     std::regex regex_contained   { CONTAINED_BAG };
 

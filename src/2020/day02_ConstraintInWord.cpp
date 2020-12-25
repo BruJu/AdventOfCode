@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <regex>
 
 // https://adventofcode.com/2020/day/2
@@ -48,7 +48,7 @@ static bool match_ruleset2(const PolicyPassword & pp) {
     return check_position(pp.first) ^ check_position(pp.second);
 }
 
-Output day02(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_02(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<PolicyPassword> policies = 
         lines_transform::map<PolicyPassword>(lines, PolicyPassword::from_string);
 

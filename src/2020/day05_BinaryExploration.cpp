@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/5
 
@@ -36,7 +36,7 @@ struct Seat {
     [[nodiscard]] int to_id() const noexcept { return row * 8 + column; }
 };
 
-Output day05(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_05(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> seats;
     for (const auto & line : lines) {
         seats.emplace_back(Seat(line).to_id());

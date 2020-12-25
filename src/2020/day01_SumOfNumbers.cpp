@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <array>
 #include <unordered_set>
@@ -60,7 +60,7 @@ static std::array<int, 3> find_sum_three_values(
     return { -1, -1, -1 };
 }
 
-Output day01(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_01(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> numbers = lines_transform::to_ints(lines);
     
     const auto r1 = find_sum_two(2020, numbers);

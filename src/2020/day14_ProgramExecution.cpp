@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <algorithm>
 #include <unordered_map>
 #include <regex>
@@ -160,7 +160,7 @@ void address_masker(ProgramExecutor::Ram & ram, Word address, Word value, const 
     }
 }
 
-Output day14(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
+Output day_2020_14(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
     std::regex mask_regex        { R"(mask = ([X10]*))" };
     std::regex affectation_regex { R"(mem\[([0-9]*)\] = ([0-9]*))" };
 

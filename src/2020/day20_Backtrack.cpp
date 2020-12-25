@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -511,7 +511,7 @@ namespace part_b {
     }
 }
 
-Output day20(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_20(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::optional<part_a::Grid> grid = part_a::solve(lines);
     if (!grid) return Output(0, 0);
 

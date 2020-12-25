@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/12
 
@@ -111,7 +111,7 @@ public:
 
 // Main
 
-Output day12(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_12(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<Command> commands = lines_transform::map<Command>(lines, Command::from_string);
 
     return Output(

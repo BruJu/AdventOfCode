@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/25
 
@@ -31,7 +31,7 @@ public:
     }
 };
 
-Output day25(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_25(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto keys = lines_transform::map<long long int>(lines, [](const std::string & s) { return std::stoll(s);});
 
     const EncryptionKey card { keys[0] };

@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <algorithm>
 #include <unordered_map>
@@ -326,7 +326,7 @@ static test::Value occupied_after_six_iterations(const std::vector<std::string> 
 }
 
 /// 3D / 4D game of life
-Output day17(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_17(const std::vector<std::string> & lines, const DayExtraInfo &) {
     return Output(
         occupied_after_six_iterations<map_implementation::Field<3>>(lines),
         occupied_after_six_iterations<map_implementation::Field<4>>(lines)

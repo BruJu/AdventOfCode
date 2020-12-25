@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../libs.hpp"
+#include "../advent_of_code.hpp"
 #include <iostream>
 #include <fstream>
 #include <optional>
@@ -40,12 +40,18 @@ struct InputConfig {
     InputConfig(int pDay, std::string pFileName, test::Expected part1, test::Expected part2)
     : day(pDay), filename(pFileName), m_expected_part_1(part1), m_expected_part_2(part2) {}
 
-    static std::vector<InputConfig> read_configuration(const char * path = "config.txt");
-    static InputConfig from_line(std::string_view line);
+    static std::vector<InputConfig> read_configuration(int year);
+    static InputConfig from_line(std::string_view line, const std::string & prefix);
 
     template <typename Runner> std::optional<test::RunResult> run(Runner runner) const;
 
     [[nodiscard]] std::string to_string() const;
+
+    [[nodiscard]] static int last_day(const std::vector<InputConfig> & configs) {
+        return std::max_element(configs.begin(), configs.end(),
+            [](const auto & lhs, const auto & rhs) { return lhs.day < rhs.day; }
+        )->day;
+    }
 };
 
 template <typename Runner>
@@ -89,3 +95,4 @@ std::optional<test::RunResult> InputConfig::run(Runner runner) const {
 }
 
 using InputsConfig = std::vector<InputConfig>;
+using DayEntryPoint = Output(const std::vector<std::string> & lines, const DayExtraInfo &);

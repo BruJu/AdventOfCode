@@ -1,9 +1,9 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/10
 
 
-Output day10(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_10(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<int> voltage = lines_transform::map<int>(lines, [](const std::string & s) { return std::stoi(s); });
 
     std::sort(voltage.begin(), voltage.end());

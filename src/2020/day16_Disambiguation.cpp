@@ -1,5 +1,5 @@
-#include "libs.hpp"
-#include "libs_ensemblist.hpp"
+#include "../advent_of_code.hpp"
+#include "../libs_ensemblist.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -204,7 +204,7 @@ public:
 };
 
 
-Output day16(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
+Output day_2020_16(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
     TicketTranslation ticket_list = TicketTranslation(lines);
 
     const test::Value error_rate = ticket_list.remove_invalid_tickets();

@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <regex>
 
 // https://adventofcode.com/2020/day/4
@@ -109,7 +109,7 @@ public:
     }
 };
 
-Output day04(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_04(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<Passport> passports = lines_transform::group<Passport, std::string>(
         lines,
         lines_transform::map_identity<std::string>,

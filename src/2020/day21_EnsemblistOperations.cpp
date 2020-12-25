@@ -1,5 +1,5 @@
-#include "libs.hpp"
-#include "libs_ensemblist.hpp"
+#include "../advent_of_code.hpp"
+#include "../libs_ensemblist.hpp"
 
 #include <map>
 #include <set>
@@ -79,7 +79,7 @@ std::set<Ingredient> get_safe_ingredients(
 
 }
 
-Output day21(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_21(const std::vector<std::string> & lines, const DayExtraInfo &) {
     auto [ingredients_occurrences, mapping] = read(lines);
     set::resolve_key_to_value(mapping);
 

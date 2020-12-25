@@ -1,6 +1,6 @@
 #include "configuration.h"
 #include <sstream>
-#include "../libs.hpp"
+#include "../advent_of_code.hpp"
 
 std::string InputConfig::to_string() const {
     std::ostringstream stringbuilder;
@@ -27,10 +27,10 @@ test::Expected::Expected(std::string line) {
     }
 }
 
-InputConfig InputConfig::from_line(std::string_view line) {
+InputConfig InputConfig::from_line(std::string_view line, const std::string & prefix) {
     StringSplitter splitter = StringSplitter(line);
     const int day = std::stoi(splitter());
-    const std::string filename = splitter();
+    const std::string filename = prefix + splitter();
     const test::Expected expected1 = test::Expected(splitter());
     const test::Expected expected2 = test::Expected(splitter());
     return InputConfig(day, filename, expected1, expected2);
@@ -41,7 +41,10 @@ static bool config_has_no_test(const InputConfig & config) {
         && config.m_expected_part_2.is_ignore();
 }
 
-InputsConfig InputConfig::read_configuration(const char * path) {
+InputsConfig InputConfig::read_configuration(const int year) {
+    const std::string prefix = "inputs/" + std::to_string(year) + "/";
+    const std::string path = prefix + "config.txt";
+
     InputsConfig configs;
 
     std::ifstream file(path);
@@ -49,7 +52,7 @@ InputsConfig InputConfig::read_configuration(const char * path) {
     std::string line;
     while (getline_cleaned(file, line)) {
         if (line.substr(0, 2) != "//") {
-            configs.emplace_back(from_line(line));
+            configs.emplace_back(from_line(line, prefix));
         }
     }
 

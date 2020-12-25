@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <vector>
 #include <variant>
@@ -177,7 +177,7 @@ test::Value compute_sum_of_results(const std::vector<std::string> & lines) {
     return sum;
 }
 
-Output day18(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_18(const std::vector<std::string> & lines, const DayExtraInfo &) {
     return Output(
         compute_sum_of_results<NoOperatorPriority>(lines),
         compute_sum_of_results<PlusPriority>(lines)

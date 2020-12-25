@@ -1,6 +1,6 @@
-# Advent of Code 2020
+# Advent of Code
 
-My answers to https://adventofcode.com/2020 written in C++
+My answers to https://adventofcode.com written in C++
 
 Architecture is a bit wonky: the goal is to have an easy to compile / run process by using only one command line.
 
@@ -10,6 +10,8 @@ Architecture is a bit wonky: the goal is to have an easy to compile / run proces
 - `./run.sh` will run the last day
 - `./run.sh 0` will run every day
 - `./run.sh x` will run day x
+
+If two integers are provided, the first one is the year and the second one is the day
 
 **The standard way**
 - You can also compile with `make`.

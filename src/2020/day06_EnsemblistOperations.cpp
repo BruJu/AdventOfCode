@@ -1,5 +1,5 @@
-#include "libs.hpp"
-#include "libs_ensemblist.hpp"
+#include "../advent_of_code.hpp"
+#include "../libs_ensemblist.hpp"
 
 #include <numeric>
 #include <set>
@@ -14,7 +14,7 @@ static std::set<char> to_set(const std::string & x) {
     return retval;
 }
 
-Output day06(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_06(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto compute = [&](auto reducer) {
         const std::vector<size_t> per_group =
             lines_transform::group<size_t, std::set<char>>(

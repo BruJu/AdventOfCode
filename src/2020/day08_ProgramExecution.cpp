@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/8
 
@@ -83,7 +83,7 @@ public:
     }
 };
 
-Output day08(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_08(const std::vector<std::string> & lines, const DayExtraInfo &) {
     std::vector<Instruction> instructions = lines_transform::map<Instruction>(lines, Instruction::from_string);
 
     const auto [_1, accumulator_loop] = Computer::compute(instructions);

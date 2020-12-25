@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 // https://adventofcode.com/2020/day/9
 
@@ -59,7 +59,7 @@ static std::pair<ValuesIter, ValuesIter> get_contiguous_sum(const Values & value
     return std::pair(values.end(), values.end());
 }
 
-Output day09(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_09(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<UUINT> values = lines_transform::map<UUINT>(lines,
         [](const std::string & s) { return std::stoull(s); }
     );

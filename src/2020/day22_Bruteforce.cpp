@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <vector>
 #include <set>
@@ -105,7 +105,7 @@ public:
     }
 };
 
-Output day22(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_22(const std::vector<std::string> & lines, const DayExtraInfo &) {
     Game game { lines };
     Game recursive_game = game;
 

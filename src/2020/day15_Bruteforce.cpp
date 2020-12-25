@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <unordered_map>
 #include <vector>
 
@@ -48,7 +48,7 @@ public:
     [[nodiscard]] int last_number() const noexcept { return m_last_number; }
 };
 
-Output day15(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
+Output day_2020_15(const std::vector<std::string> & lines, const DayExtraInfo & extra) {
     StringSplitter splitter = StringSplitter(lines[0], ',');
 
     RambunctiousRecitation instance;

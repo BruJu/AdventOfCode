@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <set>
 #include <map>
@@ -121,7 +121,7 @@ static std::set<Position> game_of_life(std::set<Position> black) {
     return result;
 }
 
-Output day24(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_24(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto directionss = lines_transform::map<std::vector<HexaDirection>>(lines, to_directions);
 
     auto black_tiles = to_tiles(directionss);

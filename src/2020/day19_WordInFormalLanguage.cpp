@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -213,7 +213,7 @@ public:
 
 // ============================================================================
 
-Output day19(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_19(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const auto [automata, words] = Automata::make(lines);
 
     test::Value matching_words = std::count_if(words.begin(), words.end(),

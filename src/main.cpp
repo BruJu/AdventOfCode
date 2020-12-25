@@ -1,46 +1,26 @@
 #include <iostream>
 #include "framework/configuration.h"
+#include "2020/days.hpp"
 #include <algorithm>
 #include "colors.h"
+#include <map>
 
-using DayEntryPoint = Output(const std::vector<std::string> & lines, const DayExtraInfo &);
+static auto get_all_handlers() {
+    std::map<int, std::array<DayEntryPoint *, 25>> map;
+    map[2020] = days_2020;
+    return map;
+}
 
-Output day01(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day02(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day03(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day04(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day05(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day06(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day07(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day08(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day09(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day10(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day11(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day12(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day13(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day14(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day15(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day16(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day17(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day18(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day19(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day20(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day21(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day22(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day23(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day24(const std::vector<std::string> & lines, const DayExtraInfo &);
-Output day25(const std::vector<std::string> & lines, const DayExtraInfo &);
+template <typename Map>
+static auto highest_day(const Map & m) {
+    return std::max_element(m.begin(), m.end(),
+            [](const auto & lhs, const auto & rhs) { return lhs.first < rhs.first; }
+        )->first;
+}
 
 void print(const InputConfig & config, const std::optional<test::RunResult> & r);
 
-void dispatch(const InputConfig & config, test::Score & ts) {
-    static constexpr std::array<DayEntryPoint *, 25> days {
-        &day01, &day02, &day03, &day04, &day05, &day06, &day07,
-        &day08, &day09, &day10, &day11, &day12, &day13, &day14,
-        &day15, &day16, &day17, &day18, &day19, &day20, &day21,
-        &day22, &day23, &day24, &day25
-    };
-
+void dispatch(const InputConfig & config, test::Score & ts, const std::array<DayEntryPoint *, 25> & days) {
     if (DayEntryPoint * day = days[config.day - 1]) {
         std::optional<test::RunResult> r = config.run(day);
         print(config, r);
@@ -96,22 +76,25 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
 }
 
 int main(int argc, const char * argv[]) {
-    auto configs = InputConfig::read_configuration();
+    const auto handlers = get_all_handlers();
 
-    int required_day;
-    if (argc <= 1) {
-        required_day = std::max_element(configs.begin(), configs.end(),
-            [](const auto & lhs, const auto & rhs) { return lhs.day < rhs.day; }
-        )->day;
-    } else {
-        required_day = std::stoi(argv[1]);
+    const int year = argc > 2 ? std::stoi(argv[1]) : highest_day(handlers);
+    const int day  = argc > 2 ? std::stoi(argv[2]) :
+                     argc > 1 ? std::stoi(argv[1]) : -2;
+
+    const auto handlers_it = handlers.find(year);
+    if (handlers_it == handlers.end()) {
+        std::cerr << "Unknown year: " << year << '\n';
+        return 1;
     }
+
+    auto configs = InputConfig::read_configuration(year);
+
+    const int required_day = day != -2 ? day : InputConfig::last_day(configs);
 
     test::Score testScore;
 
     std::optional<int> last_seen_day = std::nullopt;
-
-    // TODO : display ordered by day > part instead of day > files
 
     for (const auto & config : configs) {
         if (config.day == required_day || required_day == 0) {
@@ -120,7 +103,7 @@ int main(int argc, const char * argv[]) {
             }
             last_seen_day = config.day;
 
-            dispatch(config, testScore);
+            dispatch(config, testScore, handlers_it->second);
         }
     }
 

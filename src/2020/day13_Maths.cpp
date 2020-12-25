@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 #include <algorithm>
 
 // https://adventofcode.com/2020/day/13
@@ -128,7 +128,7 @@ static Int chinese_remainder(const std::vector<Bus> & buses) {
     }
 }
 
-Output day13(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_13(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const Int timestamp = std::stoll(lines[0]);
     const std::vector<Bus> buses = read_buses(lines[1]);
 

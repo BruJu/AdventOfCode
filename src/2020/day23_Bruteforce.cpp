@@ -1,4 +1,4 @@
-#include "libs.hpp"
+#include "../advent_of_code.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -149,7 +149,7 @@ static test::Value do_part_b(const std::vector<Cup> & cups, const Cup max_cup, s
     return linked_list[1] * linked_list[linked_list[1]];
 }
 
-Output day23(const std::vector<std::string> & lines, const DayExtraInfo &) {
+Output day_2020_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
     const std::vector<Cup> cups = read(lines[0]);
     const int loops = std::stoi(lines[1]);
 
