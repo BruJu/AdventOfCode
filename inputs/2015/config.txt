@@ -7,3 +7,5 @@
 3  03_tosolve.txt   ?                ?
 4  04_inline.txt    inline           inline
 4  04_tosolve.txt   ?                ?
+5  05_inline.txt    inline           inline
+5  05_tosolve.txt   ?                ?
