@@ -36,4 +36,23 @@ namespace bj {
     };
 
 
+    struct Rectangle {
+        int left;
+        int right;
+        int top;
+        int bottom;
+
+        Rectangle(int left, int top, int right, int bottom)
+        : left(left), right(right), top(top), bottom(bottom) {}
+
+        template <typename Consumer>
+        void for_each_position(Consumer consumer) const {
+            for (int i = left ; i <= right ; ++i) {
+                for (int j = top ; j <= bottom ; ++j) {
+                    consumer(Position { i, j });
+                }
+            }
+        }
+    };
+
 }

@@ -9,3 +9,7 @@
 4  04_tosolve.txt   ?                ?
 5  05_inline.txt    inline           inline
 5  05_tosolve.txt   ?                ?
+6  06_inline.txt    inline           inline
+6  06_tosolve.txt   ?                ?
+7  07_example.txt   72               _
+7  07_tosolve.txt   ?                ?
