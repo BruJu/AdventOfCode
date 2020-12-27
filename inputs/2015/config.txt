@@ -18,3 +18,5 @@
 9  09_example.txt   605              982
 9  09_tosolve.txt   ?                ?
 10 10_tosolve.txt   ?                ?
+11 11_inline.txt    inline           inline
+11 11_tosolve.txt   ?                ?
