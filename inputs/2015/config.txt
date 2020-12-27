@@ -20,3 +20,7 @@
 10 10_tosolve.txt   ?                ?
 11 11_inline.txt    inline           inline
 11 11_tosolve.txt   ?                ?
+13 13_example.txt   330              _
+13 13_tosolve.txt   ?                ?
+14 14_example.txt   1120             689
+14 14_tosolve.txt   ?                ?
