@@ -5,8 +5,8 @@
 
 namespace bj {
     template <typename T>
-    std::vector<T> lines_to_class_by_regex(const std::vector<std::string> & lines, const char * regex) {
-        std::regex regex_ { regex };
+    std::vector<T> lines_to_class_by_regex(const std::vector<std::string> & lines) {
+        std::regex regex_ { T::Regex_Pattern };
         std::smatch smatch;
 
         std::vector<T> retval;

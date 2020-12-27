@@ -7,7 +7,7 @@
 
 namespace {
     struct Reindeer {
-        static constexpr const char * RegexPattern = R"(^([A-Za-z]*) can fly ([0-9]+) km\/s for ([0-9]+) seconds?, but then must rest for ([0-9]+) seconds?\.$)";
+        static constexpr const char * Regex_Pattern = R"(^([A-Za-z]*) can fly ([0-9]+) km\/s for ([0-9]+) seconds?, but then must rest for ([0-9]+) seconds?\.$)";
 
         std::string name;
         unsigned long long int flight_speed;
@@ -77,7 +77,7 @@ namespace {
 }
 
 Output day_2015_14(const std::vector<std::string> & lines, const DayExtraInfo &) {
-    const std::vector<Reindeer> reindeers = bj::lines_to_class_by_regex<Reindeer>(lines, Reindeer::RegexPattern);
+    const std::vector<Reindeer> reindeers = bj::lines_to_class_by_regex<Reindeer>(lines);
     std::vector<Competitor> competitors;
     for (const auto & reindeer : reindeers) {
         competitors.emplace_back(reindeer);
