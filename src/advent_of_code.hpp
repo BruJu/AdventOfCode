@@ -23,6 +23,7 @@ namespace test {
 
         Type        type;
         std::string value;
+        int extra_parameter = 0;
 
         explicit Expected(std::string line);
         explicit Expected(Type type) : type(type), value("") {}
@@ -181,7 +182,9 @@ struct Output {
 
 struct DayExtraInfo {
     bool can_skip_part_A = false;
+    int  part_a_extra_param = 0;
     bool can_skip_part_B = false;
+    int  part_b_extra_param = 0;
 };
 
 class StringSplitter {

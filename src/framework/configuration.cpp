@@ -12,6 +12,11 @@ std::string InputConfig::to_string() const {
 }
 
 test::Expected::Expected(std::string line) {
+    if (const auto parameter = line.find("`"); parameter != std::string::npos) {
+        extra_parameter = std::stoi(line.substr(0, parameter));
+        line = line.substr(parameter + 1);
+    }
+
     if (line == "?") {
         type  = Type::Wanted;
         value = "";

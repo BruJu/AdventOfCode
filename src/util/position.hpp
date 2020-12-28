@@ -33,6 +33,27 @@ namespace bj {
                 case Direction::Down:   y += 1; break;
             }
         }
+
+        template<typename Consumer>
+        void for_each_neighbour(Consumer c) const {
+            for (Direction d : { Direction::Left, Direction::Right, Direction::Down, Direction::Top }) {
+                Position copy = *this;
+                copy.move(d);
+                c(copy);
+            }
+        }
+        
+        [[nodiscard]] std::vector<bj::Position> get_8_neighbours() const {
+            std::vector<bj::Position> retval;
+
+            for (int x_ = -1 ; x_ <= 1 ; ++x_) {
+            for (int y_ = -1 ; y_ <= 1 ; ++y_) {
+                if (y_ == 0 && x_ == 0) continue;
+                retval.push_back(Position { x + x_, y + y_ });
+            }}
+
+            return retval;
+        }
     };
 
 

@@ -80,8 +80,10 @@ std::optional<test::RunResult> InputConfig::run(Runner runner) const {
     }
 
     DayExtraInfo day_extra_info {
-        .can_skip_part_A = m_expected_part_1.type == test::Expected::Type::Ignore,
-        .can_skip_part_B = m_expected_part_2.type == test::Expected::Type::Ignore,
+        .can_skip_part_A    = m_expected_part_1.type == test::Expected::Type::Ignore,
+        .part_a_extra_param = m_expected_part_1.extra_parameter,
+        .can_skip_part_B    = m_expected_part_2.type == test::Expected::Type::Ignore,
+        .part_b_extra_param = m_expected_part_2.extra_parameter
     };
 
     if (!m_is_inline) {
