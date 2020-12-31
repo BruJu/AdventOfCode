@@ -38,7 +38,7 @@ namespace bj {
             if (!rules.is_valid(position)) continue;
 
             if (rules.is_on(position, old.contains(position), count)) {
-                rules.insert(position);
+                positions.insert(position);
             }
         }
     }

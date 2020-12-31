@@ -31,3 +31,5 @@
 17 17_tosolve.txt   ?                ?
 18 18_example.txt   4`4              5`17
 18 18_tosolve.txt   100`?            100`?
+19 19_example.txt   4                3
+19 19_tosolve.txt   ?                ?
