@@ -6,39 +6,73 @@
 
 // https://adventofcode.com/2015/day/20
 
-namespace {
-    class Dividers {
-        std::vector<int64_t> primes;
+//! == Part A:
+//! Given houses identified by numbers from 1 to h and elves identified by numbers
+//! from 1 to e:
+//! The elve number e deposits 10 presents to the house number e, 2e, 3e, ...
+//!
+//! What is the house with the lowest number that receives at least X presents?
+//! 
+//! == Part B:
+//! Elves now deposit 11 presents and stop after visiting 50 houses
 
-        void ensure_have_all_primes(int64_t number) {
-            // number is not prime
-            for (const auto prime : primes) {
+namespace {
+    /** A divider in a prime decomposition */
+    struct Divider {
+        int64_t value;
+        int64_t power;
+    };
+
+    /** A class that search for dividers using prime numbers */
+    class Dividers {
+        std::vector<int64_t> m_primes;
+
+        /**
+         * Add number to the list of known primes if it is a number
+         * 
+         * Assumes that every prime number lower than `number` is known.
+         */
+        void add_to_prime_list_if_prime(int64_t number) {
+            // Check if number is a prime
+            for (const auto prime : m_primes) {
                 if (number % prime == 0) {
                     return;
                 }
             }
 
             // number is prime
-            primes.push_back(number);
+            m_primes.push_back(number);
         }
 
     public:
-        std::vector<int64_t> get_prime_dividers_of(int64_t number) {
+        /**
+         * Return the prime decomposition of number.
+         * 
+         * Assumes that all the prime numbers until `number` excluded are known.
+         */
+        std::vector<Divider> get_prime_decomposition(int64_t number) {
             if (number == 1) return {};
 
-            ensure_have_all_primes(number);
+            add_to_prime_list_if_prime(number);
 
-            std::vector<int64_t> dividers;
+            std::vector<Divider> dividers;
 
             size_t index_current_prime = 0;
 
             while (number != 1) {
-                if (number % primes[index_current_prime] == 0) {
-                    number /= primes[index_current_prime];
-                    dividers.push_back(primes[index_current_prime]);
-                } else {
-                    ++index_current_prime;
+                const auto prime = m_primes[index_current_prime];
+                int64_t power = 0;
+
+                while (number % prime == 0) {
+                    number /= prime;
+                    ++power;
                 }
+
+                if (power != 0) {
+                    dividers.push_back(Divider{ prime, power });
+                }
+
+                ++index_current_prime;
             }
 
             return dividers;
@@ -46,30 +80,27 @@ namespace {
 
         void add_dividers_rec(
             std::vector<int64_t> & result,
-            const std::vector<int64_t> & prime_decomposition,
+            const std::vector<Divider> & prime_decomposition,
             size_t to_explore,
             int64_t current_value
         ) {
             if (to_explore == prime_decomposition.size()) {
                 result.push_back(current_value);
             } else {
-                add_dividers_rec(result, prime_decomposition, to_explore + 1, current_value * prime_decomposition[to_explore]);
-                add_dividers_rec(result, prime_decomposition, to_explore + 1, current_value);
+                const auto & divider = prime_decomposition[to_explore];
+                int64_t v = 1;
+                for (int64_t power = 0 ; power <= divider.power ; ++power) {
+                    add_dividers_rec(result, prime_decomposition, to_explore + 1, current_value * v);
+                    v *= divider.value;
+                }
             }
         }
         
         std::vector<int64_t> get_dividers_of(int64_t number) {
-            const auto prime_dividers = get_prime_dividers_of(number);
+            const auto prime_dividers = get_prime_decomposition(number);
 
             std::vector<int64_t> dividers;
-            dividers.push_back(1);
-
             add_dividers_rec(dividers, prime_dividers, 0, 1);
-
-            std::sort(dividers.begin(), dividers.end());
-            const auto it = std::unique(dividers.begin(), dividers.end());
-            dividers.erase(it, dividers.end());
-
             return dividers;
         }
     };
@@ -87,8 +118,6 @@ namespace {
     static long long int do_part_a(int64_t required_presents, P predicate) {
         Dividers dividers;
 
-        int64_t old_max = 0;
-
         std::vector<int64_t> presents;
 
         int64_t house = 0;
@@ -98,19 +127,12 @@ namespace {
             ++house;
 
             gifts = 0;
-
+            
             for (const auto divider : dividers.get_dividers_of(house)) {
                 if (predicate(divider, house)) {
                     gifts += divider * present_per_elve;
                 }
             }
-
-            if (old_max < gifts) {
-                std::cerr << " House #" << house << ": " << gifts << "\n";
-
-                old_max = gifts;
-            }
-
         } while (gifts < required_presents);
 
         return house;
