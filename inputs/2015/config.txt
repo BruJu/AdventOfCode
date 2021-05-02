@@ -33,3 +33,5 @@
 18 18_tosolve.txt   100`?            100`?
 19 19_example.txt   4                3
 19 19_tosolve.txt   ?                ?
+20 20_inline.txt    inline           inline
+20 20_tosolve.txt   ?                ?
