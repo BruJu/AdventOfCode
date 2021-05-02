@@ -45,6 +45,14 @@ namespace {
         }
 
     public:
+        void ensure_has_all_primes(int64_t number) {
+            add_to_prime_list_if_prime(2);
+            for (int64_t i = 3 ; i < number ; ++i) {
+                if (i % 2 == 0) continue;
+                add_to_prime_list_if_prime(i);
+            }
+        }
+
         /**
          * Return the prime decomposition of number.
          * 
@@ -119,12 +127,17 @@ namespace {
         Dividers dividers;
 
         std::vector<int64_t> presents;
-
         int64_t house = 0;
 
         int64_t gifts;
         do {
             ++house;
+
+            if (house > 10000 && house < 820000) {
+                // Speed up execution to make running all viable
+                house = 820000;
+                dividers.ensure_has_all_primes(house);
+            }
 
             gifts = 0;
             
