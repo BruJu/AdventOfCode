@@ -39,3 +39,6 @@
 22 21_tosolve.txt   ?953             ?1289
 23 23_example.txt   0`2              _
 23 23_tosolve.txt   1`?              1`?
+24 24_example.txt   99               _
+24 24_tosolve.txt   ?                ?
+25 24_tosolve.txt   ?                ?
