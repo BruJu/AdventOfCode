@@ -4,3 +4,5 @@
 2  02_tosolve.txt   ?                ?
 3  03_example.txt   0                _
 3  03_tosolve.txt   ?                ?
+4  04_example.txt   1514             _
+4  04_tosolve.txt   ?                ?
