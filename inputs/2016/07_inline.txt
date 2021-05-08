@@ -1,0 +1,16 @@
+abba[mnop]qrst
+1
+abcd[bddb]xyyx
+0
+aaaa[qwer]tyui
+0
+ioxxoj[asdfgh]zxcvbn
+1
+aba[bab]xyz
+_ 1
+xyx[xyx]xyx
+_ 0
+aaa[kek]eke
+_ 1
+zazbz[bzb]cdb
+_ 1

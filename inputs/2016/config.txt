@@ -8,3 +8,5 @@
 4  04_tosolve.txt   ?                ?
 6  06_example.txt   easter           advent
 6  06_tosolve.txt   ?                ?
+7  07_inline.txt    inline           inline
+7  07_tosolve.txt   ?                ?
