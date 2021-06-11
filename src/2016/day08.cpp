@@ -7,6 +7,11 @@
 
 // https://adventofcode.com/2016/day/8
 
+// Given a screen, and some instructions:
+// - Light out the pixels in a rectangle from the top left.
+// - Shift the ligthen pixels on a row or a column
+// How many pixels are lighten out at the end of the instructions?
+
 namespace {
     // ==== Individual instructions
 

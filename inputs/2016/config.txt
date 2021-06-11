@@ -11,3 +11,6 @@
 7  07_inline.txt    inline           inline
 7  07_tosolve.txt   ?                ?
 8  08_tosolve.txt   ?                _
+9  09_inline.txt    inline           inline
+9  09_tosolve.txt   ?                ?
+10 10_tosolve.txt   ?                ?
