@@ -1,7 +1,7 @@
 "use strict";
 
 const fs = require('fs');
-const input = fs.readFileSync('../../../inputs/2015/12_tosolve.txt', 'utf-8');
+const input = fs.readFileSync('../../inputs/2015/12_tosolve.txt', 'utf-8');
 const json = JSON.parse(input);
 
 function sum(json, ignoreRed = false) {
