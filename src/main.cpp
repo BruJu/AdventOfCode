@@ -82,7 +82,7 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
 int main(int argc, const char * argv[]) {
     const auto handlers = get_all_handlers();
 
-    const int year = argc > 2 ? std::stoi(argv[1]) : highest_day(handlers);
+    const int year = argc > 2 ? std::stoi(argv[1]) : 2016; //highest_day(handlers);
     const int day  = argc > 2 ? std::stoi(argv[2]) :
                      argc > 1 ? std::stoi(argv[1]) : -2;
 
