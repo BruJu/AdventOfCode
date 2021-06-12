@@ -1,10 +1,9 @@
 #include "../advent_of_code.hpp"
-#include <string>
 #include <cstring>
 #include <algorithm>
 #include <array>
-#include <stack>
 #include <map>
+#include <queue>
 
 // https://adventofcode.com/2016/day/11
 
@@ -67,6 +66,10 @@ namespace {
             if (element_id >= known_elements.size()) return "#" + std::to_string(element_id);
             return known_elements[element_id];
         }
+
+        [[nodiscard]] size_t get_number_of_elements() const {
+            return known_elements.size();
+        }
     };
 
     std::string Element::get_name() const {
@@ -82,11 +85,13 @@ namespace {
 
     static constexpr size_t none = std::string::npos;
 
-    struct State {
+    class State {
+    private:
         const State * parent = nullptr;
         size_t elevator_position = 1;
         std::vector<std::vector<Element>> floors;
 
+    public:
         explicit State(std::vector<std::vector<Element>> floors) : floors(std::move(floors)) {
             for (auto & floor : floors) {
                 std::sort(floor.begin(), floor.end());
@@ -209,11 +214,65 @@ namespace {
 
             return stream;
         }
+    
+        template<typename Predicate>
+        void filter_each_next_state(Predicate predicate) const {            
+            const auto & floor = floors[elevator_position - 1];
+
+            for (size_t i = 0 ; i != floor.size() ; ++i) {
+                for (size_t j = i ; j != floor.size() ; ++j) {
+                    std::array<size_t, 2> arr = { i, i == j ? none : j };
+
+                    if (predicate(State(*this, true, arr)) || predicate(State(*this, false, arr))) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        [[nodiscard]] size_t find_number_of_elements() const {
+            for (const auto & floor : floors) {
+                for (const auto & element : floor) {
+                    return element.factory->get_number_of_elements();
+                }
+            }
+
+            return 0;
+        }
+
+        [[nodiscard]] std::uint64_t minimize() const {
+            // Doesn't work if [number_of_elements * (number of floors + 1)] >= 64
+            size_t number_of_elements = find_number_of_elements();
+
+            std::uint64_t result = elevator_position;
+
+            for (const auto & chip_floor : floors) {
+                for (const auto & generator_floor : floors) {
+                    size_t value = 0;
+
+                    for (const auto & element : chip_floor) {
+                        if (element.kind != Kind::Microchip) continue;
+
+                        const auto generator = std::find_if(generator_floor.begin(), generator_floor.end(),
+                            [&](const Element & generator_e) { return generator_e.isGeneratorOf(element); }
+                        );
+
+                        if (generator != generator_floor.end()) {
+                            ++value;
+                        }
+                    }
+
+                    result = result * number_of_elements + value;
+                }
+            }
+
+            return result;
+        }
     };
 
 }
 
-std::ostream & operator<<(std::ostream & stream, const std::vector<std::vector<Element>> & elementss) {
+[[maybe_unused]] std::ostream & operator<<(std::ostream & stream, const std::vector<std::vector<Element>> & elementss) {
     for (const auto & elements : elementss) {
         for (const auto & element : elements) {
             stream << element << " ";
@@ -284,25 +343,23 @@ static std::vector<std::vector<Element>> read_input(const std::vector<std::strin
     return floors;
 }
 
-#include <queue>
-
 static size_t solve(std::vector<std::vector<Element>> floors) {
     State state = State(floors);
 
-    std::map<State, size_t> exploredStates;
+    std::map<uint64_t, std::pair<State, size_t>> exploredStates;
 
     std::queue<std::pair<State, size_t>> todo;
 
-    exploredStates[state] = 0;
+    exploredStates.emplace(state.minimize(), std::pair<State, size_t>(state, 0));
     todo.push({ state, 0 });
 
-    const auto maybe_add = [&](const State & state, size_t rank) -> std::optional<State> {
-        const auto it = exploredStates.find(state);
+    const auto maybe_add = [&](State state, size_t rank) -> std::optional<State> {
+        const auto it = exploredStates.find(state.minimize());
         if (it != exploredStates.end()) { return std::nullopt; }
         if (state.leads_to_death())     { return std::nullopt; }
         if (state.is_final_state()) return state;
 
-        exploredStates[state] = rank + 1;
+        exploredStates.emplace(state.minimize(), std::pair<State, size_t>(state, rank + 1));
         todo.push({ state, rank + 1 });
         return std::nullopt;
     };
@@ -315,31 +372,29 @@ static size_t solve(std::vector<std::vector<Element>> floors) {
 
         if (rank > max_seen_rank) {
             max_seen_rank = rank;
-            std::cout << "Rank " << rank << '\n';
         }
 
-        const auto it = exploredStates.find(state_);
-        const auto & state = it->first;
+        const auto it = exploredStates.find(state_.minimize());
+        const auto & state = it->second.first;
 
-        const auto & floor = state.floors[state.elevator_position - 1];
 
-        for (size_t i = 0 ; i != floor.size() ; ++i) {
-            for (size_t j = i ; j != floor.size() ; ++j) {
-                std::array<size_t, 2> arr = { i, i == j ? none : j };
+        std::optional<State> final_state = std::nullopt;
 
-                auto end = maybe_add(State(state, true , arr), rank);
-                if (!end) end = maybe_add(State(state, false, arr), rank);
-
+        const size_t r = rank; // Can't capture rank
+        state.filter_each_next_state(
+            [&](State state) {
+                const auto end = maybe_add(std::move(state), r);
                 if (end) {
-                    const auto * current = &(*end);
-
-                    while (current != nullptr) {
-                        current = current->parent;
-                    }
-
-                    return rank + 1;
+                    final_state = end;
+                    return true;
                 }
+
+                return false;
             }
+        );
+
+        if (final_state) {
+            return rank + 1;
         }
     }
 
