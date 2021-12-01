@@ -3,6 +3,7 @@
 #include "2015/days.hpp"
 #include "2016/days.hpp"
 #include "2020/days.hpp"
+#include "2021/days.hpp"
 #include <algorithm>
 #include "colors.h"
 #include <map>
@@ -12,6 +13,7 @@ static auto get_all_handlers() {
     map[2015] = days_2015;
     map[2016] = days_2016;
     map[2020] = days_2020;
+    map[2021] = days_2021;
     return map;
 }
 
@@ -82,7 +84,7 @@ void print(const InputConfig & config, const std::optional<test::RunResult> & r)
 int main(int argc, const char * argv[]) {
     const auto handlers = get_all_handlers();
 
-    const int year = argc > 2 ? std::stoi(argv[1]) : 2016; //highest_day(handlers);
+    const int year = argc > 2 ? std::stoi(argv[1]) : /* 2016; // */ highest_day(handlers);
     const int day  = argc > 2 ? std::stoi(argv[2]) :
                      argc > 1 ? std::stoi(argv[1]) : -2;
 
