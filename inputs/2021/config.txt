@@ -3,3 +3,5 @@
 2 02_real.txt ? ?
 3 03_example.txt 198 230
 3 03_real.txt ? ?
+4 04_example.txt  4512 1924
+4 04_real.txt     ?    ?
