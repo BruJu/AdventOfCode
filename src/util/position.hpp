@@ -25,6 +25,10 @@ namespace bj {
             return false;
         }
 
+        [[nodiscard]] bool operator==(const Position & rhs) const {
+            return x == rhs.x && y == rhs.y;
+        }
+
         void move(Direction direction) {
             switch (direction) {
                 case Direction::Left:   x -= 1; break;
