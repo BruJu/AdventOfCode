@@ -16,3 +16,5 @@
 10 10_tosolve.txt   ?                ?
 11 11_example.txt   11               _
 11 11_tosolve.txt   ?                ?
+12 12_example.txt   42               42
+12 12_tosolve.txt   ?318007          ?9227661
