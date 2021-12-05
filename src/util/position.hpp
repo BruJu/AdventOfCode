@@ -28,6 +28,10 @@ namespace bj {
         [[nodiscard]] bool operator==(const Position & rhs) const {
             return x == rhs.x && y == rhs.y;
         }
+        
+        [[nodiscard]] bool operator!=(const Position & rhs) const {
+            return !(*this == rhs);
+        }
 
         void move(Direction direction) {
             switch (direction) {
