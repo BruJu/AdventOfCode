@@ -7,3 +7,5 @@
 4 04_real.txt     ?    ?
 5 05_example.txt  5 12
 5 05_real.txt     ? ?
+6 06_example.txt 26 26984457539
+6 06_real.Txt    ? ?

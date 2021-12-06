@@ -68,7 +68,7 @@ struct Grid {
 /**
  * Converts a string to a list of integers
  */
-static std::vector<int> string_to_ints(const std::string & s, char separator) {
+std::vector<int> string_to_ints(const std::string & s, char separator) {
   std::vector<int> result;
   StringSplitter splitter(std::string_view(s), separator);
 
