@@ -6,23 +6,27 @@ Architecture is a bit wonky: the goal is to have an easy to compile / run proces
 
 ## Test / Compile / Run
 
-**The bash way**
-- `./run.sh` will run the last day
-- `./run.sh 0` will run every day
-- `./run.sh x` will run day x
-
-If two integers are provided, the first one is the year and the second one is the day
-
-**The standard way**
 - You can also compile with `make`.
-- And run with `./main ([0-9]+)?`
+- And run with `./main ([0-9]+)? ([0-9]+)?`
+  - `./main`: Run last exercice of current year
+  - `./main 6`: Run exercice 6 of current year
+  - `./main 0`: Run all of current year
+  - `./main 2020 16`: Run exercice 15 of year 2020
 
 ## Adding new days
 
 - Add input files in `inputs/`
-- `config.txt` : For each input, add a line `DAYID input_path part1_result part2_result`. Write ? instead of a number if unknown. Write `\_ for tests which result is unknwon and not required.
-- `src/main.cpp` : add function declaration for `dayXX() ` and add in `dispatch()` the handler
+- `config.txt` : For each input, add a line `DAYID input_path part1_result part2_result`. See Config file for the format
+- `src/YEAR/days.hpp` : add function declaration for `dayXX() ` and add in array the new function declaration.
 - Create a `src/dayXX.cpp` file.
+
+
+### Adding a new year
+
+- Create a `src/YEAR/` folder
+- Put a `days.hpp` file (copy another year)
+- In `src/main.cpp`, include the `days.hpp` file and fill the `get_all_handlers()` function
+- In the `main()` function, check if the current year (`const int year`) matches your expectation
 
 ## Config file
 
