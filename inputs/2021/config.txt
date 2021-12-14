@@ -25,5 +25,5 @@
 12 12_input.txt     ?          ?
 13 13_example.txt   17         _
 13 13_real.txt      ?          ?
-14 14_example.txt   1588       ?
+14 14_example.txt   1588       2188189693529
 14 14_real.txt      ?          ?
