@@ -6,22 +6,38 @@
 
 // https://adventofcode.com/2021/day/18
 
-enum class SnailfishType {
-  SingleValue, Embedded
+enum class SnailfishType { SingleValue, Embedded };
+
+struct Snailfish;
+
+/** A snail with its level in the tree and is parent */
+struct LinedSnail {
+  Snailfish * snail; /* Must be SingleValue */
+  Snailfish * parent; /* Must be embedded */
+  size_t level;
+};
+
+/** The list of all snails with a single value */
+struct LinedSnailCombiner {
+  std::vector<LinedSnail> m_values;
+
+  explicit LinedSnailCombiner(Snailfish & snail);
+
+  void add_value(Snailfish * self, Snailfish * parent, size_t level) {
+    m_values.emplace_back(LinedSnail{ self, parent, level });
+  }
+
+  bool explode();
+  bool split();
 };
 
 struct Snailfish {
-  struct Stacked {
-    Snailfish * snail;
-    Snailfish * parent;
-    size_t level;
-  };
-
   SnailfishType type;
   /* Single value */ long long int value = 0;
   /* Embedded */ std::vector<Snailfish> members;
 
-  Snailfish() = default;
+  explicit Snailfish(long long int value)
+  : type(SnailfishType::SingleValue), value(value) {}
 
   Snailfish(const std::string & line, size_t & cursor) {
     if (line[cursor] == '[') {
@@ -46,84 +62,29 @@ struct Snailfish {
     }
   }
 
+private:
   Snailfish(const Snailfish & lhs, const Snailfish & rhs) {
-    // TODO: use move semantic if it is too slow
     type = SnailfishType::Embedded;
     members.emplace_back(lhs);
     members.emplace_back(rhs);
 
-    bool unstable = true;
-
-    while (unstable) {
-      unstable = false;
-      //std::cout << *this << '\n';
-
-      // explode
-      std::vector<Stacked> stacked;
-      push(stacked, this);
-
-      auto it = std::find_if(
-        stacked.begin(), stacked.end(),
-        [](const Stacked & s) {
-          return s.level >= 5;
-        }
-      );
-
-      if (it != stacked.end()) {
-        unstable = true;
-        if (it != stacked.begin()) {
-          (it - 1)->snail->value += it->snail->value;
-        }
-
-        if ((it + 2) != stacked.end()) {
-          (it + 2)->snail->value += (it + 1)->snail->value;
-        }
-
-        it->snail->value = 0;
-        (it + 1)->snail->value = 0;
-
-        it->parent->type = SnailfishType::SingleValue;
-        it->parent->value = 0;
-        it->parent->members.clear();
-
-        continue;
-      }
-
-
-      // Split
-
-      if (split()) {
-        unstable = true;
-      }
+    while (true) {
+      LinedSnailCombiner combiner(*this);
+      if (combiner.explode()) continue;
+      if (combiner.split()) continue;
+      break;
     }
   }
 
-  bool split() {
-    if (type == SnailfishType::Embedded) {
-      if (members[0].split()) return true;
-      if (members[1].split()) return true;
-    } else {
-      if (value >= 10) {
-        type = SnailfishType::Embedded;
-
-        members.emplace_back();
-        members[0].type = SnailfishType::SingleValue;
-        members[0].value = value / 2;
-
-        members.emplace_back();
-        members[1].type = SnailfishType::SingleValue;
-        members[1].value = (value / 2) + (value % 2);
-
-        return true;
-      }
-    }
-
-    return false;
+public:
+  Snailfish operator+(const Snailfish & other) const {
+    return Snailfish(*this, other);
   }
 
-  void push(std::vector<Stacked> & s, Snailfish * parent, size_t level = 0) {
+
+  void push(LinedSnailCombiner & s, Snailfish * parent, size_t level = 0) {
     if (type == SnailfishType::SingleValue) {
-      s.push_back(Stacked{ this, parent, level });
+      s.add_value(this, parent, level);
     } else {
       members[0].push(s, this, level + 1);
       members[1].push(s, this, level + 1);
@@ -137,83 +98,86 @@ struct Snailfish {
       return members[0].magnitude() * 3 + members[1].magnitude() * 2;
     }
   }
-
-
-friend std::ostream & operator<<(std::ostream & stream, const Snailfish & snails) {
-  if (snails.type == SnailfishType::Embedded) {
-    return stream << '[' << snails.members[0] << ',' << snails.members[1] << ']';
-  } else {
-    return stream << snails.value;
-  }
-}
-
-
 };
 
 
-long long int do_b(const std::vector<std::string> & lines) {
-  std::vector<Snailfish> snails;
-  for (const auto & line : lines) {
-    if (line[0] == '=') {
-      continue;
-    }
+////////////////////////////////////////////////////////////////////////////////
+// === COMBINE TWO SNAILS
 
-    size_t x = 0;
-    snails.emplace_back(line, x);
-  }
-
-  if (snails.size() == 1) {
-    return snails[0].magnitude();
-  }
-
-  long long int max = 0;
-
-  for (size_t x = 0; x != snails.size(); ++x) {
-    for (size_t y = 0; y != snails.size(); ++y) {
-      if (x == y) continue;
-
-      const auto new_snail = Snailfish(snails[x], snails[y]);
-
-      const auto magn = new_snail.magnitude();
-      if (max < magn) max = magn;
-
-
-    }
-  }
-
-  return max;
+LinedSnailCombiner::LinedSnailCombiner(Snailfish & snail) {
+  snail.push(*this, nullptr, 0);
 }
 
-Output day_2021_18(const std::vector<std::string> & lines, const DayExtraInfo &) {
+bool LinedSnailCombiner::explode() {
+  auto it = std::find_if(
+    m_values.begin(), m_values.end(),
+    [](const LinedSnail & s) { return s.level >= 5; }
+  );
 
-  std::string extra;
+  if (it == m_values.end()) return false;
 
+  // Stack values
+  if (it != m_values.begin()) (it - 1)->snail->value += it->snail->value;
+  if ((it + 2) != m_values.end()) (it + 2)->snail->value += (it + 1)->snail->value;
+
+  // Set to zero
+  it->parent->type = SnailfishType::SingleValue;
+  it->parent->value = 0;
+  it->parent->members.clear();
+
+  return true;
+}
+
+bool LinedSnailCombiner::split() {
+  for (auto & value : m_values) {
+    if (value.snail->value >= 10) {
+      value.snail->type = SnailfishType::Embedded;
+      value.snail->members.clear();
+      value.snail->members.emplace_back(value.snail->value / 2);
+      value.snail->members.emplace_back(value.snail->value / 2 + value.snail->value % 2);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+Output day_2021_18(const std::vector<std::string> & lines, const DayExtraInfo & dei) {
   std::vector<Snailfish> snails;
   for (const auto & line : lines) {
-    if (line[0] == '=') {
-      extra = line;
-      continue;
-    }
-
     size_t x = 0;
     snails.emplace_back(line, x);
   }
 
-  while (snails.size() != 1) {
-    const auto new_snail = Snailfish(snails[0], snails[1]);
-    snails.erase(snails.begin() + 1);
-    snails[0] = new_snail;
-    //std::cout << ")" << snails[0] << "\n";
-  }
+  const long long int part_a = [](std::vector<Snailfish> snails) {
+    while (snails.size() != 1) {
+      const auto new_snail = snails[0] + snails[1];
+      snails.erase(snails.begin() + 1);
+      snails[0] = new_snail;
+    }
 
-  if (extra != "") {
-    // std::cout << "x" << snails[0] << "\n";
-    // std::cout << extra << "\n\n";
-  }
+    return snails[0].magnitude();
+  }(snails);
 
-  
+  const long long int part_b = dei.can_skip_part_B ? 0 : [](const std::vector<Snailfish> & snails) {
+    long long int max = 0;
 
-  long long int part_b = do_b(lines);
+    for (size_t i = 0; i != snails.size(); ++i) {
+      for (size_t j = 0; j != snails.size(); ++j) {
+        if (i == j) continue;
 
-  return Output(snails[0].magnitude(), part_b);
+        const auto new_snail = snails[i] + snails[j];
+
+        const auto magnitude = new_snail.magnitude();
+        if (max < magnitude) max = magnitude;
+      }
+    }
+
+    return max;
+  }(snails);
+
+  return Output(part_a, part_b);
 }
