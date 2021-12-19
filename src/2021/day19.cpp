@@ -10,7 +10,6 @@
 #include <cstring>
 #include <ostream>
 
-
 struct Position : std::array<long long int, 3> {
   long long int & x() { return (*this)[0]; }
   long long int & y() { return (*this)[1]; }
@@ -91,7 +90,7 @@ struct Position : std::array<long long int, 3> {
 
   Position operator+(Position other) const {
     Position copy = *this;
-    copy -= other;
+    copy += other;
     return copy;
   }
 
@@ -101,6 +100,17 @@ struct Position : std::array<long long int, 3> {
     return copy;
   }
 };
+
+static long long int manhattan(Position lhs, Position rhs) {
+  constexpr auto diff = [](long long int l, long long int r) {
+    if (l < r) return r - l;
+    else return l - r;
+  };
+
+  return diff(lhs.x(), rhs.x())
+    + diff(lhs.y(), rhs.y())
+    + diff(lhs.z(), rhs.z());
+}
 
 struct Scanner {
   int number;
@@ -181,7 +191,7 @@ struct KnownBeacons {
     scanners.emplace(offset);
 
     for (const auto & beacon : scanner.points) {
-      beacons.emplace(beacon.angle(nb_angle).turn_right(nb_turn).push(nb_push) + offset);
+      beacons.emplace(beacon.angle(nb_angle).turn_right(nb_turn).push(nb_push) - offset);
     }
 
     {
@@ -199,8 +209,8 @@ struct KnownBeacons {
 
   std::optional<ValidIntegrator> get_integrator(Scanner scanner) const {
     for (int nb_angle = 0; nb_angle != 4; ++nb_angle, scanner.angle()) {
-      for (int nb_push = 0; nb_push != 4; ++nb_push, scanner.push()) {
-        for (int nb_turn = 0; nb_turn != 4; ++nb_turn, scanner.turn()) {
+      for (int nb_turn = 0; nb_turn != 4; ++nb_turn, scanner.turn()) {
+        for (int nb_push = 0; nb_push != 4; ++nb_push, scanner.push()) {
           const auto offset = get_integrator_turned(scanner);
           if (offset) return ValidIntegrator{ nb_angle, nb_turn, nb_push, offset.value() };
         }
@@ -213,8 +223,10 @@ struct KnownBeacons {
   std::optional<Position> get_integrator_turned(const Scanner & scanner) const {
     for (const auto & beacon : beacons) {
       for (const auto & point : scanner.points) {
-        const auto bonk = collide(scanner.points, point - beacon);
-        if (bonk) return point - beacon;
+        // we assume that beacon == point
+        const auto offset = point - beacon; // How much do we need to remove from point to go to beacon ?
+        const auto bonk = collide(scanner.points, offset);
+        if (bonk) return offset;
       }
     }
 
@@ -224,7 +236,7 @@ struct KnownBeacons {
   bool collide(const std::vector<Position> & points, Position offset) const {
     size_t score = 0;
     for (const auto & point : points) {
-      const auto pt = point + offset;
+      const auto pt = point - offset;
       if (beacons.find(pt) != beacons.end()) {
         ++score;
       }
@@ -232,10 +244,6 @@ struct KnownBeacons {
 
     return score >= cap;
   }
-  
-
-
-
 };
 
 
@@ -249,6 +257,7 @@ Output day_2021_19(const std::vector<std::string> & lines, const DayExtraInfo & 
     scanners.emplace_back(it, lines.end());
   }
 
+//  // Display input
 //  for (const auto & scanner : scanners) {
 //    std::cout << scanner << '\n';
 //  }
@@ -284,9 +293,22 @@ Output day_2021_19(const std::vector<std::string> & lines, const DayExtraInfo & 
     std::cout << "bad " << scanners.size() << " / " << original_nb << "\n";
   }
 
-  for (const auto & sc : beacons.scanners) {
-    std::cout << sc << '\n';
+//  // Display scanners location
+//  for (const auto & sc : beacons.scanners) {
+//    std::cout << sc << '\n';
+//  }
+
+  long long int max_distance = 0;
+
+  for (auto i = beacons.scanners.begin(); i != beacons.scanners.end(); ++i) {
+    for (auto j = i; j != beacons.scanners.end(); ++j) {
+      if (j == i) continue;
+      const auto dist = manhattan(*i, *j);
+      if (max_distance < dist) {
+        max_distance = dist;
+      }
+    }
   }
 
-  return Output(beacons.beacons.size(), 0);
+  return Output(beacons.beacons.size(), max_distance);
 }
