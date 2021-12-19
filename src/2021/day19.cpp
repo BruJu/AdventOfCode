@@ -20,6 +20,11 @@ struct Position : std::array<long long int, 3> {
   [[nodiscard]] long long int y() const { return (*this)[1]; }
   [[nodiscard]] long long int z() const { return (*this)[2]; }
 
+  Position(long long int x, long long int y, long long int z) {
+    this->x() = x;
+    this->y() = y;
+    this->z() = z;
+  }
 
   explicit Position(const std::string & s) {
     const size_t v1 = s.find(',');
@@ -34,8 +39,68 @@ struct Position : std::array<long long int, 3> {
     return stream << self.x() << ',' << self.y() << ',' << self.z();
   }
 
-};
+  void turn_right() {
+    const auto p = x();
+    x() = -y();
+    y() = p;
+  }
 
+  Position turn_right(int nb) const {
+    auto copy = *this;
+    for (int i = 0; i != nb; ++i) copy.turn_right();
+    return copy;
+  }
+
+  void push() {
+    const auto p = x();
+    x() = -z();
+    z() = p;
+  }
+
+  Position push(int nb) const {
+    auto copy = *this;
+    for (int i = 0; i != nb; ++i) copy.push();
+    return copy;
+  }
+
+  void angle() {
+    const auto p = y();
+    y() = z();
+    z() = -p;
+  }
+
+  Position angle(int nb) const {
+    auto copy = *this;
+    for (int i = 0; i != nb; ++i) copy.angle();
+    return copy;
+  }
+
+  Position & operator+=(Position other) {
+    x() += other.x();
+    y() += other.y();
+    z() += other.z();
+    return *this;
+  }
+
+  Position & operator-=(Position other) {
+    x() -= other.x();
+    y() -= other.y();
+    z() -= other.z();
+    return *this;
+  }
+
+  Position operator+(Position other) const {
+    Position copy = *this;
+    copy -= other;
+    return copy;
+  }
+
+  Position operator-(Position other) const {
+    Position copy = *this;
+    copy -= other;
+    return copy;
+  }
+};
 
 struct Scanner {
   int number;
@@ -61,6 +126,115 @@ struct Scanner {
     return stream;
   }
 
+  void push() {
+    for (auto & point : points) {
+      point.push();
+    }
+  }
+
+  void turn() {
+    for (auto & point : points) {
+      point.turn_right();
+    }
+  }
+
+
+  void angle() {
+    for (auto & point : points) {
+      point.angle();
+    }
+  }
+
+  
+
+
+};
+
+
+struct ValidIntegrator {
+  int nb_angle;
+  int nb_turn;
+  int nb_push;
+  Position offset;
+};
+
+struct KnownBeacons {
+  std::set<Position> scanners;
+  std::set<Position> beacons;
+  size_t cap = 12;
+  
+  KnownBeacons(const Scanner & scanner) {
+    scanners.emplace(Position(0, 0, 0));
+
+    for (const auto & beacon : scanner.points) {
+      beacons.emplace(beacon);
+    }
+  }
+
+  bool integrate(const Scanner & scanner) {
+    const auto integrator = get_integrator(scanner);
+
+    if (!integrator) return false;
+
+    const auto [nb_angle, nb_turn, nb_push, offset] = *integrator;
+
+    scanners.emplace(offset);
+
+    for (const auto & beacon : scanner.points) {
+      beacons.emplace(beacon.angle(nb_angle).turn_right(nb_turn).push(nb_push) + offset);
+    }
+
+    {
+      const auto old = cap;
+      cap = scanner.points.size();
+      const auto integrator = get_integrator(scanner);
+      if (!integrator) std::cerr << ":(\n";
+      cap = old;
+    }
+    
+
+    return true;
+  }
+
+
+  std::optional<ValidIntegrator> get_integrator(Scanner scanner) const {
+    for (int nb_angle = 0; nb_angle != 4; ++nb_angle, scanner.angle()) {
+      for (int nb_push = 0; nb_push != 4; ++nb_push, scanner.push()) {
+        for (int nb_turn = 0; nb_turn != 4; ++nb_turn, scanner.turn()) {
+          const auto offset = get_integrator_turned(scanner);
+          if (offset) return ValidIntegrator{ nb_angle, nb_turn, nb_push, offset.value() };
+        }
+      }
+    }
+
+    return std::nullopt;
+  }
+
+  std::optional<Position> get_integrator_turned(const Scanner & scanner) const {
+    for (const auto & beacon : beacons) {
+      for (const auto & point : scanner.points) {
+        const auto bonk = collide(scanner.points, point - beacon);
+        if (bonk) return point - beacon;
+      }
+    }
+
+    return std::nullopt;
+  }
+
+  bool collide(const std::vector<Position> & points, Position offset) const {
+    size_t score = 0;
+    for (const auto & point : points) {
+      const auto pt = point + offset;
+      if (beacons.find(pt) != beacons.end()) {
+        ++score;
+      }
+    }
+
+    return score >= cap;
+  }
+  
+
+
 
 };
 
@@ -75,9 +249,44 @@ Output day_2021_19(const std::vector<std::string> & lines, const DayExtraInfo & 
     scanners.emplace_back(it, lines.end());
   }
 
-  for (const auto & scanner : scanners) {
-    std::cout << scanner << '\n';
+//  for (const auto & scanner : scanners) {
+//    std::cout << scanner << '\n';
+//  }
+
+  const auto original_nb = scanners.size();
+
+  KnownBeacons beacons(scanners[0]);
+  if (dei.part_a_extra_param != 0) {
+    beacons.cap = dei.part_a_extra_param;
+  } else {
+    beacons.cap = 12;
   }
 
-  return Output(0, 0);
+  scanners.erase(scanners.begin());
+
+  bool stable = false;
+  while (scanners.size() != 0 && !stable) {
+    stable = true;
+
+    auto it = scanners.begin();
+    while (it != scanners.end()) {
+      const auto ok = beacons.integrate(*it);
+      if (ok) {
+        it = scanners.erase(it);
+        stable = false;
+      } else {
+        ++it;
+      }
+    }
+  }
+
+  if (scanners.size() != 0) {
+    std::cout << "bad " << scanners.size() << " / " << original_nb << "\n";
+  }
+
+  for (const auto & sc : beacons.scanners) {
+    std::cout << sc << '\n';
+  }
+
+  return Output(beacons.beacons.size(), 0);
 }
