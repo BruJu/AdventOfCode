@@ -1,6 +1,7 @@
 #include "../advent_of_code.hpp"
 #include <vector>
-#include <map>
+#include <unordered_map>
+#include <tuple>
 
 struct Config {
   int myScore;
@@ -18,25 +19,19 @@ struct Config {
     hisScore += 1 + hisPosition;
   }
 
-  bool operator<(const Config & conf) const {
-    if (myScore + hisScore < conf.myScore + conf.hisScore) return true;
-    if (myScore + hisScore > conf.myScore + conf.hisScore) return false;
-
-    if (myScore < conf.myScore) return true;
-    if (myScore > conf.myScore) return false;
-
-    if (hisScore < conf.hisScore) return true;
-    if (hisScore > conf.hisScore) return false;
-    
-    if (myPosition < conf.myPosition) return true;
-    if (myPosition > conf.myPosition) return false;
-    
-    if (hisPosition < conf.hisPosition) return true;
-    if (hisPosition > conf.hisPosition) return false;
-
-    return false;
+  bool operator==(const Config & rhs) const {
+    return myScore == rhs.myScore && hisScore == rhs.hisScore
+      && myPosition == rhs.myPosition && hisPosition == rhs.hisPosition;
   }
 };
+
+namespace std {
+  template <> struct hash<Config> {
+    size_t operator()(const Config & x) const {
+      return ((x.myScore * 32 + x.hisScore) * 32 + x.myPosition) * 16 + x.hisPosition;
+    }
+  };
+}
 
 static constexpr auto split_universe = {
   1 + 1 + 1, 1 + 1 + 2, 1 + 1 + 3,
@@ -73,46 +68,48 @@ static long long int part_a(int position1, int position2) {
   }
 }
 
-static long long int part_b(int position1, int position2) {
-  std::map<Config, long long int> cases;
-  long long int myWin = 0;
-  long long int hiswin = 0;
+using UniversalWins = std::pair<long long int, long long int>;
 
-  cases[{ 0, 0, position1 - 1, position2 - 1 }] = 1;
+static UniversalWins compute_win(Config current_config, std::unordered_map<Config, UniversalWins> & cache) {
+  const auto it = cache.find(current_config);
+  if (it != cache.end()) {
+    return it->second;
+  }
 
-  while (!cases.empty()) {
-    // ====
-    auto it = cases.begin();
+  UniversalWins universal = UniversalWins(0, 0);
+  for (const int roll : split_universe) { int myPaths = 1;
+    auto clone = current_config;
+    clone.advance(roll);
 
-    auto config = it->first;
-    auto paths = it->second;
-    cases.erase(it);
+    if (clone.myScore >= 21) {
+      universal.first += 1;
+    } else {
 
-    // ====
+      for (const int opponent_roll : split_universe) {
+        auto opp = clone;
+        opp.opponentAdvance(opponent_roll);
 
-    for (const int roll : split_universe) {
-      auto clone = config;
-      clone.advance(roll);
-
-      if (clone.myScore >= 21) {
-        myWin += paths;
-      } else {
-
-        for (const int opponent_roll: split_universe) {
-          auto opp = clone;
-          opp.opponentAdvance(opponent_roll);
-
-          if (opp.hisScore >= 21) {
-            hiswin += paths;
-          } else {
-            auto it = cases.find(opp);
-            if (it == cases.end()) cases[opp] = paths;
-            else it->second += paths;
-          }
+        if (opp.hisScore >= 21) {
+          universal.second += 1;
+        } else {
+          auto next = compute_win(opp, cache);
+          universal.first += next.first;
+          universal.second += next.second;
         }
       }
     }
   }
+
+  cache.emplace(current_config, universal);
+  return universal;
+}
+
+static long long int part_b(int position1, int position2) {
+  std::unordered_map<Config, UniversalWins> cache;
+  const auto [myWin, hiswin] = compute_win(
+    Config{ 0, 0, position1 - 1, position2 - 1 },
+    cache
+  );
 
   return std::max(myWin, hiswin);
 }
