@@ -1,12 +1,6 @@
 #include "../advent_of_code.hpp"
 #include <vector>
 #include <map>
-#include <set>
-#include <queue>
-#include <ostream>
-#include "../util/position.hpp"
-
-
 
 struct Config {
   int myScore;
@@ -44,8 +38,7 @@ struct Config {
   }
 };
 
-
-const auto split_universe = {
+static constexpr auto split_universe = {
   1 + 1 + 1, 1 + 1 + 2, 1 + 1 + 3,
   1 + 2 + 1, 1 + 2 + 2, 1 + 2 + 3,
   1 + 3 + 1, 1 + 3 + 2, 1 + 3 + 3,
@@ -59,15 +52,35 @@ const auto split_universe = {
   3 + 3 + 1, 3 + 3 + 2, 3 + 3 + 3,
 };
 
-long long int foo() {
+static long long int part_a(int position1, int position2) {
+  Config config { 0, 0, position1 - 1, position2 - 1 };
+
+  int turnOf = 0;
+  int diceRolls = 0;
+  while (true) {
+    int add = 3 * (diceRolls % 100) + 6;
+    diceRolls += 3;
+
+    if (turnOf == 0) {
+      config.advance(add);
+      if (config.myScore >= 1000) return config.hisScore * diceRolls;
+    } else {
+      config.opponentAdvance(add);
+      if (config.hisScore >= 1000) return config.myScore * diceRolls;
+    }
+
+    turnOf = 1 - turnOf;
+  }
+}
+
+static long long int part_b(int position1, int position2) {
   std::map<Config, long long int> cases;
   long long int myWin = 0;
   long long int hiswin = 0;
 
-  cases[{ 0, 0, 10 - 1, 7 - 1 }] = 1;
+  cases[{ 0, 0, position1 - 1, position2 - 1 }] = 1;
 
   while (!cases.empty()) {
-    std::cout << cases.size() << '\n';
     // ====
     auto it = cases.begin();
 
@@ -105,44 +118,8 @@ long long int foo() {
 }
 
 Output day_2021_21(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  return Output(0, foo());
-}
+  const int p1 = std::stoi(lines[0].substr(28));
+  const int p2 = std::stoi(lines[1].substr(28));
 
-
-Output day_2021_21_a(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  std::array<int, 2> positions;
-  positions[0] = 10;
-  positions[1] = 7;
-
-  std::array<int, 2> scores;
-  scores[0] = 0;
-  scores[1] = 0;
-
-  int turnOf = 0;
-  int diceRolls = 0;
-  int nextRoll = 0;
-  while (true) {
-
-    int add = 3 * (nextRoll % 100) + 6;
-    diceRolls += 3;
-    nextRoll += 3;
-
-    positions[turnOf] = (positions[turnOf] - 1 + add) % 10 + 1;
-    scores[turnOf] += positions[turnOf];
-
-
-    turnOf = 1 - turnOf;
-    if (scores[1 - turnOf] >= 1000) break;
-  }
-
-  
-
-  std::cout << scores[turnOf] << ", " << diceRolls << '\n';
-
-  const long long int part_a = scores[turnOf] * diceRolls;
-
-
-  const long long int part_b = 0;
-
-  return Output(part_a, part_b);
+  return Output(part_a(p1, p2), part_b(p1, p2));
 }
