@@ -43,3 +43,7 @@
 20 20_real.txt      ?          ?
 21 21_example.txt   739785     444356092776315
 21 21_real.txt      ?          ?
+22 22_initialize_1.txt 39         _
+22 22_initialize_2.txt 590784     _
+22 22_reboot.txt       474140     2758514936282235
+22 22_real.txt         ?          ?

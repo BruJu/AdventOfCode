@@ -77,7 +77,7 @@ static UniversalWins compute_win(Config current_config, std::unordered_map<Confi
   }
 
   UniversalWins universal = UniversalWins(0, 0);
-  for (const int roll : split_universe) { int myPaths = 1;
+  for (const int roll : split_universe) {
     auto clone = current_config;
     clone.advance(roll);
 
