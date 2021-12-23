@@ -13,6 +13,7 @@
 
 // https://adventofcode.com/2021/day/23
 
+////////////////////////////////////////////////////////////////////////////////
 // ==== Amphipod
 
 enum class Amphipod : std::uint8_t {
@@ -40,7 +41,34 @@ struct AmphipodInfo {
   int energy_per_move;
 };
 
+static char to_char(Amphipod frog) {
+  switch (frog) {
+    case Amphipod::Nobody: return '.';
+    case Amphipod::Amber:  return 'A';
+    case Amphipod::Bronze: return 'B';
+    case Amphipod::Copper: return 'C';
+    case Amphipod::Desert: return 'D';
+    default:               return '?';
+  }
+}
 
+template<size_t Size>
+std::ostream & operator<<(
+  std::ostream & stream, const std::array<Amphipod, Size> & column
+) {
+  stream << '(';
+
+  for (size_t i = 0; i != Size; ++i) {
+    if (i != 0) stream << ", ";
+    stream << to_char(column[i]);
+  }
+  return stream << ')';
+}
+
+/**
+ * Return the number of step to travail from from to to. -1 if the path is
+ * obstructed by somebody
+ */
 static int move_to(const std::array<Amphipod, 11> & layout, int from, int to) {
   int steps = 0;
   while (from != to) {
@@ -56,10 +84,11 @@ static int move_to(const std::array<Amphipod, 11> & layout, int from, int to) {
   return steps;
 }
 
-constexpr static auto hallway_stop_places = {
-  0, 1,     3,    5,    7,    9, 10
-       /**/  /**/  /**/  /**/
-};
+////////////////////////////////////////////////////////////////////////////////
+// ==== Grid
+
+/** Positions where it is possible to stop in the hallway */
+constexpr static auto hallway_stop_places = { 0, 1, 3, 5, 7, 9, 10 };
 
 template <size_t Size>
 struct Grid {
@@ -102,6 +131,7 @@ struct Grid {
     if (Size != 2 && Size != 4) {
       std::cout << "Unexpected Size\n";
     } else if (Size == 4) {
+      // Hard coded part 2
       amber_room[1] = Amphipod::Desert;
       amber_room[2] = Amphipod::Desert;
 
@@ -116,7 +146,8 @@ struct Grid {
     }
   }
 
-  AmphipodInfo<Size> get_info(Amphipod type) {
+  /** Return the info related to the movement of an amphipod type */
+  [[nodiscard]] AmphipodInfo<Size> get_info(Amphipod type) {
     switch (type) {
       case Amphipod::Amber:
         return AmphipodInfo<Size> { &amber_room, 2, 1 };
@@ -128,11 +159,11 @@ struct Grid {
         return AmphipodInfo<Size> { &desert_room, 8, 1000 };
       default:
         std::cout << "Bad type in get_info\n";
-        exit(-1);
         return AmphipodInfo<Size> { &desert_room, 8, 10000 };
     }
   }
 
+  /** Return true if everybody is at the right place */
   [[nodiscard]] bool is_final_state() const {
     for (size_t i = 0; i != Size; ++i) {
       if (amber_room[i] != Amphipod::Amber) return false;
@@ -163,11 +194,24 @@ struct Grid {
       ++i;
     }
 
+    size_t i_save = i;
+
     while (i < Size && column[i] == expected) {
       ++i;
     }
 
-    return i;
+    if (i < Size && column[i] == Amphipod::Nobody) {
+      std::cout << "Invalid column: ";
+
+      for (size_t j = 0 ; j != Size ; ++j) {
+        std::cout << int(column[j]) << " ";
+      }
+
+      std::cout << "\n";
+      exit(-1);
+    }
+
+    return i == Size ? i : i_save;
   }
 
 
@@ -186,9 +230,12 @@ struct Grid {
 
     // Go to hallway
     const auto this_is_me = (*room)[frog_pos];
+    
+    // std::cout << "POP before= " << *room;
     (*room)[frog_pos] = Amphipod::Nobody;
-    std::cout << int(type) << " " << int((*room)[0]) << "+" << int((*room)[1]) << '\n';
-    std::cout << frog_pos << ' ' << int(this_is_me) << '\n';
+    // std::cout << " after= " << *room << '\n';
+    // std::cout << int(type) << " " << int((*room)[0]) << "+" << int((*room)[1]) << '\n';
+    // std::cout << frog_pos << ' ' << int(this_is_me) << '\n';
     auto [_1, _2, energy_to_move] = copy.get_info(this_is_me);
     int used_energy = energy_to_move * (1 + frog_pos);
 
@@ -216,9 +263,10 @@ struct Grid {
     if (frog_pos != Size) return;
 
     int room_slot = 0;
-    while (room_slot < Size && (*destination)[room_slot] == Amphipod::Nobody) {
+    while (room_slot != Size && (*destination)[room_slot] == Amphipod::Nobody) {
       ++room_slot;
     }
+    --room_slot;
 
     used_energy += (room_slot + 1) * energy_per_move;
 
@@ -231,49 +279,47 @@ struct Grid {
     used_energy += steps * energy_per_move;
 
     // Both x and y movements are ok
+    // std::cout << "before= " << *destination;
     (*destination)[room_slot] = this_is_me;
+    // std::cout << "after= " << *destination << '\n';
 
     consumer(copy, used_energy);
   }
 
-  void draw() const {
-    constexpr auto draw_ = [](Amphipod a) {
-      if (a == Amphipod::Nobody) std::cout << ".";
-      else if (a == Amphipod::Amber) std::cout << 'A';
-      else if (a == Amphipod::Bronze) std::cout << 'B';
-      else if (a == Amphipod::Copper) std::cout << 'C';
-      else if (a == Amphipod::Desert) std::cout << 'D';
-      else std::cout << '?';
-    };
-    std::cout << "#############\n";
+  friend std::ostream & operator<<(std::ostream & stream, const Grid<Size> & self) {
+    stream << "#############\n";
 
-    std::cout << "#";
+    stream << "#";
     for (int i = 0; i < 11; ++i) {
-      draw_(hallway[i]);
+      stream << to_char(self.hallway[i]);
     }
-    std::cout << "#\n";
+    stream << "#\n";
 
-    std::cout << "###";
-    draw_(amber_room[0]);
-    std::cout << "#";
-    draw_(bronze_room[0]);
-    std::cout << "#";
-    draw_(copper_room[0]);
-    std::cout << "#";
-    draw_(desert_room[0]);
-    std::cout << "###\n";
+    stream << "###";
+    stream << to_char(self.amber_room[0]);
+    stream << "#";
+    stream << to_char(self.bronze_room[0]);
+    stream << "#";
+    stream << to_char(self.copper_room[0]);
+    stream << "#";
+    stream << to_char(self.desert_room[0]);
+    stream << "###\n";
 
-    std::cout << "  #";
-    draw_(amber_room[1]);
-    std::cout << "#";
-    draw_(bronze_room[1]);
-    std::cout << "#";
-    draw_(copper_room[1]);
-    std::cout << "#";
-    draw_(desert_room[1]);
-    std::cout << "#  \n";
+    for (size_t i = 1; i != Size; ++i) {
+      stream << "  #";
+      stream << to_char(self.amber_room[i]);
+      stream << "#";
+      stream << to_char(self.bronze_room[i]);
+      stream << "#";
+      stream << to_char(self.copper_room[i]);
+      stream << "#";
+      stream << to_char(self.desert_room[i]);
+      stream << "#  \n";
+    }
 
-    std::cout << "  #########  \n";
+    stream << "  #########  \n";
+
+    return stream;
   }
 };
 
@@ -305,7 +351,6 @@ static long long int solve(const std::vector<std::string> & lines) {
       }
 
       if (grid.is_final_state()) {
-        std::cout << "final!\n";
         if (!min_energy || *min_energy > energy) {
           min_energy = energy;
           last = grid;
@@ -329,6 +374,7 @@ static long long int solve(const std::vector<std::string> & lines) {
 
 Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
   const long long int part_a = solve<2>(lines);
+  const long long int part_b = solve<4>(lines);
 
-  return Output(part_a, 0);
+  return Output(part_a, part_b);
 }
