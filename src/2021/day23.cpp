@@ -33,8 +33,9 @@ static Amphipod char_to_amphipod(char c) {
 }
 
 /** Info of a frog in the lake */
+template <size_t Size>
 struct AmphipodInfo {
-  std::array<Amphipod, 2> * ptr_to_room;
+  std::array<Amphipod, Size> * ptr_to_room;
   int room_y;
   int energy_per_move;
 };
@@ -60,12 +61,13 @@ constexpr static auto hallway_stop_places = {
        /**/  /**/  /**/  /**/
 };
 
+template <size_t Size>
 struct Grid {
   std::array<Amphipod, 11> hallway;
-  std::array<Amphipod, 2> amber_room;
-  std::array<Amphipod, 2> bronze_room;
-  std::array<Amphipod, 2> copper_room;
-  std::array<Amphipod, 2> desert_room;
+  std::array<Amphipod, Size> amber_room;
+  std::array<Amphipod, Size> bronze_room;
+  std::array<Amphipod, Size> copper_room;
+  std::array<Amphipod, Size> desert_room;
 
   bool operator<(const Grid & grid) const {
     if (hallway < grid.hallway) return true;
@@ -89,40 +91,56 @@ struct Grid {
   explicit Grid(const std::vector<std::string> & lines) {
     hallway.fill(Amphipod::Nobody);
     amber_room[0] = char_to_amphipod(lines[2][3]);
-    amber_room[1] = char_to_amphipod(lines[3][3]);
+    amber_room[Size - 1] = char_to_amphipod(lines[3][3]);
     bronze_room[0] = char_to_amphipod(lines[2][5]);
-    bronze_room[1] = char_to_amphipod(lines[3][5]);
+    bronze_room[Size - 1] = char_to_amphipod(lines[3][5]);
     copper_room[0] = char_to_amphipod(lines[2][7]);
-    copper_room[1] = char_to_amphipod(lines[3][7]);
+    copper_room[Size - 1] = char_to_amphipod(lines[3][7]);
     desert_room[0] = char_to_amphipod(lines[2][9]);
-    desert_room[1] = char_to_amphipod(lines[3][9]);
+    desert_room[Size - 1] = char_to_amphipod(lines[3][9]);
+
+    if (Size != 2 && Size != 4) {
+      std::cout << "Unexpected Size\n";
+    } else if (Size == 4) {
+      amber_room[1] = Amphipod::Desert;
+      amber_room[2] = Amphipod::Desert;
+
+      bronze_room[1] = Amphipod::Copper;
+      bronze_room[2] = Amphipod::Bronze;
+
+      copper_room[1] = Amphipod::Bronze;
+      copper_room[2] = Amphipod::Amber;
+
+      desert_room[1] = Amphipod::Amber;
+      desert_room[2] = Amphipod::Copper;
+    }
   }
 
-  AmphipodInfo get_info(Amphipod type) {
+  AmphipodInfo<Size> get_info(Amphipod type) {
     switch (type) {
       case Amphipod::Amber:
-        return AmphipodInfo { &amber_room, 2, 1 };
+        return AmphipodInfo<Size> { &amber_room, 2, 1 };
       case Amphipod::Bronze:
-        return AmphipodInfo { &bronze_room, 4, 10 };
+        return AmphipodInfo<Size> { &bronze_room, 4, 10 };
       case Amphipod::Copper:
-        return AmphipodInfo { &copper_room, 6, 100 };
+        return AmphipodInfo<Size> { &copper_room, 6, 100 };
       case Amphipod::Desert:
-        return AmphipodInfo { &desert_room, 8, 1000 };
+        return AmphipodInfo<Size> { &desert_room, 8, 1000 };
       default:
         std::cout << "Bad type in get_info\n";
-        return AmphipodInfo { &desert_room, 8, 10000 };
+        exit(-1);
+        return AmphipodInfo<Size> { &desert_room, 8, 10000 };
     }
   }
 
   [[nodiscard]] bool is_final_state() const {
-    return amber_room[0] == Amphipod::Amber
-      && amber_room[1] == Amphipod::Amber
-      && bronze_room[0] == Amphipod::Bronze
-      && bronze_room[1] == Amphipod::Bronze
-      && copper_room[0] == Amphipod::Copper
-      && copper_room[1] == Amphipod::Copper
-      && desert_room[0] == Amphipod::Desert
-      && desert_room[1] == Amphipod::Desert;
+    for (size_t i = 0; i != Size; ++i) {
+      if (amber_room[i] != Amphipod::Amber) return false;
+      if (bronze_room[i] != Amphipod::Bronze) return false;
+      if (copper_room[i] != Amphipod::Copper) return false;
+      if (desert_room[i] != Amphipod::Desert) return false;
+    }
+    return true;
   }
 
   template <typename Consumer>
@@ -139,6 +157,19 @@ struct Grid {
     }
   }
 
+  static size_t pos_of_first_invalid(const std::array<Amphipod, Size> & column, Amphipod expected) {
+    size_t i = 0;
+    while (i < Size && column[i] == Amphipod::Nobody) {
+      ++i;
+    }
+
+    while (i < Size && column[i] == expected) {
+      ++i;
+    }
+
+    return i;
+  }
+
 
   /**
    * Put a frog in the room for frogs of the given type in the hallway at position hallway_x
@@ -150,22 +181,14 @@ struct Grid {
     // Look for a frog in the room of type
     auto [room, x_src, _] = copy.get_info(type);
 
-    int frog_pos = 2;
-    if ((*room)[0] != Amphipod::Nobody) {
-      if ((*room)[0] == type && (*room)[1] == type) return;
-      frog_pos = 0;
-    } else if ((*room)[1] != Amphipod::Nobody) {
-      if ((*room)[1] == type) return;
-      frog_pos = 1;
-    } else {
-      // Both empty
-      return;
-    }
+    int frog_pos = int(pos_of_first_invalid(*room, type));
+    if (frog_pos == Size) return;
 
     // Go to hallway
     const auto this_is_me = (*room)[frog_pos];
     (*room)[frog_pos] = Amphipod::Nobody;
-
+    std::cout << int(type) << " " << int((*room)[0]) << "+" << int((*room)[1]) << '\n';
+    std::cout << frog_pos << ' ' << int(this_is_me) << '\n';
     auto [_1, _2, energy_to_move] = copy.get_info(this_is_me);
     int used_energy = energy_to_move * (1 + frog_pos);
 
@@ -189,19 +212,15 @@ struct Grid {
     long long int used_energy = 0;
 
     // y movement
-    int room_slot = -1;
-    if ((*destination)[1] == Amphipod::Nobody) {
-      room_slot = 1;
-      used_energy += energy_per_move * 2;
-    } else if ((*destination)[1] != hallway[position]) {
-      // not a friend, won't go in front of them
-      return;
-    } else if ((*destination)[0] == Amphipod::Nobody) {
-      room_slot = 0;
-      used_energy += energy_per_move;
-    } else {
-      return;
+    int frog_pos = int(pos_of_first_invalid(*destination, hallway[position]));
+    if (frog_pos != Size) return;
+
+    int room_slot = 0;
+    while (room_slot < Size && (*destination)[room_slot] == Amphipod::Nobody) {
+      ++room_slot;
     }
+
+    used_energy += (room_slot + 1) * energy_per_move;
 
     // x movement
     const auto this_is_me = copy.hallway[position];
@@ -259,14 +278,13 @@ struct Grid {
 };
 
 
-
-Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  Grid grid(lines);
+template <size_t Size>
+static long long int solve(const std::vector<std::string> & lines) {
+  Grid<Size> grid(lines);
 
   std::optional<int> min_energy = std::nullopt;
-  std::map<Grid, long long int> energy_to_reach;
-  std::queue<Grid> not_explored_yet;
-  std::map<Grid, Grid> parent;
+  std::map<Grid<Size>, long long int> energy_to_reach;
+  std::queue<Grid<Size>> not_explored_yet;
 
   energy_to_reach[grid] = 0;
   not_explored_yet.push(grid);
@@ -279,7 +297,7 @@ Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &)
 
     const auto energy_to_now = energy_to_reach.find(state)->second;
 
-    state.for_each_next_state([&](const Grid & grid, int energy) {
+    state.for_each_next_state([&](const Grid<Size> & grid, int energy) {
       energy += energy_to_now;
       last = grid;
       if (min_energy && *min_energy <= energy) {
@@ -291,7 +309,6 @@ Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &)
         if (!min_energy || *min_energy > energy) {
           min_energy = energy;
           last = grid;
-          parent.emplace(grid, state);
           return;
         }
       }
@@ -302,27 +319,16 @@ Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &)
       }
 
       energy_to_reach[grid] = energy;
-      parent.insert_or_assign(grid, state);
       not_explored_yet.push(grid);
     });
   }
 
-  std::cout << energy_to_reach.size() << " explored states\n";
+  return min_energy ? *min_energy : -1;
+}
 
 
-//  for (const auto & p : energy_to_reach) {
-//    p.first.draw();
-//    std::cout << p.second << "\n\n";
-//  }
+Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  const long long int part_a = solve<2>(lines);
 
-//  last.draw();
-//
-//  while (true) {
-//    auto it = parent.find(last);
-//    if (it == parent.end()) break;
-//    last = it->second;
-//    last.draw();
-//  }
-
-  return Output(min_energy ? *min_energy : -1, 0);
+  return Output(part_a, 0);
 }
