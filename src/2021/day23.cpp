@@ -1,17 +1,17 @@
 #include "../advent_of_code.hpp"
-#include <regex>
+#include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <map>
 #include <set>
 #include <optional>
-#include <tuple>
 #include <iostream>
 #include <array>
 #include <queue>
-#include <cmath>
 
 // https://adventofcode.com/2021/day/23
+
+namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 // ==== Amphipod
@@ -33,56 +33,89 @@ static Amphipod char_to_amphipod(char c) {
   }
 }
 
-/** Info of a frog in the lake */
-template <size_t Size>
-struct AmphipodInfo {
-  std::array<Amphipod, Size> * ptr_to_room;
-  int room_y;
-  int energy_per_move;
+std::ostream & operator<<(std::ostream & stream, Amphipod frog) {
+  switch (frog) {
+    case Amphipod::Nobody: return stream << '.';
+    case Amphipod::Amber:  return stream << 'A';
+    case Amphipod::Bronze: return stream << 'B';
+    case Amphipod::Copper: return stream << 'C';
+    case Amphipod::Desert: return stream << 'D';
+    default:               return stream << '?';
+  }
+}
+
+
+// ====
+
+/** A room */
+template<size_t Size>
+struct AmphipodRoom : std::array<Amphipod, Size> {
+  AmphipodRoom() {
+    this->fill(Amphipod::Nobody);
+  }
+
+  [[nodiscard]] bool is_full_of(Amphipod type) const noexcept {
+    return std::all_of(this->begin(), this->end(),
+      [type](const Amphipod & found) { return type == found; }
+    );
+  }
+
+  [[nodiscard]] size_t pos_of_first_invalid(Amphipod expected) const {
+    size_t i = 0;
+    while (i < Size && (*this)[i] == Amphipod::Nobody) {
+      ++i;
+    }
+
+    size_t i_save = i;
+
+    while (i < Size && (*this)[i] == expected) {
+      ++i;
+    }
+
+    if (i < Size && (*this)[i] == Amphipod::Nobody) {
+      std::cout << "Invalid column: ";
+
+      for (size_t j = 0 ; j != Size ; ++j) {
+        std::cout << int((*this)[j]) << " ";
+      }
+
+      std::cout << "\n";
+      exit(-1);
+    }
+
+    return i == Size ? i : i_save;
+  }
+
+  friend std::ostream & operator<<(std::ostream & stream, const AmphipodRoom<Size> & self) {
+    stream << '[';
+    for (size_t i = 0; i != Size; ++i) {
+      stream << self.layout[i];
+    }
+    return stream << ']';
+  }
 };
 
-static char to_char(Amphipod frog) {
-  switch (frog) {
-    case Amphipod::Nobody: return '.';
-    case Amphipod::Amber:  return 'A';
-    case Amphipod::Bronze: return 'B';
-    case Amphipod::Copper: return 'C';
-    case Amphipod::Desert: return 'D';
-    default:               return '?';
-  }
-}
-
-template<size_t Size>
-std::ostream & operator<<(
-  std::ostream & stream, const std::array<Amphipod, Size> & column
-) {
-  stream << '(';
-
-  for (size_t i = 0; i != Size; ++i) {
-    if (i != 0) stream << ", ";
-    stream << to_char(column[i]);
-  }
-  return stream << ')';
-}
+/** Info of a type frog in the lake */
+template <size_t Size>
+struct AmphipodInfo {
+  /** Home room */                  AmphipodRoom<Size> * room;
+  /** Room position */              int room_x;
+  /** Energy used by these frogs */ int energy_per_move;
+};
 
 /**
  * Return the number of step to travail from from to to. -1 if the path is
  * obstructed by somebody
  */
 static int move_to(const std::array<Amphipod, 11> & layout, int from, int to) {
-  int steps = 0;
-  while (from != to) {
-    if (from > to) {
-      --from;
-    } else {
-      ++from;
-    }
-
-    if (layout[from] != Amphipod::Nobody) return -1;
-    ++steps;
+  const int direction = from > to ? -1 : 1;
+  for (int i = from; i != to; i += direction) {
+    if (layout[i] != Amphipod::Nobody) return -1;
   }
-  return steps;
+  
+  return (to - from) * direction;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ==== Grid
@@ -93,28 +126,37 @@ constexpr static auto hallway_stop_places = { 0, 1, 3, 5, 7, 9, 10 };
 template <size_t Size>
 struct Grid {
   std::array<Amphipod, 11> hallway;
-  std::array<Amphipod, Size> amber_room;
-  std::array<Amphipod, Size> bronze_room;
-  std::array<Amphipod, Size> copper_room;
-  std::array<Amphipod, Size> desert_room;
+  AmphipodRoom<Size> amber_room;
+  AmphipodRoom<Size> bronze_room;
+  AmphipodRoom<Size> copper_room;
+  AmphipodRoom<Size> desert_room;
 
-  bool operator<(const Grid & grid) const {
-    if (hallway < grid.hallway) return true;
-    if (hallway > grid.hallway) return false;
+  bool operator==(const Grid & o) const {
+    return hallway == o.hallway
+      && amber_room == o.amber_room
+      && bronze_room == o.bronze_room
+      && copper_room == o.copper_room
+      && desert_room == o.desert_room;
+  }
 
-    if (amber_room < grid.amber_room) return true;
-    if (amber_room > grid.amber_room) return false;
+  [[nodiscard]] size_t hash() const {
+    size_t acc = 0;
+    // Theorically we should do *5 instead of *4 to have no collision
+    // but it is slightly faster with *4 to avoid an addition and *8 would
+    // not fit within 64 bits
 
-    if (bronze_room < grid.bronze_room) return true;
-    if (bronze_room > grid.bronze_room) return false;
+    for (const auto pos : hallway_stop_places) {
+      acc = acc * 4 + int(hallway[pos]);
+    }
 
-    if (copper_room < grid.copper_room) return true;
-    if (copper_room > grid.copper_room) return false;
+    for (size_t i = 0; i != Size; ++i) {
+      acc = acc * 4 + int(amber_room[i]);
+      acc = acc * 4 + int(bronze_room[i]);
+      acc = acc * 4 + int(copper_room[i]);
+      acc = acc * 4 + int(desert_room[i]);
+    }
 
-    if (desert_room < grid.desert_room) return true;
-    if (desert_room > grid.desert_room) return false;
-
-    return false;
+    return acc;
   }
 
   explicit Grid(const std::vector<std::string> & lines) {
@@ -165,12 +207,10 @@ struct Grid {
 
   /** Return true if everybody is at the right place */
   [[nodiscard]] bool is_final_state() const {
-    for (size_t i = 0; i != Size; ++i) {
-      if (amber_room[i] != Amphipod::Amber) return false;
-      if (bronze_room[i] != Amphipod::Bronze) return false;
-      if (copper_room[i] != Amphipod::Copper) return false;
-      if (desert_room[i] != Amphipod::Desert) return false;
-    }
+    if (!amber_room.is_full_of(Amphipod::Amber)) return false;
+    if (!bronze_room.is_full_of(Amphipod::Bronze)) return false;
+    if (!copper_room.is_full_of(Amphipod::Copper)) return false;
+    if (!desert_room.is_full_of(Amphipod::Desert)) return false;
     return true;
   }
 
@@ -188,33 +228,6 @@ struct Grid {
     }
   }
 
-  static size_t pos_of_first_invalid(const std::array<Amphipod, Size> & column, Amphipod expected) {
-    size_t i = 0;
-    while (i < Size && column[i] == Amphipod::Nobody) {
-      ++i;
-    }
-
-    size_t i_save = i;
-
-    while (i < Size && column[i] == expected) {
-      ++i;
-    }
-
-    if (i < Size && column[i] == Amphipod::Nobody) {
-      std::cout << "Invalid column: ";
-
-      for (size_t j = 0 ; j != Size ; ++j) {
-        std::cout << int(column[j]) << " ";
-      }
-
-      std::cout << "\n";
-      exit(-1);
-    }
-
-    return i == Size ? i : i_save;
-  }
-
-
   /**
    * Put a frog in the room for frogs of the given type in the hallway at position hallway_x
    */
@@ -225,17 +238,13 @@ struct Grid {
     // Look for a frog in the room of type
     auto [room, x_src, _] = copy.get_info(type);
 
-    int frog_pos = int(pos_of_first_invalid(*room, type));
+    size_t frog_pos = room->pos_of_first_invalid(type);
     if (frog_pos == Size) return;
 
     // Go to hallway
     const auto this_is_me = (*room)[frog_pos];
     
-    // std::cout << "POP before= " << *room;
     (*room)[frog_pos] = Amphipod::Nobody;
-    // std::cout << " after= " << *room << '\n';
-    // std::cout << int(type) << " " << int((*room)[0]) << "+" << int((*room)[1]) << '\n';
-    // std::cout << frog_pos << ' ' << int(this_is_me) << '\n';
     auto [_1, _2, energy_to_move] = copy.get_info(this_is_me);
     int used_energy = energy_to_move * (1 + frog_pos);
 
@@ -259,7 +268,7 @@ struct Grid {
     long long int used_energy = 0;
 
     // y movement
-    int frog_pos = int(pos_of_first_invalid(*destination, hallway[position]));
+    int frog_pos = destination->pos_of_first_invalid(hallway[position]);
     if (frog_pos != Size) return;
 
     int room_slot = 0;
@@ -279,63 +288,51 @@ struct Grid {
     used_energy += steps * energy_per_move;
 
     // Both x and y movements are ok
-    // std::cout << "before= " << *destination;
     (*destination)[room_slot] = this_is_me;
-    // std::cout << "after= " << *destination << '\n';
 
     consumer(copy, used_energy);
   }
 
   friend std::ostream & operator<<(std::ostream & stream, const Grid<Size> & self) {
-    stream << "#############\n";
-
-    stream << "#";
+    stream << "#############\n" << "#";
     for (int i = 0; i < 11; ++i) {
-      stream << to_char(self.hallway[i]);
+      stream << (self.hallway[i]);
     }
     stream << "#\n";
 
-    stream << "###";
-    stream << to_char(self.amber_room[0]);
-    stream << "#";
-    stream << to_char(self.bronze_room[0]);
-    stream << "#";
-    stream << to_char(self.copper_room[0]);
-    stream << "#";
-    stream << to_char(self.desert_room[0]);
-    stream << "###\n";
-
-    for (size_t i = 1; i != Size; ++i) {
-      stream << "  #";
-      stream << to_char(self.amber_room[i]);
-      stream << "#";
-      stream << to_char(self.bronze_room[i]);
-      stream << "#";
-      stream << to_char(self.copper_room[i]);
-      stream << "#";
-      stream << to_char(self.desert_room[i]);
-      stream << "#  \n";
+    for (size_t i = 0; i != Size; ++i) {
+      if (i == 0) stream << "###"; else stream << "  #";
+      stream << self.amber_room[i] << '#' << self.bronze_room[i]
+        << '#' << self.copper_room[i] << '#' << self.desert_room[i];
+      if (i == 0) stream << "###\n"; else stream << "#  \n";
     }
 
-    stream << "  #########  \n";
-
-    return stream;
+    return stream << "  #########  \n";
   }
 };
 
+}
+
+namespace std {
+  template <size_t Size> struct hash<Grid<Size>> {
+    size_t operator()(const Grid<Size> & grid) const {
+      return grid.hash();
+    }
+  };
+}
+
+namespace {
 
 template <size_t Size>
 static long long int solve(const std::vector<std::string> & lines) {
   Grid<Size> grid(lines);
 
   std::optional<int> min_energy = std::nullopt;
-  std::map<Grid<Size>, long long int> energy_to_reach;
+  std::unordered_map<Grid<Size>, long long int> energy_to_reach;
   std::queue<Grid<Size>> not_explored_yet;
 
   energy_to_reach[grid] = 0;
   not_explored_yet.push(grid);
-
-  Grid last = grid;
 
   while (!not_explored_yet.empty()) {
     const auto state = not_explored_yet.front();
@@ -345,7 +342,6 @@ static long long int solve(const std::vector<std::string> & lines) {
 
     state.for_each_next_state([&](const Grid<Size> & grid, int energy) {
       energy += energy_to_now;
-      last = grid;
       if (min_energy && *min_energy <= energy) {
         return;
       }
@@ -353,7 +349,6 @@ static long long int solve(const std::vector<std::string> & lines) {
       if (grid.is_final_state()) {
         if (!min_energy || *min_energy > energy) {
           min_energy = energy;
-          last = grid;
           return;
         }
       }
@@ -371,6 +366,7 @@ static long long int solve(const std::vector<std::string> & lines) {
   return min_energy ? *min_energy : -1;
 }
 
+}
 
 Output day_2021_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
   const long long int part_a = solve<2>(lines);
