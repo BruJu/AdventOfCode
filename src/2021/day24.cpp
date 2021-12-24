@@ -13,91 +13,9 @@
 // https://adventofcode.com/2021/day/24
 
 
-struct ProgramInput {
-  std::array<int, 14> values;
+////////////////////////////////////////////////////////////////////////////////
 
-  ProgramInput(int init = 9) {
-    values.fill(init);
-  }
-
-  [[nodiscard]] int operator[](size_t i) const {
-    return values[i];
-  }
-
-  ProgramInput & operator--() {
-    for (int i = 14 - 1; i >= 0; ++i) {
-      --values[i];
-
-      if (values[i] == 0) {
-        values[i] = 9;
-      } else {
-        break;
-      }
-    }
-
-    return *this;
-  }
-
-
-  ProgramInput & operator++() {
-    for (int i = 14 - 1; i >= 0; ++i) {
-      ++values[i];
-
-      if (values[i] == 10) {
-        values[i] = 1;
-      } else {
-        break;
-      }
-    }
-
-    return *this;
-  }
-
-  [[nodiscard]] long long int to_int() const {
-    long long int v = 0;
-
-    for (int x : values) {
-      v = v * 10 + x;
-    }
-
-    return v;
-  }
-
-
-};
-
-
-struct Memory {
-  ProgramInput inputs;
-  int i_input = 0;
-  long long int w = 0;
-  long long int x = 0;
-  long long int y = 0;
-  long long int z = 0;
-
-
-  long long int & get(char c) {
-    if (c == 'w') return w;
-    else if (c == 'x') return x;
-    else if (c == 'y') return y;
-    else if (c == 'z') return z;
-    std::cout << "error: invalid name " << c << '\n';
-    return z;
-  }
-
-  int get_input() {
-    if (i_input == 14) {
-      std::cout << "no input but one was required\n";
-      return 0;
-    }
-
-    return inputs[i_input++];
-  }
-};
-
-enum class IType {
-  imp, add, mul, div, mod, eql
-};
+enum class IType { imp, add, mul, div, mod, eql };
 
 IType to_type(const std::string & s) {
   if (s == "inp") return IType::imp;
@@ -111,6 +29,58 @@ IType to_type(const std::string & s) {
   exit(0);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+
+using ProgramInput = long long int;
+
+static std::array<ProgramInput, 9> derivate(ProgramInput self) {
+  std::array<ProgramInput, 9> result;
+  for (int i = 1; i <= 9; ++i) {
+    result[i - 1] = self * 10 + i;
+  }
+  return result;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct RAMState {
+  int w = 0;
+  int x = 0;
+  int y = 0;
+  int z = 0;
+  bool bad_state = false;
+  
+  int & get(char c) {
+    if (c == 'w') return w;
+    else if (c == 'x') return x;
+    else if (c == 'y') return y;
+    else if (c == 'z') return z;
+    std::cout << "error: invalid name " << c << '\n';
+    return z;
+  }
+
+  [[nodiscard]] bool operator==(const RAMState & other) const {
+    if (bad_state != other.bad_state) return false;
+    if (bad_state) return true;
+
+    return w == other.w && x == other.x && y == other.y && z == other.z;
+  }
+};
+
+
+namespace std {
+  template <> struct hash<RAMState> {
+    size_t operator()(const RAMState & r) const {
+      if (r.bad_state) return 0;
+      return (((((r.w << 4) + r.x) << 4) + r.y) << 4) + r.z + 1;
+    }
+  };
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 struct Instruction {
   IType type;
 
@@ -119,37 +89,6 @@ struct Instruction {
   bool is_int = false;
   long long int int_value = 0;
   char variable_2 = '0';
-
-  void print_cpp(int & input) const {
-    const auto & name_arg = [&]() {
-      if (is_int) return std::to_string(int_value);
-      else return std::string("") + variable_2;
-    };
-
-    switch (type) {
-      case IType::imp:
-        std::cout << variable << " = input[" << (input++) << "]; \n";
-        break;
-      case IType::add:
-        std::cout << variable << " += " << name_arg() << "; \n";
-        break;
-      case IType::mul:
-        std::cout << variable << " *= " << name_arg() << "; \n";
-        break;
-      case IType::div:
-        std::cout << "if (" << name_arg() << " == 0) return false; \n";
-        std::cout << variable << " /= " << name_arg() << "; \n";
-        break;
-      case IType::mod:
-        std::cout << "if (" << variable << " < 0) return false; \n";
-        std::cout << "if (" << name_arg() << " == 0) return false; \n";
-        std::cout << variable << " %= " << name_arg() << "; \n";
-        break;
-      case IType::eql:
-        std::cout << variable << " = ( " << variable << " == " << name_arg() << ") ? 1 : 0;\n";
-        break;
-    }
-  }
 
   Instruction(std::string c) {
     type = IType::imp;
@@ -170,10 +109,10 @@ struct Instruction {
     int_value = val;
   }
 
-  bool modify(Memory & state) const {
+  bool modify(RAMState & state, ProgramInput input) const {
     switch (type) {
       case IType::imp:
-        state.get(variable) = state.get_input();
+        state.get(variable) = (input % 10);
         break;
       case IType::add:
         state.get(variable) += value(state);
@@ -204,7 +143,7 @@ struct Instruction {
     return true;
   }
 
-  long long int value(Memory & state) const {
+  long long int value(RAMState & state) const {
     if (is_int) {
       return int_value;
     } else {
@@ -213,15 +152,119 @@ struct Instruction {
   }
 };
 
-void into_cpp(const std::vector<Instruction> & instructioons) {
-  // Tried to compile the code into C++ to benefit from gcc optimization
-  // that's still too slow
-  int input = 0;
-  for (const auto & instruction : instructioons) {
-    instruction.print_cpp(input);
-  }
-}
 
+struct OneUniverse {
+  RAMState ram;
+  ProgramInput input = 0;
+};
+
+
+
+struct Memory {
+  std::vector<OneUniverse> universes;
+
+  Memory() {
+    universes.push_back(OneUniverse{});
+  }
+
+  void run(const Instruction & instruction) {
+    switch (instruction.type) {
+      case IType::imp: {
+        reduce_universes();
+        expand_universes();
+        break;
+      }
+    }
+
+    for (auto it = universes.begin(); it != universes.end();) {
+      if (!instruction.modify(it->ram, it->input)) {
+        it->ram.bad_state = true;
+        ++it;
+      } else {
+        ++it;
+      }
+    }
+
+    if (instruction.type == IType::mul && instruction.type == IType::mod && instruction.type == IType::eql) {
+      reduce_universes();
+    }
+  }
+
+  void reduce_universes() {
+    // Find higher
+    std::unordered_map<RAMState, ProgramInput> to_the_sky;
+    std::unordered_map<RAMState, ProgramInput> to_the_ground;
+    for (const auto & universe : universes) {
+      auto sky_it = to_the_sky.find(universe.ram);
+
+      if (sky_it == to_the_sky.end()) {
+        to_the_sky.emplace(universe.ram, universe.input);
+        to_the_ground.emplace(universe.ram, universe.input);
+      } else {
+        if (sky_it->second < universe.input) {
+          sky_it->second = universe.input;
+        }
+
+        auto ground_it = to_the_ground.find(universe.ram);
+        if (universe.input < ground_it->second) {
+          ground_it->second = universe.input;
+        }
+      }
+    }
+
+    // Change universes
+    universes.clear();
+    for (const auto & [ram, input] : to_the_sky) {
+      universes.push_back(OneUniverse{ ram, input });
+    }
+    for (const auto & [ram, input] : to_the_ground) {
+      universes.push_back(OneUniverse{ ram, input });
+    }
+  }
+
+  void expand_universes() {
+    std::vector<OneUniverse> next;
+
+    for (const auto & universe : universes) {
+      for (const auto & expansion : derivate(universe.input)) {
+        next.push_back(OneUniverse { universe.ram, expansion });
+      }
+    }
+    
+    universes = next;
+  }
+
+  void remove_not_final() {
+    universes.erase(
+      std::remove_if(
+        universes.begin(),
+        universes.end(),
+        [](const OneUniverse & universe) {
+          return universe.ram.bad_state || universe.ram.z != 0;
+        }
+      ),
+      universes.end()
+    );
+    
+    reduce_universes();
+  }
+
+  Output get_min_max() {
+    const auto min = std::min_element(universes.begin(), universes.end(),
+      [](const OneUniverse & lhs, const OneUniverse & rhs) {
+        return lhs.input < rhs.input;
+      }
+    );
+    
+    const auto max = std::min_element(universes.begin(), universes.end(),
+      [](const OneUniverse & lhs, const OneUniverse & rhs) {
+        return lhs.input > rhs.input;
+      }
+    );
+
+    return Output(max->input, min->input);
+  }
+};
 
 static std::vector<Instruction> read_input(const std::vector<std::string> & lines) {
   bj::InstructionReader<Instruction> ir;
@@ -249,42 +292,17 @@ static std::vector<Instruction> read_input(const std::vector<std::string> & line
 }
 
 Output day_2021_24(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  return Output("ok", "");
-
-  // Input is too big
-  // I don't want to use an external tool to solve this, it's plain boring.
-  // If the purpose is to use SOTA tools for CSP solving, I'm out
-
   const auto instructions = read_input(lines);
 
-  ProgramInput programInput(9);
-
-  while (true) {
-    Memory mem { programInput };
-
-    bool in_the_end = true;
-
-    int used_inputs = 0;
-
-    for (size_t i = 0; i != instructions.size(); ++i) {
-      const auto & instruction = instructions[i];
-
-      if (!instruction.modify(mem)) {
-        in_the_end = false;
-        break;
-      }
-
-      if (instruction.type == IType::imp) {
-        ++used_inputs;
-      }
-    }
-
-    if (in_the_end && mem.z == 0) {
-      std::cout << programInput.to_int() << '\n';
-    }
-
-    ++programInput;
+  Memory memory;
+  size_t line = 0;
+  for (const auto & instruction : instructions) {
+    std::cout << (++line) << " " << memory.universes.size() << '\n';
+    memory.run(instruction);
   }
 
-  return Output(programInput.to_int(), 0);
+  memory.remove_not_final();
+
+  return memory.get_min_max();
 }
+
