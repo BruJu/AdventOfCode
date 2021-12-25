@@ -60,27 +60,15 @@ struct Grid {
     return stable;
   }
 
-  bool east() {
-    std::vector<std::pair<size_t, size_t>> x = find_all_movable(Cucumber::Right, 1, 0);
-
-    for (const auto cucumber_pos : x) {
-      get(cucumber_pos.first, cucumber_pos.second) = Cucumber::None;
-      get(cucumber_pos.first + 1, cucumber_pos.second) = Cucumber::Right;
-    }
-
+  template<Cucumber moved_type, size_t dx, size_t dy>
+  bool mid_step() {
+    std::vector<std::pair<size_t, size_t>> x = find_all_movable(moved_type, dx, dy);
+    move(x, dx, dy);
     return x.empty();
   }
 
-  bool south() {
-    std::vector<std::pair<size_t, size_t>> x = find_all_movable(Cucumber::Down, 0, 1);
-
-    for (const auto cucumber_pos : x) {
-      get(cucumber_pos.first, cucumber_pos.second) = Cucumber::None;
-      get(cucumber_pos.first, cucumber_pos.second + 1) = Cucumber::Down;
-    }
-
-    return x.empty();
-  }
+  [[nodiscard]] bool east() { return mid_step<Cucumber::Right, 1ul, 0ul>(); }
+  [[nodiscard]] bool south() { return mid_step<Cucumber::Down, 0ul, 1ul>(); }
 
   std::vector<std::pair<size_t, size_t>> find_all_movable(Cucumber type, size_t dx, size_t dy) {
     std::vector<std::pair<size_t, size_t>> positions;
@@ -94,6 +82,15 @@ struct Grid {
     }
 
     return positions;
+  }
+
+  void move(const std::vector<std::pair<size_t, size_t>> & moved_positions, size_t dx, size_t dy) {
+    for (const auto cucumber_pos : moved_positions) {
+      std::swap(
+        get(cucumber_pos.first, cucumber_pos.second),
+        get(cucumber_pos.first + dx, cucumber_pos.second + dy)
+      );
+    }
   }
 
   friend std::ostream & operator<<(std::ostream & stream, const Grid & self) {

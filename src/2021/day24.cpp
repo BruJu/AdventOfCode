@@ -168,12 +168,9 @@ struct Memory {
   }
 
   void run(const Instruction & instruction) {
-    switch (instruction.type) {
-      case IType::imp: {
-        reduce_universes();
-        expand_universes();
-        break;
-      }
+    if (instruction.type == IType::imp) {
+      reduce_universes();
+      expand_universes();
     }
 
     for (auto it = universes.begin(); it != universes.end();) {
