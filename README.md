@@ -46,4 +46,7 @@ Possible values for the resumt :
 
 WTFPL ¯\\\_( ツ )\_/¯
 
-Generic Makefile distributed under the MIT License (see https://github.com/mbcrawfo/GenericMakefile for more information)
+- Generic Makefile distributed under the MIT License (see https://github.com/mbcrawfo/GenericMakefile for more information)
+
+- The used md5 implementation licensied under the zlib license. See https://create.stephan-brumme.com/hash-library/
+
