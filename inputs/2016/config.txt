@@ -23,3 +23,5 @@
 13 13_tosolve.txt   ? ?
 16 16_inline.txt    inline           inline
 16 16_tosolve.txt   ?                ?
+17 17_inline.txt    inline           inline
+17 17_tosolve.txt   ?                ?
