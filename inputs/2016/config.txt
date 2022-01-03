@@ -25,3 +25,5 @@
 16 16_tosolve.txt   ?                ?
 17 17_inline.txt    inline           inline
 17 17_tosolve.txt   ?                ?
+18 18_example.txt   38               _
+18 18_tosolve.txt   ?                ?
