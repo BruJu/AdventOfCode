@@ -17,12 +17,12 @@ namespace {
         explicit Formula(const std::vector<std::string> & values) {
             if (values.size() == 3) {
                 /* VAL -> dest */
-                lhs = 0;
+                lhs = std::uint16_t(0);
                 rhs = to_value(values[0]);
                 op = Operator::Assign;
             } else if (values.size() == 4) {
                 /* NOT VAL -> dest */
-                lhs = 0;
+                lhs = std::uint16_t(0);
                 rhs = to_value(values[1]);
                 op = Operator::Not;
             } else {
@@ -43,11 +43,11 @@ namespace {
             }
         }
         
-        /* implicit */ Formula(uint16_t value) : lhs(0), op(Operator::Assign), rhs(value) {}
+        /* implicit */ Formula(uint16_t value) : lhs(static_cast<std::uint16_t>(0)), op(Operator::Assign), rhs(value) {}
 
         [[nodiscard]] static Source to_value(const std::string & s) {
             if (s[0] >= '0' && s[0] <= '9') {
-                return std::stoi(s);
+                return static_cast<std::uint16_t>(std::stoi(s));
             } else {
                 return s;
             }
