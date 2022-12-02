@@ -1,7 +1,8 @@
 #include "../framework/configuration.h"
 
 Output day_2022_01(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2022_02(const std::vector<std::string> & lines, const DayExtraInfo &);
 
 static constexpr std::array<DayEntryPoint *, 25> days_2022 {
-    &day_2022_01, nullptr
+    &day_2022_01, &day_2022_02, nullptr
 };
