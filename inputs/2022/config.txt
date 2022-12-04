@@ -4,3 +4,5 @@
 02 02_puzzle.txt ? ?
 03 03_example.txt 157 70
 03 03_puzzle.txt ? ?
+04 04_example.txt 2 4
+04 04_puzzle.txt ? ?
