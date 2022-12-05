@@ -6,3 +6,5 @@
 03 03_puzzle.txt ? ?
 04 04_example.txt 2 4
 04 04_puzzle.txt ? ?
+05 05_example.txt CMZ MCD
+05 05_puzzle.txt ? ?
