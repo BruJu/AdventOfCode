@@ -8,3 +8,5 @@
 04 04_puzzle.txt ? ?
 05 05_example.txt CMZ MCD
 05 05_puzzle.txt ? ?
+06 06_example.txt inline inline
+06 06_puzzle.txt ? ?
