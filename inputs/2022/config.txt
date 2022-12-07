@@ -10,3 +10,5 @@
 05 05_puzzle.txt ? ?
 06 06_example.txt inline inline
 06 06_puzzle.txt ? ?
+07 07_example.txt 95437 24933642
+07 07_puzzle.txt ? ?
