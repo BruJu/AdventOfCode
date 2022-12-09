@@ -31,3 +31,5 @@
 19 config.txt       3004953`?        ?
 20 20_example.txt   3                9`2
 20 20_puzzle.txt    ?                ?
+21 21_example.txt   decab            ?
+21 21_puzzle.txt    ?                ?

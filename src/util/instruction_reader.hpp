@@ -1,5 +1,6 @@
 #include <regex>
 #include <string>
+#include <span>
 
 namespace bj {
     /**
@@ -68,10 +69,10 @@ namespace bj {
          * If Ts can be built from all the strings in the vector, return a
          * vector of these Ts. Else, return std::nullopt and write in std::cerr.
          */
-        std::optional<std::vector<T>> operator()(const std::vector<std::string> & lines) const {
+        std::optional<std::vector<T>> operator()(std::span<const std::string> lines) const {
             std::vector<T> elements;
 
-            for (const auto & line : lines) {
+            for (const std::string & line : lines) {
                 const auto opt_e = this->operator()(line);
                 if (!opt_e) {
                     std::cerr << "Bad input\n" << line << "\n";
