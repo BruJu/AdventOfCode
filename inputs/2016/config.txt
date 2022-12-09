@@ -27,3 +27,5 @@
 17 17_tosolve.txt   ?                ?
 18 18_example.txt   38               _
 18 18_tosolve.txt   ?                ?
+19 config.txt       5`3              ?
+19 config.txt       3004953`?        ?
