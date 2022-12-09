@@ -14,3 +14,6 @@
 07 07_puzzle.txt ? ?
 08 08_example.txt 21 8
 08 08_puzzle.txt ? ?
+09 09_example_a.txt 13 1
+09 09_example_b.txt _ 36
+09 09_puzzle.txt ? ?
