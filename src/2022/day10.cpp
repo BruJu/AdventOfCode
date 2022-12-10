@@ -2,13 +2,30 @@
 
 // https://adventofcode.com/2022/day/10
 
-Output day_2022_10(const std::vector<std::string> & lines, const DayExtraInfo &) {
+class CathodeRay_Tube {
+private:
   int cycle_number = 1;
   int register_V = 1;
 
-  // Part B
+  int signal_strength_sum = 0;
   std::string line_buffer = "";
-  const auto draw_crt = [&]() {
+
+public:
+  void next_cycle() {
+    ++cycle_number;
+
+    if (cycle_number % 40 == 20) {
+      signal_strength_sum += cycle_number * register_V;
+    }
+  }
+
+  [[nodiscard]] void add_value(int value) { register_V += value; }
+
+  [[nodiscard]] auto get_signal_strength_sum() const noexcept {
+    return signal_strength_sum;
+  }
+
+  void draw_crt() {
     // Decide pixel
     if (std::abs(((cycle_number - 1) % 40) - register_V) <= 1) {
       line_buffer += '#';
@@ -21,32 +38,24 @@ Output day_2022_10(const std::vector<std::string> & lines, const DayExtraInfo &)
       std::cout << line_buffer << '\n';
       line_buffer = "";
     }
-  };
+  }
+};
 
-  // Part A
-  int signal_strength_sum = 0;
-
-  const auto next_cycle = [&]() {
-    ++cycle_number;
-
-    if (cycle_number % 40 == 20) {
-      signal_strength_sum += cycle_number * register_V;
-    }
-  };
-
-  // Read instructions
+Output day_2022_10(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  CathodeRay_Tube tube;
+  
   for (const std::string & line : lines) {
-    draw_crt();
-    next_cycle();
+    tube.draw_crt();
+    tube.next_cycle();
     
     if (line != "noop") {
-      draw_crt();
+      tube.draw_crt();
       const auto space_pos = line.find(' ');
       const int addx_value = std::stoi(line.substr(space_pos + 1));
-      register_V += addx_value;
-      next_cycle();
+      tube.add_value(addx_value);
+      tube.next_cycle();
     }
   }
   
-  return Output(signal_strength_sum, "Oui");
+  return Output(tube.get_signal_strength_sum(), "Oui");
 }
