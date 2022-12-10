@@ -13,7 +13,7 @@
 // (B) unrun the instructions
 
 struct SwapPosition {
-  static constexpr const char * Regex = R"(swap position ([0-9]) with position ([0-9]))";
+  static constexpr const char * Regex_Pattern = R"(swap position ([0-9]) with position ([0-9]))";
 
   size_t pos_a;
   size_t pos_b;
@@ -28,7 +28,7 @@ struct SwapPosition {
 };
 
 struct SwapLetter {
-  static constexpr const char * Regex = R"(swap letter ([a-z]) with letter ([a-z]))";
+  static constexpr const char * Regex_Pattern = R"(swap letter ([a-z]) with letter ([a-z]))";
 
   char letter_a;
   char letter_b;
@@ -48,7 +48,7 @@ struct SwapLetter {
 };
 
 struct RotateLeft {
-  static constexpr const char * Regex = R"(rotate left ([0-9]) steps?)";
+  static constexpr const char * Regex_Pattern = R"(rotate left ([0-9]) steps?)";
 
   size_t steps;
 
@@ -68,7 +68,7 @@ struct RotateLeft {
 };
 
 struct RotateRight {
-  static constexpr const char * Regex = R"(rotate right ([0-9]) steps?)";
+  static constexpr const char * Regex_Pattern = R"(rotate right ([0-9]) steps?)";
 
   RotateLeft base;
 
@@ -80,7 +80,7 @@ struct RotateRight {
 };
 
 struct RotateLetter {
-  static constexpr const char * Regex = R"(rotate based on position of letter ([a-z]))";
+  static constexpr const char * Regex_Pattern = R"(rotate based on position of letter ([a-z]))";
 
   char letter;
 
@@ -122,7 +122,7 @@ struct RotateLetter {
 };
 
 struct ReversePositions {
-  static constexpr const char * Regex = R"(reverse positions ([0-9]) through ([0-9]))";
+  static constexpr const char * Regex_Pattern = R"(reverse positions ([0-9]) through ([0-9]))";
 
   size_t pos_a;
   size_t pos_b;
@@ -147,7 +147,7 @@ struct ReversePositions {
 };
 
 struct MovePosition {
-  static constexpr const char * Regex = R"(move position ([0-9]) to position ([0-9]))";
+  static constexpr const char * Regex_Pattern = R"(move position ([0-9]) to position ([0-9]))";
 
   size_t from;
   size_t to;
@@ -174,30 +174,13 @@ using Instruction = std::variant<
   SwapPosition, SwapLetter, RotateLeft, RotateRight, RotateLetter, ReversePositions, MovePosition
 >;
 
-template<typename Type>
-void add_handler_for(bj::InstructionReader<Instruction> & reader) {
-  reader.add_handler(
-    Type::Regex,
-    [](const std::vector<std::string> & values) -> Instruction {
-      return Type(values);
-    }
-  );
-}
-
 Output day_2016_21(const std::vector<std::string> & lines, const DayExtraInfo &) {
   std::string to_scramble = lines[0];
   std::string to_unscramble = lines[1];
 
   const std::span<const std::string> instruction_lines(lines.begin() + 2, lines.end());
 
-  bj::InstructionReader<Instruction> reader;
-  add_handler_for<SwapPosition>(reader);
-  add_handler_for<SwapLetter>(reader);
-  add_handler_for<RotateLeft>(reader);
-  add_handler_for<RotateRight>(reader);
-  add_handler_for<RotateLetter>(reader);
-  add_handler_for<ReversePositions>(reader);
-  add_handler_for<MovePosition>(reader);
+  bj::InstructionReader<Instruction> reader = bj::make_instruction_reader_from_variant<Instruction>();
 
   const auto opt_instructions = reader(instruction_lines);
   if (!opt_instructions.has_value()) return Output(0, 0);

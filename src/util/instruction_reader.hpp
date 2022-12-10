@@ -1,6 +1,7 @@
 #include <regex>
 #include <string>
 #include <span>
+#include <variant>
 
 namespace bj {
     /**
@@ -84,4 +85,31 @@ namespace bj {
             return elements;
         }
     };
+
+    namespace _ {
+        template<typename Variant, size_t I>
+        constexpr void add_variant(InstructionReader<Variant> & reader) {
+            if constexpr (I == std::variant_size_v<Variant>) return;
+
+            using Type = std::variant_alternative_t<I, Variant>;
+
+            reader.add_handler(
+                Type::Regex_Pattern,
+                [](const std::vector<std::string> & values) -> Variant {
+                    return Type(values);
+                }
+            );
+
+            if constexpr (I + 1 != std::variant_size_v<Variant>) {
+                add_variant<Variant, I + 1>(reader);
+            }
+        }
+    }
+
+    template<typename Variant>
+    InstructionReader<Variant> make_instruction_reader_from_variant() {
+        InstructionReader<Variant> reader;
+        _::add_variant<Variant, 0>(reader);
+        return reader;
+    }
 }
