@@ -19,3 +19,5 @@
 09 09_puzzle.txt ? ?
 10 10_example.txt 13140 _
 10 10_puzzle.txt ?14520 ?
+11 11_example.txt 10605 2713310158
+11 11_puzzle.txt ? ?
