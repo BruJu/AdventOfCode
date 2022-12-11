@@ -1,11 +1,11 @@
 #include "../advent_of_code.hpp"
-#include <span>
 #include <algorithm>
-#include <queue>
+#include <cstring>
 #include <exception>
 #include <optional>
-#include <ranges>
-#include <cstring>
+#include <queue>
+#include <regex>
+#include <span>
 
 // https://adventofcode.com/2022/day/11
 
@@ -54,8 +54,6 @@ public:
   }
 };
 
-struct MonkeyBuilder;
-
 class Monkey {
 private:
   size_t id;
@@ -65,10 +63,11 @@ private:
   size_t target_monkey_if_true;
   size_t target_monkey_if_false;
   size_t seen_items = 0;
+  
+  explicit Monkey(std::smatch regex_match);
 
-  Monkey() = default;
 public:
-  static std::optional<Monkey> next_monkey(MonkeyBuilder & builder);
+  [[nodiscard]] static std::vector<Monkey> read_monkeys(const std::vector<std::string> & lines);
 
   static unsigned long long int get_monkey_business(std::span<const Monkey> monkeys) {
     std::vector<unsigned long long int> values;
@@ -133,44 +132,48 @@ public:
   }
 };
 
-struct MonkeyBuilder {
-  const std::vector<std::string> * lines;
+std::vector<Monkey> Monkey::read_monkeys(const std::vector<std::string> & lines) {
+  const std::regex regex_object = std::regex(
+    R"(Monkey (\d+):\n  Starting items: (.*)\n  Operation: new = old (\*|\+) (\d+|old)\n  Test: divisible by (\d+)\n    If true: throw to monkey (\d+)\n    If false: throw to monkey (\d+))"
+  );
+  std::smatch smatch_;
+
+  std::vector<Monkey> retval;
+
   size_t i = 0;
 
-  bool go_to_next_non_empty_line() {
-    while (i < lines->size() && (*lines)[i] == "") ++i;
+  while (true) {
+    while (i < lines.size() && lines[i] == "") ++i;
 
-    return i != lines->size();
-  }
+    if (i == lines.size()) break;
 
-  std::string check_and_trim(const char * prefix) {
-    if (i == lines->size()) throw std::runtime_error("bad input (eof)");
-    const std::string & line = (*lines)[i];
-    ++i;
-    const size_t expected_size = std::strlen(prefix);
-    if (line.size() < expected_size) throw std::runtime_error("bad input");
-    if (line.substr(0, expected_size) != prefix) {
-      throw std::runtime_error("bad input");
+    const std::string to_parse =
+      lines[i] + '\n' + lines[i + 1] + '\n' +
+      lines[i + 2] + '\n' + lines[i + 3] + '\n' +
+      lines[i + 4] + '\n' + lines[i + 5];
+    
+    i += 6;
+
+    if (!std::regex_search(to_parse, smatch_, regex_object)) {
+      std::cerr << to_parse << '\n';
+      throw std::runtime_error("Bad input");
     }
-    return line.substr(expected_size);
-  }
-};
 
-std::optional<Monkey> Monkey::next_monkey(MonkeyBuilder & builder) {
-  // IF ONLY THERE WAS SOME KIND OF UNIVERSAL FORMAT THAT EVERY APIs
-  // IN THIS WORLD WAS USING. MAYBE WE COULD USE IT INSTEAD OF HAVING PARSING
-  // FUNCTIONS THAT ARE WAY DAMN TOO LONG.
-  if (!builder.go_to_next_non_empty_line()) return std::nullopt;
-
-  Monkey monkey;
-
-  {
-    const std::string monkey_id_line = builder.check_and_trim("Monkey ");
-    monkey.id = std::stoul(monkey_id_line.substr(0, monkey_id_line.size() - 1));
+    retval.push_back(Monkey(smatch_));
   }
 
+  return retval;
+}
+
+Monkey::Monkey(std::smatch regex_match)
+  : id(std::stoul(regex_match[1].str()))
+  , dividable_by(std::stoul(regex_match[5].str()))
+  , target_monkey_if_true(std::stoul(regex_match[6].str()))
+  , target_monkey_if_false(std::stoul(regex_match[7].str()))
+{
+
   {
-    std::string items_line = builder.check_and_trim("  Starting items: ");
+    std::string items_line = regex_match[2].str();
     auto it = items_line.begin();
     while (it != items_line.end()) {
       if (*it == ',') it = items_line.erase(it);
@@ -183,52 +186,28 @@ std::optional<Monkey> Monkey::next_monkey(MonkeyBuilder & builder) {
     );
 
     for (const Item item : items_int) {
-      monkey.held_items.emplace(item);
+      held_items.emplace(item);
     }
   }
-
+  
   {
-    std::string operation = builder.check_and_trim("  Operation: new = old ");
-    const Operator operator_ = operation[0] == '+' ? Operator::Plus : Operator::Times;
+    const Operator operator_ = regex_match[3].str()[0] == '+' ? Operator::Plus : Operator::Times;
     std::optional<Item> value;
+
+    std::string value_str = regex_match[4].str();
     
-    if (operation.size() == 5 && operation.substr(2, 3) == "old") {
+    if (value_str == "old") {
       value = std::nullopt; // I like writing useless lines so I can write useless comments
     } else{
-      value = std::stoul(operation.substr(2));
+      value = std::stoul(value_str);
     }
 
-    monkey.transformer = ItemTransformer{ operator_, value };
+    transformer = ItemTransformer{ operator_, value };
   }
-
-  {
-    std::string line = builder.check_and_trim("  Test: divisible by ");
-    monkey.dividable_by = std::stoul(line);
-  }
-
-  {
-    std::string line = builder.check_and_trim("    If true: throw to monkey ");
-    monkey.target_monkey_if_true = std::stoul(line);
-  }
-
-  {
-    std::string line = builder.check_and_trim("    If false: throw to monkey ");
-    monkey.target_monkey_if_false = std::stoul(line);
-  }
-
-  return monkey;
 }
 
 Output day_2022_11(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  std::vector<Monkey> monkeys = [&]() {
-    MonkeyBuilder monkey_builder{ &lines, 0 };
-
-    std::vector<Monkey> monkeys;
-    while (auto new_monkey = Monkey::next_monkey(monkey_builder)) {
-      monkeys.emplace_back(std::move(new_monkey.value()));
-    }
-    return monkeys;
-  }();
+  const std::vector<Monkey> monkeys = Monkey::read_monkeys(lines);
 
   auto part_a = monkeys;
   for (size_t round = 0; round != 20; ++round) {

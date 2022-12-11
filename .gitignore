@@ -2,3 +2,5 @@
 **/main
 bin/
 build/
+.release_time
+main.stackdump
