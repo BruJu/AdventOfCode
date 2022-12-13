@@ -33,3 +33,5 @@
 20 20_puzzle.txt    ?                ?
 21 21_example.txt   decab            ?
 21 21_puzzle.txt    ?                ?
+22 22_example.txt   _                7
+22 22_input.txt     ?                ?
