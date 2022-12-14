@@ -1,5 +1,9 @@
 #pragma once
+
 #include <optional>
+#include <concepts>
+#include <cmath>
+#include <stdexcept>
 
 namespace bj {
     enum class Direction { Left, Right, Top, Down };
@@ -61,6 +65,28 @@ namespace bj {
             }}
 
             return retval;
+        }
+
+        template<std::invocable<bj::Position> Consumer>
+        static void for_each_point_between(const bj::Position from, const bj::Position to, Consumer consumer) {
+            if (from.x != to.x && from.y != to.y) {
+                // Pure diagonal movements actually work
+                if (std::abs(from.x - to.x) != std::abs(from.y - to.y)) {
+                    throw std::runtime_error("bj::Position::for_each_point_between does not support oblique movements");
+                }
+            }
+
+            const int delta_x = from.x < to.x ? 1 : from.x == to.x ? 0 : -1;
+            const int delta_y = from.y < to.y ? 1 : from.y == to.y ? 0 : -1;
+
+            bj::Position i = from;
+            while (i != to) {
+                consumer(i);
+                i.x += delta_x;
+                i.y += delta_y;
+            }
+
+            consumer(i);
         }
     };
 

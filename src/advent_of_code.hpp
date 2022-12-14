@@ -227,6 +227,36 @@ public:
     }
 };
 
+
+namespace bj {
+/** string_split(line, separator) is equivalent to line.split(separator) in JavaScript */
+inline std::vector<std::string> string_split(
+    const std::string_view line,
+    const std::string_view separator
+) {
+  std::vector<std::string> retval;
+
+  size_t segment_start = 0;
+  size_t i = 0;
+  while (i < line.size()) {
+    if (i + separator.size() < line.size()) {
+      if (line.substr(i, separator.size()) == separator) {
+        retval.emplace_back(line.substr(segment_start, i - segment_start));
+        i += separator.size();
+        segment_start = i;
+        continue;
+      }
+    }
+
+    ++i;
+  }
+
+  retval.emplace_back(line.substr(segment_start, i - segment_start));
+
+  return retval;
+}
+}
+
 struct Board {
     std::vector<std::vector<char>> m_board;
 

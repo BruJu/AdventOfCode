@@ -15,6 +15,7 @@
 
 enum class Cucumber { None, Down, Right };
 
+struct CucumberPosition { size_t x; size_t y; };
 
 static Cucumber make_cucumber(char c) {
   if (c == '>') return Cucumber::Right;
@@ -62,7 +63,7 @@ struct Grid {
 
   template<Cucumber moved_type, size_t dx, size_t dy>
   bool mid_step() {
-    std::vector<std::pair<size_t, size_t>> x = find_all_movable(moved_type, dx, dy);
+    std::vector<CucumberPosition> x = find_all_movable(moved_type, dx, dy);
     move(x, dx, dy);
     return x.empty();
   }
@@ -70,13 +71,13 @@ struct Grid {
   [[nodiscard]] bool east() { return mid_step<Cucumber::Right, 1ul, 0ul>(); }
   [[nodiscard]] bool south() { return mid_step<Cucumber::Down, 0ul, 1ul>(); }
 
-  std::vector<std::pair<size_t, size_t>> find_all_movable(Cucumber type, size_t dx, size_t dy) {
-    std::vector<std::pair<size_t, size_t>> positions;
+  std::vector<CucumberPosition> find_all_movable(Cucumber type, size_t dx, size_t dy) {
+    std::vector<CucumberPosition> positions;
 
     for (size_t x = 0; x != width; ++x) {
       for (size_t y = 0; y != height; ++y) {
         if (get(x, y) == type && get(x + dx, y + dy) == Cucumber::None) {
-          positions.push_back(std::pair(x, y));
+          positions.emplace_back(CucumberPosition { x, y });
         }
       }
     }
@@ -84,11 +85,11 @@ struct Grid {
     return positions;
   }
 
-  void move(const std::vector<std::pair<size_t, size_t>> & moved_positions, size_t dx, size_t dy) {
-    for (const auto cucumber_pos : moved_positions) {
+  void move(const std::vector<CucumberPosition> & moved_positions, size_t dx, size_t dy) {
+    for (const CucumberPosition cucumber_pos : moved_positions) {
       std::swap(
-        get(cucumber_pos.first, cucumber_pos.second),
-        get(cucumber_pos.first + dx, cucumber_pos.second + dy)
+        get(cucumber_pos.x     , cucumber_pos.y     ),
+        get(cucumber_pos.x + dx, cucumber_pos.y + dy)
       );
     }
   }

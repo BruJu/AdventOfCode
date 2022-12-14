@@ -19,7 +19,7 @@ public:
     }
   }
 
-  [[nodiscard]] void add_value(int value) { register_V += value; }
+  void add_value(int value) { register_V += value; }
 
   [[nodiscard]] auto get_signal_strength_sum() const noexcept {
     return signal_strength_sum;
