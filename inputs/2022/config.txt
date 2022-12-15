@@ -27,3 +27,5 @@
 13 13_puzzle.txt    ?      ?
 14 14_example.txt   24     93
 14 14_puzzle.txt    ?      ?
+15 15_example.txt   26     56000011
+15 15_puzzle.txt    ?      ?
