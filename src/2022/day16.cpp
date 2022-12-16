@@ -9,11 +9,11 @@
 #include <list>
 #include <array>
 #include <optional>
+#include <bitset>
 // https://adventofcode.com/2022/day/16
 
 
-using CompactName = int;
-int compact_name(const std::string & s) { return s[0] * 0x100 + s[1]; }
+using CompactName = size_t;
 
 struct Valve {
   int flow_rate;
@@ -22,18 +22,24 @@ struct Valve {
 
 struct Valves {
 private:
-  std::map<CompactName, Valve> m_valves;
+  std::map<std::string, CompactName> name_to_value;
+  std::vector<Valve> m_valves;
+  
   size_t valves_to_open;
 
 public:
   explicit Valves(const std::vector<std::string> & lines);
 
   [[nodiscard]] const Valve & operator[](const CompactName name) const {
-    return m_valves.find(name)->second;
+    return m_valves[name];
   }
 
   [[nodiscard]] size_t number_of_valves_to_open() const noexcept {
     return valves_to_open;
+  }
+
+  [[nodiscard]] CompactName get_id_of(const std::string & name) const {
+    return name_to_value.find(name)->second;
   }
 };
 
@@ -41,29 +47,57 @@ Valves::Valves(const std::vector<std::string> & lines) {
   std::regex regex_ { R"(Valve ([A-Z][A-Z]) has flow rate=(\d+); tunnels? leads? to valves? (.*))"};
   std::smatch smatch_;
 
+  m_valves.reserve(lines.size());
+
+  const auto create_or_get_valve = [&](const std::string & name) {
+    if (auto it = name_to_value.find(name); it != name_to_value.end()) {
+      return &m_valves[it->second];
+    } else {
+      name_to_value.emplace(name, m_valves.size());
+      return &m_valves.emplace_back();
+    }
+  };
+
+  // Put non empty flow_rate first
   for (const auto & line : lines) {
     if (!std::regex_search(line, smatch_, regex_)) {
       throw std::runtime_error(":(");
     }
 
-    const CompactName name = compact_name(smatch_[1].str());
+    const int flow_rate = std::stoi(smatch_[2].str());
+    if (flow_rate != 0) {
+      const std::string str_name = smatch_[1].str();
+      Valve * ptrValve = create_or_get_valve(str_name);
+    }
+  }
 
-    Valve valve;
-    valve.flow_rate = std::stoi(smatch_[2].str());
-    std::vector<std::string> next_name = bj::string_split(smatch_[3].str(), ", ");
-    for (const auto & name : next_name) {
-      valve.lead_to.emplace_back(compact_name(name));
+  // Ok, read tunnels and put empty tunnels
+  for (const auto & line : lines) {
+    if (!std::regex_search(line, smatch_, regex_)) {
+      throw std::runtime_error(":(");
     }
 
-    m_valves[name] = std::move(valve);
+    const std::string str_name = smatch_[1].str();
+    Valve * ptrValve = create_or_get_valve(str_name);
+
+    ptrValve->flow_rate = std::stoi(smatch_[2].str());
+    std::vector<std::string> next_name = bj::string_split(smatch_[3].str(), ", ");
+    for (const auto & name : next_name) {
+      create_or_get_valve(name);
+      ptrValve->lead_to.emplace_back(get_id_of(name));
+    }
   }
 
   // Cache the number of valves to open
   valves_to_open = 0;
-  for (const Valve & valve : m_valves | std::views::values) {
+  for (const Valve & valve : m_valves) {
     if (valve.flow_rate != 0) {
       ++valves_to_open;
     }
+  }
+
+  if (valves_to_open >= 32) {
+    throw std::runtime_error("Too much valves to open");
   }
 }
 
@@ -71,7 +105,7 @@ struct State {
   std::set<CompactName> oppened;
   long long int total_pressure = 0;
 
-  CompactName on_name = compact_name("AA");
+  CompactName on_name;
 
   std::vector<State> next_states(const Valves & valves, int remaining) const {
     std::vector<State> next;
@@ -100,15 +134,15 @@ struct State {
 
 
 Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  std::cout << "xxread" <<std::endl;
+  std::cout << "start reading\n";
   Valves valves(lines);
-  std::cout << "xxendread"<<std::endl;
   const size_t valves_to_open = valves.number_of_valves_to_open();
-  std::cout << "xx"<<std::endl;
+
+  std::cout << "finished reading\n";
 
   State state;
   state.total_pressure = 0;
-  state.on_name = compact_name("AA");
+  state.on_name = valves.get_id_of("AA");
 
   std::vector<State> current_states;
   current_states.emplace_back(state);
