@@ -10,14 +10,36 @@
 #include <array>
 #include <optional>
 #include <bitset>
+#include <array>
+#include <span>
 // https://adventofcode.com/2022/day/16
 
 
 using CompactName = size_t;
+constexpr size_t MaxNonEmptyValves = 16;
+
+template<typename T, size_t N>
+struct bad_static_vector {
+private:
+  std::array<T, N> values {};
+  size_t size = 0;
+
+public:
+  void add(T value) {
+    if (size == N) throw std::runtime_error("too much elemensts in bad static vector");
+    values[size] = value;
+    ++size;
+  }
+
+  [[nodiscard]] std::span<const T> get_all() const {
+    return std::span(values.begin(), values.begin() + size);
+  }
+};
+
 
 struct Valve {
   int flow_rate;
-  std::vector<CompactName> lead_to;
+  bad_static_vector<CompactName, 6> lead_to;
 };
 
 struct Valves {
@@ -26,6 +48,7 @@ private:
   std::vector<Valve> m_valves;
   
   size_t valves_to_open;
+  unsigned long open_valves_mask;
 
 public:
   explicit Valves(const std::vector<std::string> & lines);
@@ -40,6 +63,10 @@ public:
 
   [[nodiscard]] CompactName get_id_of(const std::string & name) const {
     return name_to_value.find(name)->second;
+  }
+
+  [[nodiscard]] unsigned long get_open_valve_mask() const noexcept {
+    return open_valves_mask;
   }
 };
 
@@ -67,7 +94,7 @@ Valves::Valves(const std::vector<std::string> & lines) {
     const int flow_rate = std::stoi(smatch_[2].str());
     if (flow_rate != 0) {
       const std::string str_name = smatch_[1].str();
-      Valve * ptrValve = create_or_get_valve(str_name);
+      create_or_get_valve(str_name);
     }
   }
 
@@ -84,7 +111,7 @@ Valves::Valves(const std::vector<std::string> & lines) {
     std::vector<std::string> next_name = bj::string_split(smatch_[3].str(), ", ");
     for (const auto & name : next_name) {
       create_or_get_valve(name);
-      ptrValve->lead_to.emplace_back(get_id_of(name));
+      ptrValve->lead_to.add(get_id_of(name));
     }
   }
 
@@ -96,77 +123,69 @@ Valves::Valves(const std::vector<std::string> & lines) {
     }
   }
 
-  if (valves_to_open >= 32) {
+  if (valves_to_open >= MaxNonEmptyValves) {
     throw std::runtime_error("Too much valves to open");
   }
+
+  open_valves_mask = (1 << valves_to_open) - 1;
 }
 
 struct State {
-  std::set<CompactName> oppened;
-  long long int total_pressure = 0;
+  std::bitset<MaxNonEmptyValves> oppened;
+  long int total_pressure = 0;
 
   CompactName on_name;
 
-  std::vector<State> next_states(const Valves & valves, int remaining) const {
-    std::vector<State> next;
+  void next_states(
+    std::vector<State> & output,
+    const Valves & valves, int remaining) const {
 
     const Valve & valve = valves[on_name];
 
-    if (valve.flow_rate != 0 && !oppened.contains(on_name)) {
+    if (valve.flow_rate != 0 && !oppened.test(on_name)) {
       State copy = *this;
-      copy.oppened.emplace(on_name);
+      copy.oppened.set(on_name);
       if (remaining >= 0)
         copy.total_pressure += remaining * valve.flow_rate;
-      next.emplace_back(copy);
+      output.emplace_back(copy);
     }
 
-    for (const CompactName & next_valve : valve.lead_to) {
+    for (const CompactName & next_valve : valve.lead_to.get_all()) {
       State copy = *this;
       copy.on_name = next_valve;
-      next.emplace_back(copy);
+      output.emplace_back(copy);
     }
-
-    return next;
   }
 
 };
 
 
-
 Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  std::cout << "start reading\n";
   Valves valves(lines);
-  const size_t valves_to_open = valves.number_of_valves_to_open();
-
-  std::cout << "finished reading\n";
-
-  State state;
-  state.total_pressure = 0;
-  state.on_name = valves.get_id_of("AA");
+  const auto all_open_mask = valves.get_open_valve_mask();  
 
   std::vector<State> current_states;
-  current_states.emplace_back(state);
+  {
+    State state;
+    state.on_name = valves.get_id_of("AA");
+    current_states.emplace_back(state);
+  }
 
 
+  std::vector<State> next;
   for (int i = 0; i != 30; ++i) {
-
     std::sort(
       current_states.begin(), current_states.end(),
       [&](const State & lhs, const State & rhs) {
-        if (lhs.oppened.size() != valves_to_open) {
+
+        const auto lhs_op = lhs.oppened.to_ulong();
+        const auto rhs_op = rhs.oppened.to_ulong();
+        if (lhs_op < rhs_op) return false;
+        if (lhs_op > rhs_op) return true;
+
+        if (lhs_op != all_open_mask) {
           if (lhs.on_name < rhs.on_name) return true;
           if (lhs.on_name > rhs.on_name) return false;
-        }
-        if (lhs.oppened.size() < rhs.oppened.size()) return true;
-        if (lhs.oppened.size() > rhs.oppened.size()) return false;
-
-        auto lit = lhs.oppened.begin();
-        auto rit = rhs.oppened.begin();
-        while (lit != lhs.oppened.end()) {
-          if (*lit < *rit) return true;
-          if (*lit > *rit) return false;
-          ++lit;
-          ++rit;
         }
 
         if (lhs.total_pressure > rhs.total_pressure) return true;
@@ -184,9 +203,10 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
     while (listed_it != listed.end() && listed_next != listed.end()) {
       const auto & lhs = *listed_it;
       const auto & rhs = *listed_next;
+
       if (
-        ( lhs.oppened.size() == rhs.oppened.size() && lhs.oppened.size() == valves_to_open )
-        || ( lhs.on_name == rhs.on_name && lhs.oppened == rhs.oppened)
+        lhs.oppened == rhs.oppened 
+        && (lhs.oppened.to_ulong() == all_open_mask || lhs.on_name == rhs.on_name)
         ) {
           listed_next = listed.erase(listed_next);
       } else {
@@ -198,26 +218,22 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
     current_states = std::vector<State>(listed.begin(), listed.end());
 
     std::cout << i << " " << current_states.size() << "\n";
-    std::vector<State> next;
-
+    
+    next.clear();
     for (const State & s : current_states) {
-      if (state.oppened.size() == valves_to_open) {
+      if (s.oppened.to_ulong() == all_open_mask) {
         next.emplace_back(s);
         continue;
       }
 
-      const auto nexts = s.next_states(valves, 30 - i - 1);
-
-      for (const auto & n : nexts) {
-        next.emplace_back(n);
-      }
+      s.next_states(next, valves, 30 - i - 1);
     }
 
     if (next.size() == 0) {
       next = current_states;
     }
 
-    current_states = next;
+    std::swap(current_states, next);
   }
 
   std::partial_sort(current_states.begin(), current_states.begin() + 1, current_states.end(),
