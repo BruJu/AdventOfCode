@@ -17,6 +17,7 @@
 
 using CompactName = size_t;
 constexpr size_t MaxNonEmptyValves = 16;
+constexpr size_t MaxValves = 64;
 
 template<typename T, size_t N>
 struct bad_static_vector {
@@ -127,24 +128,101 @@ Valves::Valves(const std::vector<std::string> & lines) {
     throw std::runtime_error("Too much valves to open");
   }
 
+  if (m_valves.size() >= MaxValves) {
+    throw std::runtime_error("Too many valves");
+  }
+
   open_valves_mask = (1 << valves_to_open) - 1;
 }
 
+
+
+template<size_t N>
+struct Position {
+  std::array<CompactName, N> values;
+
+  explicit Position(CompactName name) { values.fill(name); }
+
+  CompactName & operator[](size_t n) { return values[n]; }
+  CompactName operator[](size_t n) const { return values[n]; }
+
+  bool operator<(Position other) const {
+    auto lhs = values;
+    std::sort(lhs.begin(), lhs.end());
+
+    auto rhs = other.values;
+    std::sort(rhs.begin(), rhs.end());
+
+    for (size_t i = 0; i != N; ++i) {
+      if (lhs[i] < rhs[i]) return true;
+      if (lhs[i] > rhs[i]) return false;
+    }
+    return false;
+  }
+
+  bool operator>(Position other) const { return other < *this; }
+
+  bool operator==(Position other) const {
+    auto lhs = values;
+    std::sort(lhs.begin(), lhs.end());
+
+    auto rhs = other.values;
+    std::sort(rhs.begin(), rhs.end());
+
+    return lhs == rhs;
+  }
+};
+
+
+template<size_t N>
 struct State {
   std::bitset<MaxNonEmptyValves> oppened;
   long int total_pressure = 0;
 
-  CompactName on_name;
+  Position<N> elephant_pos;
+
+  explicit State(CompactName name) : elephant_pos(name) {}
 
   void next_states(
     std::vector<State> & output,
     const Valves & valves, int remaining) const {
 
-    const Valve & valve = valves[on_name];
+    size_t initial_start = output.size();
+    size_t segment_start = output.size();
+    output.emplace_back(*this);
+    size_t segment_end = output.size();
 
-    if (valve.flow_rate != 0 && !oppened.test(on_name)) {
+    for (size_t i = 0; i != N; ++i) {
+
+      for (size_t x = segment_start; x != segment_end; ++x) {
+        /* copy */ const State state = output[x];
+        state.push_next_states(
+          output, valves, remaining, i
+        );
+      }
+
+      segment_start = segment_end;
+      segment_end = output.size();
+    }
+
+    output.erase(
+      output.begin() + initial_start,
+      output.begin() + segment_start
+    );
+  }
+
+
+
+  void push_next_states(
+    std::vector<State> & output,
+    const Valves & valves, int remaining,
+    size_t n
+  ) const {
+    const Valve & valve = valves[elephant_pos[n]];
+
+    if (valve.flow_rate != 0 && !oppened.test(elephant_pos[n])) {
       State copy = *this;
-      copy.oppened.set(on_name);
+      copy.oppened.set(elephant_pos[n]);
       if (remaining >= 0)
         copy.total_pressure += remaining * valve.flow_rate;
       output.emplace_back(copy);
@@ -152,7 +230,7 @@ struct State {
 
     for (const CompactName & next_valve : valve.lead_to.get_all()) {
       State copy = *this;
-      copy.on_name = next_valve;
+      copy.elephant_pos[n] = next_valve;
       output.emplace_back(copy);
     }
   }
@@ -160,15 +238,16 @@ struct State {
 };
 
 
-bool order_states(const State & lhs, const State & rhs, const unsigned long all_open_mask) {
+template<size_t N>
+bool order_states(const State<N> & lhs, const State<N> & rhs, const unsigned long all_open_mask) {
   const auto lhs_op = lhs.oppened.to_ulong();
   const auto rhs_op = rhs.oppened.to_ulong();
   if (lhs_op < rhs_op) return false;
   if (lhs_op > rhs_op) return true;
 
   if (lhs_op != all_open_mask) {
-    if (lhs.on_name < rhs.on_name) return true;
-    if (lhs.on_name > rhs.on_name) return false;
+    if (lhs.elephant_pos < rhs.elephant_pos) return true;
+    if (lhs.elephant_pos > rhs.elephant_pos) return false;
   }
 
   if (lhs.total_pressure > rhs.total_pressure) return true;
@@ -177,28 +256,25 @@ bool order_states(const State & lhs, const State & rhs, const unsigned long all_
   return false;
 }
 
-bool rhs_is_useless(const State & lhs, const State & rhs, const unsigned long all_open_mask) {
+template<size_t N>
+bool rhs_is_useless(const State<N> & lhs, const State<N> & rhs, const unsigned long all_open_mask) {
   return lhs.oppened == rhs.oppened 
-    && (lhs.oppened.to_ulong() == all_open_mask || lhs.on_name == rhs.on_name);
+    && (lhs.oppened.to_ulong() == all_open_mask || lhs.elephant_pos == rhs.elephant_pos);
 }
 
 
-Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  Valves valves(lines);
+
+template<size_t N>
+long int solve(const Valves & valves, int start_i) {
   const auto all_open_mask = valves.get_open_valve_mask();  
 
-  std::vector<State> current_states;
-  {
-    State state;
-    state.on_name = valves.get_id_of("AA");
-    current_states.emplace_back(state);
-  }
+  std::vector<State<N>> current_states;
+  current_states.emplace_back(valves.get_id_of("AA"));
 
-
-  std::vector<State> next;
-  for (int i = 0; i != 30; ++i) {
+  std::vector<State<N>> next;
+  for (int i = start_i; i != 30; ++i) {
     std::sort(current_states.begin(), current_states.end(),
-      [&](const State & lhs, const State & rhs) {
+      [&](const State<N> & lhs, const State<N> & rhs) {
         return order_states(lhs, rhs, all_open_mask);
       }
     );
@@ -206,7 +282,7 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
     const auto end = std::unique(
       current_states.begin(),
       current_states.end(),
-      [&](const State & lhs, const State & rhs) {
+      [&](const State<N> & lhs, const State<N> & rhs) {
         return rhs_is_useless(lhs, rhs, all_open_mask);
       }
     );
@@ -216,7 +292,7 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
     std::cout << i << " " << current_states.size() << "\n";
     
     next.clear();
-    for (const State & s : current_states) {
+    for (const State<N> & s : current_states) {
       if (s.oppened.to_ulong() == all_open_mask) {
         next.emplace_back(s);
         continue;
@@ -234,10 +310,21 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
 
   const auto max_pressure = std::max_element(
     current_states.begin(), current_states.end(),
-    [](const State & state, const State & rhs) {
+    [](const State<N> & state, const State<N> & rhs) {
       return state.total_pressure < rhs.total_pressure;
     }
   );
 
-  return Output(max_pressure->total_pressure, 0);
+  return max_pressure->total_pressure;
+
+}
+
+
+Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  Valves valves(lines);
+
+  const auto part_a = solve<1>(valves, 0);
+  const auto part_b = solve<2>(valves, 15);  
+
+  return Output(part_a, part_b);
 }
