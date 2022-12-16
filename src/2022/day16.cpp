@@ -263,6 +263,48 @@ bool rhs_is_useless(const State<N> & lhs, const State<N> & rhs, const unsigned l
 }
 
 
+template<size_t N>
+void remove_duplicates_unique(
+  std::vector<State<N>> & current_states, 
+  unsigned long all_open_mask
+) {
+  const auto end = std::unique(
+    current_states.begin(),
+    current_states.end(),
+    [&](const State<N> & lhs, const State<N> & rhs) {
+      return rhs_is_useless(lhs, rhs, all_open_mask);
+    }
+  );
+
+  current_states.erase(end, current_states.end());
+}
+
+#include <list>
+template<size_t N>
+void remove_duplicates_list(
+  std::vector<State<N>> & current_states, 
+  unsigned long all_open_mask
+) {
+  if (current_states.size() <= 1) return;
+
+  std::list<State<N>> list(current_states.begin(), current_states.end());
+
+  auto it_a = list.begin();
+  auto it_b = list.begin();
+  ++it_b;
+
+  while (it_b != list.end()) {
+    if (rhs_is_useless(*it_a, *it_b, all_open_mask)) {
+      it_b = list.erase(it_b);
+    } else {
+      ++it_a;
+      ++it_b;
+    }
+  }
+
+  current_states.clear();
+  current_states.insert(current_states.begin(), list.begin(), list.end());
+}
 
 template<size_t N>
 long int solve(const Valves & valves, int start_i) {
@@ -279,15 +321,7 @@ long int solve(const Valves & valves, int start_i) {
       }
     );
 
-    const auto end = std::unique(
-      current_states.begin(),
-      current_states.end(),
-      [&](const State<N> & lhs, const State<N> & rhs) {
-        return rhs_is_useless(lhs, rhs, all_open_mask);
-      }
-    );
-
-    current_states.erase(end, current_states.end());
+    remove_duplicates_unique(current_states, all_open_mask);
 
     std::cout << i << " " << current_states.size() << "\n";
     
@@ -324,7 +358,7 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
   Valves valves(lines);
 
   const auto part_a = solve<1>(valves, 0);
-  const auto part_b = solve<2>(valves, 15);  
+  const auto part_b = solve<2>(valves, 4);  
 
   return Output(part_a, part_b);
 }
