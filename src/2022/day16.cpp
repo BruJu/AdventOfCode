@@ -160,6 +160,29 @@ struct State {
 };
 
 
+bool order_states(const State & lhs, const State & rhs, const unsigned long all_open_mask) {
+  const auto lhs_op = lhs.oppened.to_ulong();
+  const auto rhs_op = rhs.oppened.to_ulong();
+  if (lhs_op < rhs_op) return false;
+  if (lhs_op > rhs_op) return true;
+
+  if (lhs_op != all_open_mask) {
+    if (lhs.on_name < rhs.on_name) return true;
+    if (lhs.on_name > rhs.on_name) return false;
+  }
+
+  if (lhs.total_pressure > rhs.total_pressure) return true;
+  if (lhs.total_pressure < rhs.total_pressure) return false;
+
+  return false;
+}
+
+bool rhs_is_useless(const State & lhs, const State & rhs, const unsigned long all_open_mask) {
+  return lhs.oppened == rhs.oppened 
+    && (lhs.oppened.to_ulong() == all_open_mask || lhs.on_name == rhs.on_name);
+}
+
+
 Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
   Valves valves(lines);
   const auto all_open_mask = valves.get_open_valve_mask();  
@@ -174,48 +197,21 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
 
   std::vector<State> next;
   for (int i = 0; i != 30; ++i) {
-    std::sort(
-      current_states.begin(), current_states.end(),
+    std::sort(current_states.begin(), current_states.end(),
       [&](const State & lhs, const State & rhs) {
-
-        const auto lhs_op = lhs.oppened.to_ulong();
-        const auto rhs_op = rhs.oppened.to_ulong();
-        if (lhs_op < rhs_op) return false;
-        if (lhs_op > rhs_op) return true;
-
-        if (lhs_op != all_open_mask) {
-          if (lhs.on_name < rhs.on_name) return true;
-          if (lhs.on_name > rhs.on_name) return false;
-        }
-
-        if (lhs.total_pressure > rhs.total_pressure) return true;
-        if (lhs.total_pressure < rhs.total_pressure) return false;
-
-        return false;
+        return order_states(lhs, rhs, all_open_mask);
       }
     );
 
-    std::list<State> listed(current_states.begin(), current_states.end());
-
-    auto listed_it = listed.begin();
-    auto listed_next = listed.begin();
-    ++listed_next;
-    while (listed_it != listed.end() && listed_next != listed.end()) {
-      const auto & lhs = *listed_it;
-      const auto & rhs = *listed_next;
-
-      if (
-        lhs.oppened == rhs.oppened 
-        && (lhs.oppened.to_ulong() == all_open_mask || lhs.on_name == rhs.on_name)
-        ) {
-          listed_next = listed.erase(listed_next);
-      } else {
-        ++listed_it;
-        ++listed_next;
+    const auto end = std::unique(
+      current_states.begin(),
+      current_states.end(),
+      [&](const State & lhs, const State & rhs) {
+        return rhs_is_useless(lhs, rhs, all_open_mask);
       }
-    }
+    );
 
-    current_states = std::vector<State>(listed.begin(), listed.end());
+    current_states.erase(end, current_states.end());
 
     std::cout << i << " " << current_states.size() << "\n";
     
@@ -230,19 +226,18 @@ Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &)
     }
 
     if (next.size() == 0) {
-      next = current_states;
+      next.emplace_back(current_states[0]);
     }
 
     std::swap(current_states, next);
   }
 
-  std::partial_sort(current_states.begin(), current_states.begin() + 1, current_states.end(),
-  [](const State & state, const State & rhs) {
-    return state.total_pressure > rhs.total_pressure;
-  }
+  const auto max_pressure = std::max_element(
+    current_states.begin(), current_states.end(),
+    [](const State & state, const State & rhs) {
+      return state.total_pressure < rhs.total_pressure;
+    }
   );
 
-
-
-  return Output(current_states[0].total_pressure, 0);
+  return Output(max_pressure->total_pressure, 0);
 }
