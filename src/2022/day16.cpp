@@ -185,30 +185,24 @@ struct State {
 
   void next_states(
     std::vector<State> & output,
+    std::vector<State> & temporary_states,
     const Valves & valves, int remaining) const {
 
-    size_t initial_start = output.size();
-    size_t segment_start = output.size();
-    output.emplace_back(*this);
-    size_t segment_end = output.size();
+    size_t segment_start = temporary_states.size();
+    temporary_states.emplace_back(*this);
+    size_t segment_end = temporary_states.size();
 
     for (size_t i = 0; i != N; ++i) {
-
       for (size_t x = segment_start; x != segment_end; ++x) {
-        /* copy */ const State state = output[x];
+        /* copy */ const State state = temporary_states[x];
         state.push_next_states(
-          output, valves, remaining, i
+          i + 1 == N ? output : temporary_states, valves, remaining, i
         );
       }
 
       segment_start = segment_end;
-      segment_end = output.size();
+      segment_end = temporary_states.size();
     }
-
-    output.erase(
-      output.begin() + initial_start,
-      output.begin() + segment_start
-    );
   }
 
 
@@ -306,13 +300,18 @@ void remove_duplicates_list(
   current_states.insert(current_states.begin(), list.begin(), list.end());
 }
 
+#include <chrono>
+
 template<size_t N>
 long int solve(const Valves & valves, int start_i) {
   const auto all_open_mask = valves.get_open_valve_mask();  
 
   std::vector<State<N>> current_states;
+  std::vector<State<N>> temporary_states;
   current_states.emplace_back(valves.get_id_of("AA"));
 
+
+  const auto start = std::chrono::high_resolution_clock::now();
   std::vector<State<N>> next;
   for (int i = start_i; i != 30; ++i) {
     std::sort(current_states.begin(), current_states.end(),
@@ -323,16 +322,20 @@ long int solve(const Valves & valves, int start_i) {
 
     remove_duplicates_unique(current_states, all_open_mask);
 
-    std::cout << i << " " << current_states.size() << "\n";
+    const auto current_time = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start).count();
+
+    std::cout << i << '[' << duration << ']' << " " << current_states.size() << "\n";
     
     next.clear();
+    temporary_states.clear();
     for (const State<N> & s : current_states) {
       if (s.oppened.to_ulong() == all_open_mask) {
         next.emplace_back(s);
         continue;
       }
 
-      s.next_states(next, valves, 30 - i - 1);
+      s.next_states(next, temporary_states, valves, 30 - i - 1);
     }
 
     if (next.size() == 0) {
