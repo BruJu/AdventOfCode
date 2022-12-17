@@ -15,7 +15,7 @@
 
 // https://adventofcode.com/2022/day/17
 
-static constexpr size_t LastLines = 15;
+static constexpr size_t LastLines = 5;
 
 struct Grid {
   std::set<bj::Position> m_stabilized_positions;
@@ -266,11 +266,8 @@ Output day_2022_17(const std::vector<std::string> & lines, const DayExtraInfo &)
 
   // Make the cycles fall
   static constexpr long long int part_b_rocks = 1000000000000;
-  long long int n = 0;
-  while (cavern.number_of_rocks() + rock_diff < part_b_rocks) {
-    ++n;
-    cavern.add_fake_rocks(rock_diff); // who needs division?
-  }
+  const auto n = (part_b_rocks - cavern.number_of_rocks()) / rock_diff;
+  cavern.add_fake_rocks(rock_diff * n);
 
   // Finish the simulation
   while (cavern.number_of_rocks() != part_b_rocks) {
