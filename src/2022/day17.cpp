@@ -15,29 +15,21 @@
 
 // https://adventofcode.com/2022/day/17
 
+static constexpr size_t LastLines = 15;
 
 struct Grid {
   std::set<bj::Position> m_stabilized_positions;
   std::vector<bj::Position> current_falling_position;
-  int number_of_rocks = 0;
+  long long int number_of_rocks = 0;
 
+  void on_descend();
+  void jet_stream(int dx) { try_move(dx, 0); }
 
-  bool on_descend();
-  void jet_stream(int dx);
-
-  
-
-  int get_highest_y();
-
-  // [[nodiscard]] int number_of_rocks() const { return number_of_rocks; }
-
-  bool can_move(int dx, int dy) const;
-  void move(int dx, int dy);
-
+  int get_highest_y() const;
 
   void draw(int max_y);
 
-  int get_height_score(int y) {
+  int get_height_score(int y) const {
     int score = 0;
 
     for (int x = 0; x < 7; ++x) {
@@ -49,8 +41,22 @@ struct Grid {
     return score;
   }
 
-  static constexpr int tetris_score = 0x7F;
+  void add_falling_rock(const char * rock);
 
+  [[nodiscard]] std::array<int, LastLines> get_last_lines() const {
+    std::array<int, LastLines> l;
+
+    const int height = get_highest_y();
+    for (int i = 0; i != LastLines; ++i) {
+      l[i] = get_height_score(height - 1 - i);
+    }
+
+    return l;
+  }
+
+private:
+  bool try_move(int dx, int dy);
+  void stabilize();
 };
 
 void Grid::draw(int max_y) {
@@ -74,24 +80,42 @@ void Grid::draw(int max_y) {
   }
 }
 
-void Grid::jet_stream(int dx) {
-  if (can_move(dx, 0)) {
-    move(dx, 0);
+bool Grid::try_move(int dx, int dy) {
+  const auto can_move = [&](int dx, int dy) {
+    for (const bj::Position & pos : current_falling_position) {
+      bj::Position delta = pos;
+      delta.x += dx;
+      delta.y += dy;
+
+      if (delta.x < 0) return false;
+      if (delta.x >= 7) return false;
+      if (delta.y < 0) return false;
+      if (m_stabilized_positions.contains(delta)) return false;
+    }
+
+    return true;
+  };
+
+  const auto move = [&](int dx, int dy) {
+    for (bj::Position & pos : current_falling_position) {
+      pos.x += dx;
+      pos.y += dy;
+    }
+  };
+
+  if (can_move(dx, dy)) {
+    move(dx, dy);
+    return true;
+  } else {
+    return false;
   }
 }
 
-void Grid::move(int dx, int dy) {
-  for (bj::Position & pos : current_falling_position) {
-    pos.x += dx;
-    pos.y += dy;
-  }
-}
-
-int Grid::get_highest_y() {
+int Grid::get_highest_y() const {
   int highest = 0;
 
-  for (const auto & position : m_stabilized_positions) {
-    if (position.y + 1> highest) {
+  for (const bj::Position & position : m_stabilized_positions) {
+    if (position.y + 1 > highest) {
       highest = position.y + 1;
     }
   }
@@ -99,122 +123,165 @@ int Grid::get_highest_y() {
   return highest;
 }
 
-bool Grid::on_descend() {
-  if (can_move(0, -1)) {
-    for (bj::Position & pos : current_falling_position) {
-      pos.y -= 1;
-    }
-
-    return true;
+void Grid::on_descend() {
+  if (try_move(0, -1)) {
+    // noop
   } else {
-    for (const bj::Position & pos : current_falling_position) {
-      m_stabilized_positions.emplace(pos);
-    }
-
-    current_falling_position.clear();
-    ++number_of_rocks;
-
-    return false;
+    stabilize();
   }
 }
 
-
-bool Grid::can_move(int dx, int dy) const {
+void Grid::stabilize() {
   for (const bj::Position & pos : current_falling_position) {
-    bj::Position delta = pos;
-    delta.x += dx;
-    delta.y += dy;
-
-    if (delta.x < 0) return false;
-    if (delta.x >= 7) return false;
-    if (delta.y < 0) return false;
-    if (m_stabilized_positions.contains(delta)) return false;
+    m_stabilized_positions.emplace(pos);
   }
 
-  return true;
+  current_falling_position.clear();
+  ++number_of_rocks;
 }
-
-const char * falling_rock_1 = "####";
-const char * falling_rock_2 = ".#. ### .#.";
-const char * falling_rock_3 = "..# ..# ###";
-const char * falling_rock_4 = "# # # #";
-const char * falling_rock_5 = "## ##";
-
-std::array<const char *, 5> falling_types = {
-  falling_rock_1, falling_rock_2, falling_rock_3, falling_rock_4, falling_rock_5
-};
 
 struct JetPattern {
   std::string pattern;
   size_t i = 0;
 
-  [[nodiscard]] char next() {
+  [[nodiscard]] int next_dx() {
     const char p = pattern[i];
     i = (i + 1) % pattern.size();
-    return p;
+    if (p == '<') return -1;
+    else if (p == '>') return 1;
+    else throw std::runtime_error("bad jet");
   }
 };
 
 struct RockAdder {
-  size_t i = 0;
+  static constexpr std::array<const char *, 5> falling_rocks = {
+    "####",
+    ".#. ### .#.",
+    "..# ..# ###",
+    "# # # #",
+    "## ##"
+  };
 
-  void add_rock(Grid & grid) {
-    const char * rock_type = falling_types[i];
-    i = (i + 1) % falling_types.size();
+  size_t next_rock_id = 0;
 
-    int x = 2;
-    int y = grid.get_highest_y() + 3;
-
-    while (*rock_type) {
-      if (*rock_type == ' ') {
-        x = 2;
-        
-        for (bj::Position & pos : grid.current_falling_position) {
-          ++pos.y;
-        }
-      } else if (*rock_type == '#') {
-        grid.current_falling_position.emplace_back(bj::Position{ x, y });
-        ++x;
-      } else {
-        ++x;
-      }
-      ++rock_type;
-    }
+  [[nodiscard]] const char * get_next_rock() {
+    const char * rock = falling_rocks[next_rock_id];
+    next_rock_id = (next_rock_id + 1) % falling_rocks.size();
+    return rock;
   }
+};
+
+void Grid::add_falling_rock(const char * rock_type) {
+  int x = 2;
+  int y = get_highest_y() + 3;
+
+  while (*rock_type) {
+    if (*rock_type == ' ') {
+      x = 2;
+      
+      for (bj::Position & pos : current_falling_position) {
+        ++pos.y;
+      }
+    } else if (*rock_type == '#') {
+      current_falling_position.emplace_back(bj::Position{ x, y });
+      ++x;
+    } else {
+      ++x;
+    }
+    ++rock_type;
+  }
+}
+
+struct CycleDetector {
+  size_t pattern_pos;
+  size_t rock_pos;
+  std::array<int, LastLines> last_lines;
+
+  bool operator==(const CycleDetector & other) const {
+    return pattern_pos == other.pattern_pos && rock_pos == other.rock_pos && last_lines == other.last_lines;
+  }
+};
+
+
+class FallingCavern {
+private:
+  Grid present_rocks;
+  JetPattern jet_stream;
+  RockAdder future_rocks;
+
+public:
+  explicit FallingCavern(std::string jet_pattern) : jet_stream{ jet_pattern } {}
+
+  void tick() {
+    if (present_rocks.current_falling_position.size() == 0) {
+      present_rocks.add_falling_rock(future_rocks.get_next_rock());
+    }
+
+    present_rocks.jet_stream(jet_stream.next_dx());
+    present_rocks.on_descend();
+  }
+
+  [[nodiscard]] CycleDetector get_state_for_cycle_detection() const {
+    return CycleDetector { jet_stream.i, future_rocks.next_rock_id, present_rocks.get_last_lines() };
+  };
+
+  [[nodiscard]] long long int number_of_rocks() const noexcept { return present_rocks.number_of_rocks; }
+
+  [[nodiscard]] long long int get_highest_y() const noexcept { return present_rocks.get_highest_y(); }
+
+  void add_fake_rocks(long long int nb) { present_rocks.number_of_rocks += nb; }
 };
 
 
 
 Output day_2022_17(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  const std::string & line = lines[0];
+  // ==== PART A ====
+  FallingCavern cavern(lines[0]);
 
-  JetPattern pattern(line);
-  RockAdder rock_faller;
-
-  Grid grid;
-
-  int x=  0;
-  while (grid.number_of_rocks != 2022) {
-    
-    //std::cout << x <<  ' ' << grid.number_of_rocks << "\n";
-    ++x;
-    if (grid.current_falling_position.size() == 0) {
-      rock_faller.add_rock(grid);
-    }
-    //grid.draw(grid.get_highest_y() + 6);
-
-    char stream = pattern.next();
-    if (stream == '<') {
-      grid.jet_stream(-1);
-    } else if (stream == '>') {
-      grid.jet_stream(1);
-    } else {
-      throw std::runtime_error(":(");
-    }
-
-    grid.on_descend();
+  while (cavern.number_of_rocks() != 2022) {
+    cavern.tick();
   }
 
+  const auto ref_current_height = cavern.get_highest_y();
+
+  // ==== PART B ====
+
+  // Grid state to find a cycle
+  const CycleDetector ref_state = cavern.get_state_for_cycle_detection();
+
+  while (true) {
+    cavern.tick();
+
+    const CycleDetector now_state = cavern.get_state_for_cycle_detection();
+    if (now_state == ref_state) {
+      break;
+    }
+  }
+
+  // Let's pretend it's a cycle
+  const auto after_cycle_height = cavern.get_highest_y();
   
-  return Output(grid.get_highest_y(), 0);
+  const auto height_diff = after_cycle_height - ref_current_height;
+  const auto rock_diff = cavern.number_of_rocks() - 2022;
+
+  // Make the cycles fall
+  static constexpr long long int part_b_rocks = 1000000000000;
+  long long int n = 0;
+  while (cavern.number_of_rocks() + rock_diff < part_b_rocks) {
+    ++n;
+    cavern.add_fake_rocks(rock_diff); // who needs division?
+  }
+
+  // Finish the simulation
+  while (cavern.number_of_rocks() != part_b_rocks) {
+    cavern.tick();
+  }
+
+  // Compute added height by simulation
+  long long int height_b = cavern.get_highest_y();
+  long long int computed_height = n * height_diff;
+  height_b += computed_height;
+
+  // ==== DONE ====
+  return Output(ref_current_height, height_b);
 }
