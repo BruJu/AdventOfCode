@@ -2,6 +2,7 @@
 #include "../util/position.hpp"
 #include <cmath>
 #include <map>
+#include <chrono>
 #include <ranges>
 #include <regex>
 #include <stdexcept>
@@ -14,6 +15,7 @@
 #include <span>
 // https://adventofcode.com/2022/day/16
 
+namespace {
 
 using CompactName = size_t;
 constexpr size_t MaxNonEmptyValves = 16;
@@ -33,6 +35,10 @@ public:
   }
 
   [[nodiscard]] std::span<const T> get_all() const {
+    return std::span(values.begin(), values.begin() + size);
+  }
+  
+  [[nodiscard]] std::span<T> get_all() {
     return std::span(values.begin(), values.begin() + size);
   }
 };
@@ -229,6 +235,37 @@ struct State {
     }
   }
 
+  long int get_astar_estimate(const Valves & valves, int remaining_days) const {
+    long int pressure = total_pressure;
+    if (remaining_days <= 0) return pressure;
+
+    bad_static_vector<int, MaxNonEmptyValves> remaining_energy;
+    
+    for (size_t i = 0; i != valves.number_of_valves_to_open(); ++i) {
+      if (!oppened.test(i)) {
+        remaining_energy.add(valves[i].flow_rate);
+      }
+    }
+
+    const auto remaining_span = remaining_energy.get_all();
+    std::sort(remaining_span.rbegin(), remaining_span.rend());
+
+    auto cur = remaining_span.begin();
+    auto end = remaining_span.end();
+
+    while (remaining_days > 0) {
+      for (size_t i = 0; i != N; ++i) {
+        if (cur == end) return pressure;
+        pressure += *cur * remaining_days;
+        ++cur;
+      }
+
+      if (cur == end) return pressure;
+      remaining_days -= 2;
+    }
+
+    return pressure;
+  }
 };
 
 
@@ -300,7 +337,36 @@ void remove_duplicates_list(
   current_states.insert(current_states.begin(), list.begin(), list.end());
 }
 
-#include <chrono>
+
+template<size_t N>
+long int get_max_pressure(const std::vector<State<N>> & states) {
+  return std::max_element(states.begin(), states.end(),
+    [](const State<N> & lhs, const State<N> & rhs) {
+      return lhs.total_pressure < rhs.total_pressure;
+    }
+  )->total_pressure;
+}
+
+template<size_t N>
+void astar_pruning(std::vector<State<N>> & states, const Valves & valves, const int current_minute) {
+  const auto max_pressure = get_max_pressure(states);
+
+  std::erase_if(states, [&](const State<N> & state) {
+    return state.get_astar_estimate(valves, 30 - current_minute - 1) < max_pressure;
+  });
+}
+
+template<size_t N>
+void duplicate_states_pruning(std::vector<State<N>> & states, const unsigned long all_open_mask) {
+  std::sort(states.begin(), states.end(),
+    [&](const State<N> & lhs, const State<N> & rhs) {
+      return order_states(lhs, rhs, all_open_mask);
+    }
+  );
+
+  remove_duplicates_unique(states, all_open_mask);
+}
+
 
 template<size_t N>
 long int solve(const Valves & valves, int start_i) {
@@ -311,21 +377,16 @@ long int solve(const Valves & valves, int start_i) {
   current_states.emplace_back(valves.get_id_of("AA"));
 
 
-  const auto start = std::chrono::high_resolution_clock::now();
+  // const auto start = std::chrono::high_resolution_clock::now();
   std::vector<State<N>> next;
   for (int i = start_i; i != 30; ++i) {
-    std::sort(current_states.begin(), current_states.end(),
-      [&](const State<N> & lhs, const State<N> & rhs) {
-        return order_states(lhs, rhs, all_open_mask);
-      }
-    );
+    astar_pruning(current_states, valves, i);
+    duplicate_states_pruning(current_states, all_open_mask);
 
-    remove_duplicates_unique(current_states, all_open_mask);
-
-    const auto current_time = std::chrono::high_resolution_clock::now();
-    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start).count();
-
-    std::cout << i << '[' << duration << ']' << " " << current_states.size() << "\n";
+    // Ok let's go
+    // const auto current_time = std::chrono::high_resolution_clock::now();
+    // const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start).count();
+    // std::cout << i << '[' << duration << ']' << " " << current_states.size() << "\n";
     
     next.clear();
     temporary_states.clear();
@@ -345,17 +406,10 @@ long int solve(const Valves & valves, int start_i) {
     std::swap(current_states, next);
   }
 
-  const auto max_pressure = std::max_element(
-    current_states.begin(), current_states.end(),
-    [](const State<N> & state, const State<N> & rhs) {
-      return state.total_pressure < rhs.total_pressure;
-    }
-  );
-
-  return max_pressure->total_pressure;
-
+  return get_max_pressure(current_states);
 }
 
+}
 
 Output day_2022_16(const std::vector<std::string> & lines, const DayExtraInfo &) {
   Valves valves(lines);
