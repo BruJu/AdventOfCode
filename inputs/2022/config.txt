@@ -33,3 +33,5 @@
 16 16_puzzle.txt ?2087 ?2591
 17 17_example.txt 3068 1514285714288
 17 17_puzzle.txt ? ?
+18 18_example.txt 64 58
+18 18_puzzle.txt ? ?
