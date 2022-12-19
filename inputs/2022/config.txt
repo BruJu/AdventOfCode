@@ -35,3 +35,5 @@
 17 17_puzzle.txt ? ?
 18 18_example.txt 64 58
 18 18_puzzle.txt ? ?
+// 19 19_example.txt ? ?
+19 19_puzzle.txt ? ?
