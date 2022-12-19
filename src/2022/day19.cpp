@@ -66,46 +66,29 @@ struct Blueprint {
 struct State {
   Resource current_robots;
   Resource resources;
+  int time = 0;
 
   explicit State([[maybe_unused]] EmptyStateClass marker) {
     current_robots.ore = 1;
+  }
+
+  State do_nothing() const {
+    State copy = *this;
+    copy.resources += current_robots;
+    copy.time += 1;
+    return copy;
   }
 
   friend std::ostream & operator<<(std::ostream & stream, const State & state) {
     return stream << "{ Robots= " << state.current_robots << " ; Resources= " << state.resources << " }";
   }
 
-  std::vector<State> nextStates(const Blueprint & blueprint) const {
-    std::vector<State> nexts { *this };
-
-    nexts = generate_next(std::move(nexts), [&](const State & state) { return state.buy_geode(blueprint); });
-    nexts = generate_next(std::move(nexts), [&](const State & state) { return state.buy_obsidian(blueprint); });
-    nexts = generate_next(std::move(nexts), [&](const State & state) { return state.buy_clay(blueprint); });
-    nexts = generate_next(std::move(nexts), [&](const State & state) { return state.buy_ore(blueprint); });
-
-
-    for (State & state : nexts) {
-      state.resources += current_robots;
-    }
-
-    return nexts;
-  }
-
-  template<typename Generator>
-  static std::vector<State> generate_next(std::vector<State> from, Generator generator) {
-    std::vector<State> to;
-
-    for (const State & current : from) {
-      to.emplace_back(current);
-
-      State c = current;
-      while (auto next_c = generator(c)) {
-        to.emplace_back(next_c.value());
-        c = next_c.value();
-      }
-    }
-
-    return to;
+  void add_next_states(std::stack<State> & output, const Blueprint & blueprint) const {
+    output.emplace(do_nothing());
+    if (auto next = buy_ore(blueprint)) output.emplace(next.value());
+    if (auto next = buy_clay(blueprint)) output.emplace(next.value());
+    if (auto next = buy_obsidian(blueprint)) output.emplace(next.value());
+    if (auto next = buy_geode(blueprint)) output.emplace(next.value());
   }
 
   [[nodiscard]] std::optional<State> try_buy(Resource what, const Resource & cost) const {
@@ -116,7 +99,9 @@ struct State {
 
     State copy = *this;
     copy.resources -= cost;
+    copy.resources += copy.current_robots;
     copy.current_robots += what;
+    ++copy.time;
     return copy;
   }
 
@@ -148,73 +133,51 @@ struct State {
     );
   }
 
-  long long int end_simulation(int remaining_minutes) const {
-    return resources.geode + remaining_minutes * current_robots.geode;
-  }
+  long long int get_possible_best(const Blueprint & blueprint, int max_minutes) const {
+    State cpy = *this;
 
-  static long long int get_astar_score(const Blueprint & blueprint, State state, int remaining_minutes) {
-    while (remaining_minutes > 0) {
-      State final_state = state;
-
-      final_state.current_robots.obsidian += final_state.resources.how_much_can_fit(Resource{ blueprint.geode_robot_cost_ore, 0, blueprint.geode_robot_cost_obsidian });
-      final_state.current_robots.obsidian += final_state.resources.how_much_can_fit(Resource{ blueprint.obsidian_robot_cost_ore, blueprint.obsidian_robot_cost_clay });
-      final_state.current_robots.obsidian += final_state.resources.how_much_can_fit(Resource{ blueprint.clay_robot_cost_ore });
-      final_state.current_robots.obsidian += final_state.resources.how_much_can_fit(Resource{ blueprint.ore_robot_cost_ore });
-
-      final_state.resources += state.current_robots;
-
-      --remaining_minutes;
-
-      state = final_state;
+    for (int i = time; i != max_minutes; ++i) {
+      if (auto geode = cpy.buy_geode(blueprint)) {
+        cpy = *geode;
+      } else {
+        ++cpy.time;
+        cpy.resources += cpy.current_robots;
+        ++cpy.current_robots.clay;
+        ++cpy.current_robots.ore;
+        ++cpy.current_robots.obsidian;
+      }
+      
     }
 
-    return state.resources.geode;
+    return cpy.resources.geode;
   }
-
-
-
 
 };
 
 
+template<int max_minutes>
 int compute_blueprint_quality(const Blueprint & blueprint) {
-  std::vector<State> states;
-  states.emplace_back(EmptyState);
+  std::stack<State> states;
+  states.emplace(EmptyState);
 
-  static constexpr int end_minute = 24;
-  for (int minute = 0; minute != end_minute; ++minute) {
-    std::cout << "minute=" << minute << " " << states.size() << "\n";
-    std::vector<State> next;
-    for (const State & state : states) {
-      const auto res = state.nextStates(blueprint);
-      for (const State & state : res) {
-        next.emplace_back(state);
-      }
+  int best_quality = 0;
+
+  while (!states.empty()) {
+    const State state = states.top();
+    states.pop();
+
+    if (best_quality >= state.get_possible_best(blueprint, max_minutes)) {
+      continue;
     }
-    states = next;
 
-    const int left_minutes = end_minute - minute - 1;
-    const auto best = std::max_element(states.begin(), states.end(),
-      [&](const State & lhs, const State & rhs) {
-        return lhs.end_simulation(left_minutes) < rhs.end_simulation(left_minutes);
-      }
-    )->end_simulation(left_minutes);
-
-    std::erase_if(states,
-      [&](const State & state) {
-        return State::get_astar_score(blueprint, state, left_minutes) < best;
-      }
-    );
-
+    if (state.time == max_minutes) {
+      best_quality = std::max(best_quality, state.resources.geode);
+    } else  {
+      state.add_next_states(states, blueprint);
+    }
   }
 
-  const auto best = std::max_element(
-    states.begin(), states.end(),
-    [](const State & lhs, const State & rhs) {
-      return lhs.resources.geode < rhs.resources.geode;
-    }
-  );
-  return best->resources.geode;
+  return best_quality;
 }
 
 std::vector<Blueprint> read_blueprints(const std::vector<std::string> & lines) {
@@ -245,15 +208,23 @@ std::vector<Blueprint> read_blueprints(const std::vector<std::string> & lines) {
 }
 
 Output day_2022_19(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  const std::vector<Blueprint> blueprints = read_blueprints(lines);
+  std::vector<Blueprint> blueprints = read_blueprints(lines);
 
   long long int quality_sum = 0;
+
   for (size_t i = 0; i != blueprints.size(); ++i) {
-    const long long int my_quality = compute_blueprint_quality(blueprints[i]);
-    std::cout << (i + 1) << " = " << my_quality << "\n";
+    const long long int my_quality = compute_blueprint_quality<24>(blueprints[i]);
     quality_sum += my_quality * (i + 1);
   }
-  
 
-  return Output(quality_sum, 0);
+  long long int part_b = 1;
+  if (blueprints.size() > 3) {
+    blueprints.erase(blueprints.begin() + 3, blueprints.end());
+  }
+  for (const Blueprint & blueprint : blueprints) {
+    const long long int my_quality = compute_blueprint_quality<32>(blueprint);
+    part_b *= my_quality;
+  }
+
+  return Output(quality_sum, part_b);
 }
