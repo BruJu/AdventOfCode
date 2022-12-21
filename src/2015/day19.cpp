@@ -155,7 +155,7 @@ namespace {
             // Apply each rule
             for (const Rule & rule : reversed_rules) {
                 // Find every possible substitution
-                for (const auto new_word : rule.map_to_constructible(w)) {
+                for (const auto & new_word : rule.map_to_constructible(w)) {
                     if (new_word == initial_word) {
                         return my_steps + 1;
                     }

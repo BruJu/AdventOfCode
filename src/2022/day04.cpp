@@ -48,8 +48,8 @@ struct TwoRanges {
 Output day_2022_04(const std::vector<std::string> & lines, const DayExtraInfo &) {
   const std::vector<TwoRanges> ranges = bj::lines_to_class_by_regex<TwoRanges>(lines);
 
-  const long long int part_a = std::ranges::distance(ranges | std::views::filter(TwoRanges::has_contained));
-  const long long int part_b = std::ranges::distance(ranges | std::views::filter(TwoRanges::has_overlap));
+  const long long int part_a = std::ranges::distance(ranges | std::views::filter([](const TwoRanges & rng) { return rng.has_contained(); }));
+  const long long int part_b = std::ranges::distance(ranges | std::views::filter([](const TwoRanges & rng) { return rng.has_overlap(); }));
 
   return Output(part_a, part_b);
 }
