@@ -41,3 +41,5 @@
 20 20_puzzle.txt ?1087 ?
 21 21_example.txt 152 301
 21 21_puzzle.txt ? ?
+22 22_example.txt 6032 ?
+22 22_puzzle.txt ? ?
