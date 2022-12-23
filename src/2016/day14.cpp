@@ -17,9 +17,15 @@ struct HashDescription {
 
 struct KeyFinder {
   std::string salt;
+  size_t number_of_hashes = 1;
   size_t next_index_to_explore = 0;
   std::vector<size_t> validated;
   MD5 md5;
+
+  KeyFinder(std::string salt, size_t number_of_hashes)
+    : salt(salt), number_of_hashes(number_of_hashes) {
+
+    }
 
   std::map<char, std::set<size_t>> candidates;
 
@@ -52,6 +58,7 @@ void KeyFinder::validate_candidates(char c) {
   if (it == candidates.end()) return;
 
   validated.insert(validated.begin(), it->second.begin(), it->second.end());
+
   candidates.erase(it);
 }
 
@@ -71,7 +78,12 @@ void KeyFinder::remove_candidates(size_t size) {
 
 void KeyFinder::next() {
   const std::string base = salt + std::to_string(next_index_to_explore);
-  const std::string hash = md5(base);
+  std::string hash = base;
+
+  for (size_t i = 0; i != number_of_hashes; ++i) {
+    std::string s = std::move(hash);
+    hash = md5(s);
+  }
 
   size_t c = 0;
   char last = hash[0] == 'a' ? 'b' : 'a';
@@ -93,7 +105,10 @@ void KeyFinder::next() {
       last = chr;
     }
   }
-  if (ok_3) candidates[last].emplace(next_index_to_explore);
+  if (ok_3) {
+    
+    candidates[to_validate].emplace(next_index_to_explore);
+  }
 
   if (next_index_to_explore >= 1000) {
     remove_candidates(next_index_to_explore - 1000);
@@ -104,11 +119,18 @@ void KeyFinder::next() {
 
 
 Output day_2016_14(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  KeyFinder kf{ lines[0] };
+  KeyFinder kf(lines[0], 1);
 
   while (!kf.has_all_until(64)) {
     kf.next();
   }
 
-  return Output(kf.validated[64-1], 0);
+  
+  KeyFinder kf2(lines[0], 2016 + 1);
+
+  while (!kf2.has_all_until(64)) {
+    kf2.next();
+  }
+
+  return Output(kf.validated[64-1], kf2.validated[64-1]);
 }
