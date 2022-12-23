@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <optional>
 #include <concepts>
 #include <cmath>
@@ -55,13 +56,14 @@ namespace bj {
             }
         }
         
-        [[nodiscard]] std::vector<bj::Position> get_8_neighbours() const {
-            std::vector<bj::Position> retval;
+        [[nodiscard]] std::array<bj::Position, 8> get_8_neighbours() const {
+            std::array<bj::Position, 8> retval;
 
+            size_t i = 0;
             for (int x_ = -1 ; x_ <= 1 ; ++x_) {
             for (int y_ = -1 ; y_ <= 1 ; ++y_) {
                 if (y_ == 0 && x_ == 0) continue;
-                retval.push_back(Position { x + x_, y + y_ });
+                retval[i++] = Position { x + x_, y + y_ };
             }}
 
             return retval;

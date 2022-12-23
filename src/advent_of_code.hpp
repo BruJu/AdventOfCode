@@ -3,6 +3,7 @@
 #include <array>
 #include <variant>
 #include <vector>
+#include <span>
 #include <string>
 #include <string_view>
 #include <optional>
@@ -389,4 +390,34 @@ namespace lines_transform {
 
     template <typename T> inline T map_identity(T t) { return t; }
 }
+
+
+template<typename T, size_t N>
+struct bad_static_vector {
+private:
+  std::array<T, N> values {};
+  size_t size_ = 0;
+
+public:
+  void add(T value) {
+    if (size_ == N) throw std::runtime_error("too much elemensts in bad static vector");
+    values[size_] = value;
+    ++size_;
+  }
+
+  [[nodiscard]] std::span<const T> get_all() const {
+    return std::span(values.begin(), values.begin() + size_);
+  }
+  
+  [[nodiscard]] std::span<T> get_all() {
+    return std::span(values.begin(), values.begin() + size_);
+  }
+
+  [[nodiscard]] size_t size() const noexcept { return size_; }
+
+  [[nodiscard]] const T & operator[](const size_t index) const {
+    return values[index];
+  }
+};
+
 

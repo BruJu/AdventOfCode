@@ -21,29 +21,6 @@ using CompactName = size_t;
 constexpr size_t MaxNonEmptyValves = 16;
 constexpr size_t MaxValves = 64;
 
-template<typename T, size_t N>
-struct bad_static_vector {
-private:
-  std::array<T, N> values {};
-  size_t size = 0;
-
-public:
-  void add(T value) {
-    if (size == N) throw std::runtime_error("too much elemensts in bad static vector");
-    values[size] = value;
-    ++size;
-  }
-
-  [[nodiscard]] std::span<const T> get_all() const {
-    return std::span(values.begin(), values.begin() + size);
-  }
-  
-  [[nodiscard]] std::span<T> get_all() {
-    return std::span(values.begin(), values.begin() + size);
-  }
-};
-
-
 struct Valve {
   int flow_rate;
   bad_static_vector<CompactName, 6> lead_to;

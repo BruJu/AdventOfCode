@@ -9,7 +9,9 @@
 
 // https://adventofcode.com/2022/day/23
 
+namespace {
 
+using Propositions = std::map<bj::Position, bad_static_vector<bj::Position, 4>>;
 
 struct ElvesInAVolcano {
   std::set<bj::Position> elves;
@@ -21,8 +23,8 @@ struct ElvesInAVolcano {
   void draw_grid();
 
 private:
-  std::map<bj::Position, std::set<bj::Position>> make_propositions(std::array<bj::Direction, 4> directions) const;
-  bool move_the_elves(const std::map<bj::Position, std::set<bj::Position>> & propositions);
+  Propositions make_propositions(std::span<const bj::Direction> directions) const;
+  bool move_the_elves(const Propositions & propositions);
 };
 
 
@@ -37,22 +39,23 @@ std::pair<bj::Direction, bj::Direction> travel_directions(bj::Direction directio
 
 
 bool ElvesInAVolcano::run_a_round(size_t round_id) {
-  // I would have done a constexpr array of 7 directions if VSCode was not making compile error for std::span
-  std::array<bj::Direction, 4> directions { bj::Direction::Top, bj::Direction::Down, bj::Direction::Left, bj::Direction::Right };
+  static constexpr std::array<bj::Direction, 7> directions {
+    bj::Direction::Top, bj::Direction::Down, bj::Direction::Left, bj::Direction::Right,
+    bj::Direction::Top, bj::Direction::Down, bj::Direction::Left
+    };
 
-  for (size_t i = 0; i != round_id % 4; ++i) {
-    for (size_t j = 0; j != 3; ++j) {
-      std::swap(directions[j], directions[j + 1]);
-    }
-  }
+  std::span<const bj::Direction> dirs(
+    directions.begin() + (round_id % 4),
+    directions.begin() + 4 + (round_id % 4)
+  );
 
   // ok
-  const auto propal = make_propositions(directions);
+  const auto propal = make_propositions(dirs);
   return move_the_elves(propal);
 }
 
-std::map<bj::Position, std::set<bj::Position>> ElvesInAVolcano::make_propositions(std::array<bj::Direction, 4> directions) const {
-  std::map<bj::Position, std::set<bj::Position>> retval;
+Propositions ElvesInAVolcano::make_propositions(std::span<const bj::Direction> directions) const {
+  Propositions retval;
 
   for (const bj::Position & elve : elves) {
     const auto neighbours = elve.get_8_neighbours();
@@ -83,7 +86,7 @@ std::map<bj::Position, std::set<bj::Position>> ElvesInAVolcano::make_proposition
       check.move(up);
       if (elves.count(check)) continue;
 
-      retval[check].emplace(elve);
+      retval[check].add(elve);
       break;
     }
   }
@@ -93,12 +96,12 @@ std::map<bj::Position, std::set<bj::Position>> ElvesInAVolcano::make_proposition
 
 
 
-bool ElvesInAVolcano::move_the_elves(const std::map<bj::Position, std::set<bj::Position>> & propositions) {
+bool ElvesInAVolcano::move_the_elves(const Propositions & propositions) {
   bool noone_moved = true;
 
   for (const auto & [destination, proposing_elves] : propositions) {
     if (proposing_elves.size() == 1) {
-      elves.erase(*proposing_elves.begin());
+      elves.erase(proposing_elves[0]);
       elves.emplace(destination);
       noone_moved = false;
     }
@@ -124,7 +127,6 @@ size_t ElvesInAVolcano::empty_in_delimited() const {
   return rectangle_area - elves.size();
 }
 
-
 void ElvesInAVolcano::draw_grid() {
   for (int y = -5; y != 10; ++y) {
   for (int x = -5; x != 10; ++x) {
@@ -137,6 +139,8 @@ void ElvesInAVolcano::draw_grid() {
   }
   std::cout << "\n";
   }
+}
+
 }
 
 Output day_2022_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
