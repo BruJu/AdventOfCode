@@ -1,56 +1,54 @@
 #include "../advent_of_code.hpp"
-#include <algorithm>
-#include <map>
-#include <vector>
 #include "../util/position.hpp"
-#include <set>
-#include <span>
 #include <array>
 #include <bitset>
+#include <queue>
+#include <unordered_map>
+#include <vector>
 
 // https://adventofcode.com/2022/day/24
 
 // A blizzard situation
-struct Blizzards {
+struct Blizzard {
   static constexpr size_t dir_left = 0;
   static constexpr size_t dir_right = 1;
   static constexpr size_t dir_up = 2;
   static constexpr size_t dir_down = 3;
 
-  explicit Blizzards(const std::vector<std::string> & lines);
-  [[nodiscard]] Blizzards next() const;
-  [[nodiscard]] bool is_blocked(bj::Position position) const;
+  explicit Blizzard(const std::vector<std::string> & lines);
+  [[nodiscard]] Blizzard next() const;
 
-  [[nodiscard]] int width() const { return static_cast<int>(blizzards[0].size()); }
-  [[nodiscard]] int height() const noexcept { return static_cast<int>(blizzards.size()); }
+  [[nodiscard]] int width() const { return static_cast<int>(blizzard[0].size()); }
+  [[nodiscard]] int height() const noexcept { return static_cast<int>(blizzard.size()); }
+
+  [[nodiscard]] bool operator==(const Blizzard & other) const { return blizzard == other.blizzard; }
+
+  [[nodiscard]] bool is_blocked(bj::Position position) const;
+  [[nodiscard]] std::uint8_t compute_step(bj::Position position, std::uint8_t former_step) const;
 
   void print() const;
 
-  [[nodiscard]] bool operator==(const Blizzards & other) const {
-    return blizzards == other.blizzards;
-  }
-
 private:
-  Blizzards() = default;
+  Blizzard() = default;
   [[nodiscard]] static std::bitset<4> to_bitset(char c);
 
-  std::vector<std::vector<std::bitset<4>>> blizzards;
+  std::vector<std::vector<std::bitset<4>>> blizzard;
 };
 
-Blizzards::Blizzards(const std::vector<std::string> & lines) {
+Blizzard::Blizzard(const std::vector<std::string> & lines) {
   for (const std::string & line : lines) {
-    blizzards.emplace_back();
+    blizzard.emplace_back();
     for (const char c : line) {
       if (c == '#') continue;
-      blizzards.back().emplace_back(to_bitset(c));
+      blizzard.back().emplace_back(to_bitset(c));
     }
   }
 
-  blizzards.erase(blizzards.begin());
-  blizzards.erase(blizzards.end() - 1);
+  blizzard.erase(blizzard.begin());
+  blizzard.erase(blizzard.end() - 1);
 }
 
-std::bitset<4> Blizzards::to_bitset(const char c) {
+std::bitset<4> Blizzard::to_bitset(const char c) {
   std::bitset<4> retval{ 0 };
   switch (c) {
     case '<': retval[dir_left]  = true; break;
@@ -61,12 +59,12 @@ std::bitset<4> Blizzards::to_bitset(const char c) {
   return retval;
 }
 
-Blizzards Blizzards::next() const {
-  Blizzards retval;
+Blizzard Blizzard::next() const {
+  Blizzard retval;
 
-  for (const auto & line : blizzards) {
-    retval.blizzards.emplace_back();
-    retval.blizzards.back().resize(line.size(), 0);
+  for (const auto & line : blizzard) {
+    retval.blizzard.emplace_back();
+    retval.blizzard.back().resize(line.size(), 0);
   }
 
   const int width_ = width();
@@ -74,28 +72,38 @@ Blizzards Blizzards::next() const {
 
   for (int y = 0; y != height_; ++y) {
     for (int x = 0; x != width_; ++x) {
-      std::bitset<4> & bitset = retval.blizzards[y][x];
+      std::bitset<4> & bitset = retval.blizzard[y][x];
 
       const int xleft = x == 0 ? width_  - 1 : x - 1;
       const int ytop  = y == 0 ? height_ - 1 : y - 1;
       const int xright  = x + 1 == width_  ? 0 : x + 1;
       const int ybottom = y + 1 == height_ ? 0 : y + 1;
 
-      if (blizzards[ytop][x].test(dir_down)) bitset.set(dir_down);
-      if (blizzards[y][xleft].test(dir_right)) bitset.set(dir_right);
-      if (blizzards[ybottom][x].test(dir_up)) bitset.set(dir_up);
-      if (blizzards[y][xright].test(dir_left)) bitset.set(dir_left);
+      if (blizzard[ytop][x].test(dir_down)) bitset.set(dir_down);
+      if (blizzard[y][xleft].test(dir_right)) bitset.set(dir_right);
+      if (blizzard[ybottom][x].test(dir_up)) bitset.set(dir_up);
+      if (blizzard[y][xright].test(dir_left)) bitset.set(dir_left);
     }
   }
 
   return retval;
 }
 
-bool Blizzards::is_blocked(bj::Position position) const {
-  return blizzards[position.y][position.x].any();
+bool Blizzard::is_blocked(bj::Position position) const {
+  return blizzard[position.y][position.x].any();
 }
 
-void Blizzards::print() const {
+std::uint8_t Blizzard::compute_step(const bj::Position position, const std::uint8_t former_step) const {
+  if (former_step % 2 == 0) {
+    if (position == bj::Position{ width() - 1, height() }) return former_step + 1;
+    return former_step;
+  } else {
+    if (position == bj::Position{ 0, -1 }) return former_step + 1;
+    else return former_step;
+  }
+}
+
+void Blizzard::print() const {
   const int width_ = width();
   const int height_ = height();
 
@@ -112,15 +120,15 @@ void Blizzards::print() const {
     std::cout << '#';
 
     for (int x = 0; x != width_; ++x) {
-      const size_t size = blizzards[y][x].count();
+      const size_t size = blizzard[y][x].count();
 
       if (size == 0) std::cout << '.';
       else if (size > 1) std::cout << (char)('0' + size);
       else {
-        if (blizzards[y][x][dir_down]) std::cout << 'v';
-        else if (blizzards[y][x][dir_left]) std::cout << '<';
-        else if (blizzards[y][x][dir_right]) std::cout << '>';
-        else if (blizzards[y][x][dir_up]) std::cout << '^';
+        if (blizzard[y][x][dir_down]) std::cout << 'v';
+        else if (blizzard[y][x][dir_left]) std::cout << '<';
+        else if (blizzard[y][x][dir_right]) std::cout << '>';
+        else if (blizzard[y][x][dir_up]) std::cout << '^';
       }
     }
 
@@ -142,28 +150,36 @@ void Blizzards::print() const {
 struct State {
   bj::Position where;
   size_t blizzard_id;
+  std::uint8_t step;
 
-  State(bj::Position where, size_t blizzard_id) : where(where), blizzard_id(blizzard_id) {}
+  State(bj::Position where, size_t blizzard_id, std::uint8_t step)
+    : where(where), blizzard_id(blizzard_id), step(step) {}
 
-  bool operator<(const State & state) const {
-    if (where < state.where) return true;
-    if (state.where < where) return false;
-    return blizzard_id < state.blizzard_id;
+  [[nodiscard]] bool operator==(const State & other) const noexcept {
+    return where == other.where && blizzard_id == other.blizzard_id && step == other.step;
   }
 };
 
-struct Blizzardss {
-  std::vector<Blizzards> all_setups;
+namespace std {
+  template <> struct hash<State> {
+    std::size_t operator()(const State & state) const noexcept {
+      return state.where.x * 100000 + state.where.y * 1000 + state.blizzard_id * 5 + state.step;
+    }
+  };
+}
+
+struct Blizzards {
+  std::vector<Blizzard> all_setups;
   int width;
   int height;
 
-  explicit Blizzardss(const std::vector<std::string> & lines);
+  explicit Blizzards(const std::vector<std::string> & lines);
 
   [[nodiscard]] int distance_to_end(State state) const;
 };
 
-Blizzardss::Blizzardss(const std::vector<std::string> & lines) {
-  Blizzards current(lines);
+Blizzards::Blizzards(const std::vector<std::string> & lines) {
+  Blizzard current(lines);
 
   width = current.width();
   height = current.height();
@@ -180,71 +196,73 @@ Blizzardss::Blizzardss(const std::vector<std::string> & lines) {
   }
 }
 
-int Blizzardss::distance_to_end(const State state) const {
-  return (width - 1 - state.where.x) + (height - state.where.y);
+int Blizzards::distance_to_end(const State state) const {
+  int added = (2 - state.step) * (width + height);
+
+  if (state.step % 2 == 0) {
+    return added + (width - 1 - state.where.x) + (height - state.where.y);
+  } else {
+    return added + (state.where.x + state.where.y + 1);
+  }
 }
 
-// 
-#include <queue>
+// DFS
+struct DFS {
+  static std::optional<size_t> run(const Blizzards & blizzards, size_t initial_step);
 
-struct StateAndWalk {
-  State state;
-  size_t walk;
-
-  StateAndWalk(State state, size_t walk) : state(state), walk(walk) {}
-};
-
-struct BFS {
-  const Blizzardss * blizzardss;
-  std::map<State, size_t> visited;
-  std::queue<StateAndWalk> to_visit;
+private:
+  const Blizzards * blizzards;
+  std::unordered_map<State, size_t> visited;
+  std::queue<State> to_visit;
 
   std::optional<size_t> best = std::nullopt;
 
-  explicit BFS(const Blizzardss & blizzards);
+  DFS(const Blizzards & blizzards, size_t initial_step);
 
-  std::optional<size_t> visit_states();
   void visit_state();
 
-  void try_add(bj::Position where, size_t blizzard_setup, size_t walked);
+  void try_add(bj::Position where, size_t blizzard_setup, size_t walked, std::uint8_t step);
 
-  [[nodiscard]] static bool is_legal_position(const bj::Position position, const Blizzards & blizzards);
+  [[nodiscard]] static bool is_legal_position(const bj::Position position, const Blizzard & blizzard);
 };
 
-BFS::BFS(const Blizzardss & blizzards) : blizzardss(&blizzards) {
-  State state(bj::Position{ 0, -1 }, 0);
-  to_visit.emplace(StateAndWalk(state, 0));
+std::optional<size_t> DFS::run(const Blizzards & blizzards, size_t initial_step) {
+  DFS dfs(blizzards, initial_step);
+  
+  while (!dfs.to_visit.empty()) {
+    dfs.visit_state();
+  }
+
+  return dfs.best;
+}
+
+DFS::DFS(const Blizzards & blizzards, size_t initial_step) : blizzards(&blizzards) {
+  State state(bj::Position{ 0, -1 }, 0, initial_step);
+  to_visit.emplace(state);
   visited.emplace(state, 0);
 }
 
-bool BFS::is_legal_position(const bj::Position position, const Blizzards & blizzards) {
-  if (position.y < -1 || position.y > blizzards.height()) return false;
-  if (position.x <= -1 || position.x >= blizzards.width()) return false;
+bool DFS::is_legal_position(const bj::Position position, const Blizzard & blizzard) {
+  if (position.y < -1 || position.y > blizzard.height()) return false;
+  if (position.x <= -1 || position.x >= blizzard.width()) return false;
 
   if (position.y == -1) {
     return position.x == 0;
-  } else if (position.y == blizzards.height()) {
-    return position.x + 1 == blizzards.width();
+  } else if (position.y == blizzard.height()) {
+    return position.x + 1 == blizzard.width();
   } else {
-    return !blizzards.is_blocked(position);
+    return !blizzard.is_blocked(position);
   }
 }
 
-std::optional<size_t> BFS::visit_states() {
-  while (!to_visit.empty()) {
-    visit_state();
-  }
-
-  return best;
-}
-
-void BFS::visit_state() {
-  const auto [state, walked] = to_visit.front();
+void DFS::visit_state() {
+  const auto state = to_visit.front();
+  const auto walked = visited.find(state)->second;
   to_visit.pop();
 
-  if (best && blizzardss->distance_to_end(state) + walked >= *best) return;
+  if (best && blizzards->distance_to_end(state) + walked >= *best) return;
 
-  const size_t next_setup_id = (state.blizzard_id + 1) % blizzardss->all_setups.size();
+  const size_t next_setup_id = (state.blizzard_id + 1) % blizzards->all_setups.size();
 
   std::array<bj::Position, 5> nexts;
   nexts[0] = state.where; nexts[0].y += 1;
@@ -254,38 +272,35 @@ void BFS::visit_state() {
   nexts[4] = state.where; nexts[4].x -= 1;
   
   for (const auto & next : nexts) {
-    try_add(next, next_setup_id, walked + 1);
+    try_add(next, next_setup_id, walked + 1, state.step);
   }
 }
 
-void BFS::try_add(bj::Position where, size_t blizzard_setup, size_t walked) {
-  const Blizzards & blizzards = blizzardss->all_setups[blizzard_setup];
+void DFS::try_add(bj::Position where, size_t blizzard_setup, size_t walked, std::uint8_t step) {
+  const Blizzard & blizzard = blizzards->all_setups[blizzard_setup];
 
-  if (!is_legal_position(where, blizzards)) return;
+  if (!is_legal_position(where, blizzard)) return;
 
-  State state{ where, blizzard_setup };
+  State state{ where, blizzard_setup, blizzard.compute_step(where, step) };
 
   const auto in_visited = visited.find(state);
   if (in_visited != visited.end() && in_visited->second <= walked) return;
 
   visited[state] = walked;
 
-  if (where.y == blizzards.height()) {
+  if (state.step == 3) {
     best = walked;
   } else {
-    to_visit.emplace(state, walked);
+    to_visit.emplace(state);
   }
 }
 
+// Ok
 Output day_2022_24(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  Blizzardss bs(lines);
-  std::cout << bs.all_setups.size() << "\n";
+  Blizzards blizzards(lines);
 
-  BFS bfs(bs);
-
-  const auto answer = bfs.visit_states();
-
-  std::cout << bfs.visited.size() << "\n";
-
-  return Output(answer.value_or(-1), 0);
+  return Output(
+    DFS::run(blizzards, 2).value_or(-1),
+    DFS::run(blizzards, 0).value_or(-1)
+  );
 }
