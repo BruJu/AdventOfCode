@@ -5,20 +5,34 @@
 #include <array>
 #include <map>
 #include <queue>
+#include <variant>
 
 // https://adventofcode.com/2016/day/12
 
 enum class InstructionType {
-  cpyvalue, cpyregister, inc, jnz, dec, jnz_constant
+  cpy, inc, jnz, dec
 };
+
+using Thing = std::variant<int, std::string>;
 
 struct Instruction {
   InstructionType type;
-  int value;
-  bool valuebool;
-  std::string symbol1;
-  std::string symbol2;
+
+  Thing x;
+  Thing y;
 };
+
+
+int get(const std::map<std::string, int> & memory, const Thing & value) {
+  if (const int * value_ = std::get_if<int>(&value)) {
+    return *value_;
+  } else {
+    const std::string * str = std::get_if<std::string>(&value);
+    const auto it = memory.find(*str);
+    if (it == memory.end()) return 0;
+    return it->second;
+  }
+}
 
 static int run(const std::vector<Instruction> & instructions, std::map<std::string, int> memory) {
   int pc = 0;
@@ -28,36 +42,40 @@ static int run(const std::vector<Instruction> & instructions, std::map<std::stri
     // std::cout << pc << '\n';
 
     switch (instruction.type) {
-      case InstructionType::cpyvalue:
-        memory[instruction.symbol2] = instruction.value;
+      case InstructionType::cpy: {
+        const std::string * y = std::get_if<std::string>(&instruction.y);
+        if (y) {
+          memory[*y] = get(memory, instruction.x);
+        }
         ++pc;
         break;
-      case InstructionType::cpyregister:
-        memory[instruction.symbol2] = memory[instruction.symbol1];
+      }
+      case InstructionType::inc: {
+        const std::string * x = std::get_if<std::string>(&instruction.x);
+        if (x) {
+          ++memory[*x];
+        }
         ++pc;
         break;
-      case InstructionType::inc:
-        ++memory[instruction.symbol2];
+      }
+      case InstructionType::dec: {
+        const std::string * x = std::get_if<std::string>(&instruction.x);
+        if (x) {
+          --memory[*x];
+        }
         ++pc;
         break;
-      case InstructionType::dec:
-        --memory[instruction.symbol2];
-        ++pc;
-        break;
-      case InstructionType::jnz:
-        if (memory[instruction.symbol2] != 0) {
-          pc += instruction.value;
+      }
+      case InstructionType::jnz: {
+        const int x = get(memory, instruction.x);
+        if (x != 0) {
+          const int y = get(memory, instruction.y);
+          pc += y;
         } else {
           ++pc;
         }
         break;
-      case InstructionType::jnz_constant:
-        if (instruction.valuebool) {
-          pc += instruction.value;
-        } else {
-          ++pc;
-        }
-        break;
+      }
     }
   }
 
@@ -66,51 +84,28 @@ static int run(const std::vector<Instruction> & instructions, std::map<std::stri
 
 
 Output day_2016_12(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  bj::InstructionReader<Instruction> reader;
+  std::vector<Instruction> instructions;
 
-  reader.add_handler(
-    R"(cpy (-?[0-9]+) ([a-z]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::cpyvalue, std::stoi(values[0]), false, "", values[1] };
+  for (const std::string & line : lines) {
+    const auto split = bj::string_split(line, " ");
+
+    constexpr auto to_thing = [](std::string s) -> Thing {
+      if (s[0] >= 'a' && s[0] <= 'z') return s;
+      return std::stoi(s);
+    };
+
+    if (split[0] == "cpy") {
+      instructions.emplace_back(Instruction{ InstructionType::cpy, to_thing(split[1]), to_thing(split[2]) });
+    } else if (split[0] == "inc") {
+      instructions.emplace_back(Instruction{ InstructionType::inc, to_thing(split[1]), Thing(0) });
+    } else if (split[0] == "dec") {
+      instructions.emplace_back(Instruction{ InstructionType::dec, to_thing(split[1]), Thing(0) });
+    } else if (split[0] == "jnz") {
+      instructions.emplace_back(Instruction{ InstructionType::jnz, to_thing(split[1]), to_thing(split[2]) });
+    } else {
+      throw std::runtime_error("Unknown instruction");
     }
-  );
-
-  reader.add_handler(
-    R"(cpy ([a-z]+) ([a-z]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::cpyregister, 0, false, values[0], values[1] };
-    }
-  );
-
-  reader.add_handler(
-    R"(inc ([a-z]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::inc, 0, false, "", values[0] };
-    }
-  );
-
-  reader.add_handler(
-    R"(dec ([a-z]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::dec, 0, false, "", values[0] };
-    }
-  );
-
-  reader.add_handler(
-    R"(jnz ([a-z]+) (-?[0-9]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::jnz, std::stoi(values[1]), false, "", values[0] };
-    }
-  );
-
-  reader.add_handler(
-    R"(jnz (-?[0-9]+) (-?[0-9]+))",
-    [](const std::vector<std::string> & values) {
-      return Instruction { InstructionType::jnz_constant, std::stoi(values[1]), std::stoi(values[0]) != 0, "", ""} ;
-    }
-  );
-
-  const auto instructions = reader(lines).value();
+  }
 
   const int part_a = run(instructions, {});
   const int part_b = run(instructions, { { "c", 1 } });
