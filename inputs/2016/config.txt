@@ -41,3 +41,5 @@
 22 22_input.txt     ?                ?
 23 23_example.txt   3                ?
 23 23_input.txt     ?                ?
+24 24_example.txt   14               _
+24 24_input.txt     ?                ?
