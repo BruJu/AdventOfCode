@@ -39,3 +39,5 @@
 21 21_puzzle.txt    ?                ?
 22 22_example.txt   7                7
 22 22_input.txt     ?                ?
+23 23_example.txt   3                ?
+23 23_input.txt     ?                ?

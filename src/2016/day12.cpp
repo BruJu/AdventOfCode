@@ -10,7 +10,7 @@
 // https://adventofcode.com/2016/day/12
 
 enum class InstructionType {
-  cpy, inc, jnz, dec
+  cpy, inc, jnz, dec, tgl
 };
 
 using Thing = std::variant<int, std::string>;
@@ -34,7 +34,7 @@ int get(const std::map<std::string, int> & memory, const Thing & value) {
   }
 }
 
-static int run(const std::vector<Instruction> & instructions, std::map<std::string, int> memory) {
+static int run(std::vector<Instruction> instructions, std::map<std::string, int> memory) {
   int pc = 0;
   
   while (pc >= 0 && pc < static_cast<int>(instructions.size())) {
@@ -76,6 +76,28 @@ static int run(const std::vector<Instruction> & instructions, std::map<std::stri
         }
         break;
       }
+      case InstructionType::tgl: {
+        const int tgl_offset = get(memory, instruction.x);
+        const int tgl_line = pc + tgl_offset;
+        if (tgl_line < 0 || std::cmp_greater_equal(tgl_line, instructions.size())) {
+          ++pc;
+          break;
+        }
+
+        Instruction & modified = instructions[tgl_line];
+
+        switch (modified.type) {
+          case InstructionType::cpy: modified.type = InstructionType::jnz; break;
+          case InstructionType::inc: modified.type = InstructionType::dec; break;
+          case InstructionType::jnz: modified.type = InstructionType::cpy; break;
+          case InstructionType::dec: modified.type = InstructionType::inc; break;
+          case InstructionType::tgl: modified.type = InstructionType::inc; break;
+        }
+
+        ++pc;
+
+        break;
+      }
     }
   }
 
@@ -83,7 +105,7 @@ static int run(const std::vector<Instruction> & instructions, std::map<std::stri
 }
 
 
-Output day_2016_12(const std::vector<std::string> & lines, const DayExtraInfo &) {
+std::vector<Instruction> read_instructions(const std::vector<std::string> & lines) {
   std::vector<Instruction> instructions;
 
   for (const std::string & line : lines) {
@@ -102,13 +124,31 @@ Output day_2016_12(const std::vector<std::string> & lines, const DayExtraInfo &)
       instructions.emplace_back(Instruction{ InstructionType::dec, to_thing(split[1]), Thing(0) });
     } else if (split[0] == "jnz") {
       instructions.emplace_back(Instruction{ InstructionType::jnz, to_thing(split[1]), to_thing(split[2]) });
+    } else if (split[0] == "tgl") {
+      instructions.emplace_back(Instruction{ InstructionType::tgl, to_thing(split[1]), Thing(0) });
     } else {
       throw std::runtime_error("Unknown instruction");
     }
   }
 
+  return instructions;
+}
+
+
+Output day_2016_12(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  const auto instructions = read_instructions(lines);
+
   const int part_a = run(instructions, {});
   const int part_b = run(instructions, { { "c", 1 } });
+
+  return Output(part_a, part_b);
+}
+
+Output day_2016_23(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  const auto instructions = read_instructions(lines);
+
+  const int part_a = run(instructions, { { "a", 7 } });
+  const int part_b = run(instructions, { { "a", 12 } });
 
   return Output(part_a, part_b);
 }
