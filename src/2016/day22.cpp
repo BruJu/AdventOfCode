@@ -13,22 +13,81 @@
 
 // https://adventofcode.com/2016/day/22
 
-struct Node {
-  int used;
-  int avail;
+namespace {
 
-  [[nodiscard]] bool can_move_data_to(const Node & other) const noexcept {
-    return used <= other.avail;
+void set_in_grid(
+  std::vector<std::vector<unsigned int>> & grid,
+  const bj::Position position,
+  const unsigned int capacity
+) {
+  while (std::cmp_less_equal(grid.size(), position.x)) {
+    grid.emplace_back();
   }
 
-  void move_data_to(Node & other) {
-    other.used += used;
-    other.avail -= used;
-    avail += used;
-    used = 0;
+  auto & line = grid[position.x];
+  while (std::cmp_less_equal(line.size(), position.y)) {
+    line.emplace_back(0);
   }
+
+  line[position.y] = capacity;
+}
+
+struct CapacityGrid {
+  std::vector<std::vector<unsigned int>> m_grid;
+
+  [[nodiscard]] unsigned int operator[](const bj::Position position) const {
+    return m_grid[position.x][position.y];
+  }
+
 };
 
+struct DataGrid {
+  std::vector<std::vector<unsigned int>> m_grid;
+  bj::Position important_data_position;
+
+  unsigned int operator[](const bj::Position position) const {
+    return m_grid[position.x][position.y];
+  }
+  
+  unsigned int & operator[](const bj::Position position) {
+    return m_grid[position.x][position.y];
+  }
+
+  [[nodiscard]] bool can_move_data_to(const CapacityGrid & capacity, const bj::Position from, const bj::Position to) const {
+    const auto from_data = operator[](from);
+    const auto to_data = operator[](to);
+    const auto to_max = capacity[to];
+    const auto to_avail = to_max - to_data;
+
+    return from_data <= to_avail;
+  }
+
+  void move_data_inplace(const bj::Position from, const bj::Position to) {
+    operator[](to) += operator[](from);
+    operator[](from) = 0;
+    if (important_data_position == from) {
+      important_data_position = to;
+    }
+  }
+
+  [[nodiscard]] DataGrid move_data(const bj::Position from, const bj::Position to) const {
+    DataGrid copy = *this;
+    copy.move_data_inplace(from, to);
+    return copy;
+  }
+
+};
+
+}
+
+namespace {
+
+
+
+}
+
+
+/*
 struct MoveOperation {
   bj::Position from;
   bj::Position to;
@@ -173,13 +232,17 @@ long long int compute_part_b(std::map<bj::Position, Node> nodes) {
   return 0;
 }
 
+*/
+
 Output day_2016_22(const std::vector<std::string> & lines, const DayExtraInfo &) {
+  CapacityGrid capacity_grid;
+  DataGrid data_grid;
+
   constexpr const char * LineRegex = R"(\/dev\/grid\/node-x(\d+)-y(\d+)\s+(\d+)T\s+(\d+)T\s+(\d+)T\s+(\d+)%)";
   std::regex regex_(LineRegex);
 
   std::smatch smatch_;
 
-  std::map<bj::Position, Node> nodes;
   for (size_t i = 2; i != lines.size(); ++i) {
     if (!std::regex_search(lines[i], smatch_, regex_))
       throw std::runtime_error("bad io");
@@ -188,34 +251,48 @@ Output day_2016_22(const std::vector<std::string> & lines, const DayExtraInfo &)
     position.x = std::stoi(smatch_[1].str());
     position.y = std::stoi(smatch_[2].str());
 
-    Node node;
-    //node.size = std::stoi(smatch_[3].str());
-    node.used = std::stoi(smatch_[4].str());
-    node.avail = std::stoi(smatch_[5].str());
-    //node.used_percent = std::stoi(smatch_[6].str());
-    nodes.emplace(position, node);
+    // avail = std::stoi(smatch_[5].str());
+    // used_percent = std::stoi(smatch_[6].str());
+
+    set_in_grid(capacity_grid.m_grid, position, std::stoul(smatch_[3].str()));
+    set_in_grid(data_grid.m_grid    , position, std::stoul(smatch_[4].str()));
   }
 
   long long int viable_pairs = 0;
 
-  for (const Node & lhs : nodes | std::views::values) {
-    for (const Node & rhs : nodes | std::views::values) {
-      if (&lhs == &rhs) continue;
+  const auto grid_area = bj::Rectangle(0, 0, capacity_grid.m_grid.size() - 1, capacity_grid.m_grid[0].size() - 1);
 
-      if (lhs.used == 0) continue;
+  grid_area.for_each_position([&](const bj::Position from) {
+    if (data_grid[from] == 0) return;
 
-      if (lhs.used <= rhs.avail) {
+    grid_area.for_each_position([&](const bj::Position to) {
+      if (from != to && data_grid.can_move_data_to(capacity_grid, from, to)) {
         ++viable_pairs;
       }
-    }
-  }
+    });
+  });
 
-  std::string part_b;
-  if (nodes.size() < 100) {
-    part_b = std::to_string(compute_part_b(nodes));
-  } else {
-    part_b = "Part B is not intended to be solved programmatically";
+  data_grid.important_data_position = bj::Position{ grid_area.right, 0 };
+
+  std::string part_b = "lol";
+//  if (nodes.size() < 100) {
+//    part_b = std::to_string(compute_part_b(nodes));
+//  } else {
+//    part_b = "Part B is not intended to be solved programmatically";
+//  }
+
+  for (int y = 0; y <= grid_area.bottom; ++y) {
+    for (int x = 0; x <= grid_area.right; ++x) {
+      bj::Position pos {x, y};
+      std::cout << data_grid[pos] << '/' << capacity_grid[pos];
+
+      std::cout << ";";
+    }
+    std::cout << "\n";
   }
+  // 1/ Locate the empty grid
+  // 2/ travel it to x = max, y = 0, count the steps
+  // 3/ add to STEPS (max - 1) * 5
 
   return Output(viable_pairs, part_b);
 }
