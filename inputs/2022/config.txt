@@ -46,3 +46,6 @@
 23 23_example.txt 110 20
 //23 23_small.txt ? ?
 23 23_puzzle.txt ? ?
+24 24_example_few.txt 10 _
+24 24_example_many.txt 18 _
+24 24_puzzle.txt ? ?
