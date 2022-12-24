@@ -256,6 +256,29 @@ inline std::vector<std::string> string_split(
 
   return retval;
 }
+
+inline std::vector<int> extract_ints_from_line(const std::string & line) {
+  size_t i = 0;
+
+  std::vector<int> values;
+
+  while (true) {
+    int accumulator = 0;
+    
+    while (i < line.size() && !(line[i] >= '0' && line[i] <= '9')) {
+      ++i;
+    }
+
+    if (i == line.size()) return values;
+
+    while (i < line.size() && (line[i] >= '0' && line[i] <= '9')) {
+      accumulator = accumulator * 10 + (line[i] - '0');
+      ++i;
+    }
+
+    values.emplace_back(accumulator);
+  }
+}
 }
 
 struct Board {
