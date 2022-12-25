@@ -115,6 +115,9 @@ std::optional<test::RunResult> InputConfig::run(Runner runner) const {
             const std::string expect_a = splitter ? splitter() : "";
             const std::string expect_b = splitter ? splitter() : "";
 
+            day_extra_info.can_skip_part_A = !(expect_a != "" && expect_a != "_");
+            day_extra_info.can_skip_part_B = !(expect_b != "" && expect_b != "_");
+
             Output result = runner(input, day_extra_info);
 
             if (expect_a != "" && expect_a != "_") {
