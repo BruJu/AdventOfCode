@@ -49,3 +49,5 @@
 24 24_example_few.txt 10 _
 24 24_example_many.txt 18 54
 24 24_puzzle.txt ? ?
+25 25_example.txt 2=-1=0 _
+25 25_puzzle.txt ? _
