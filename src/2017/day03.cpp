@@ -5,6 +5,7 @@
 
 // https://adventofcode.com/2017/day/03
 
+namespace {
 
 bool is_in(bj::Position pos, bj::Rectangle rectangle) {
   return rectangle.left <= pos.x
@@ -87,6 +88,8 @@ int part_b(int input) {
       rectangle.bottom = std::max(rectangle.bottom, position.y);
     }
   }
+}
+
 }
 
 Output day_2017_03(const std::vector<std::string> &, const DayExtraInfo & dei) {
