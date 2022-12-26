@@ -17,11 +17,14 @@ Output day_2017_14(const std::vector<std::string> & lines, const DayExtraInfo &)
 Output day_2017_15(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day_2017_16(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day_2017_17(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2017_18(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2017_19(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2017_20(const std::vector<std::string> & lines, const DayExtraInfo &);
 
 static constexpr std::array<DayEntryPoint *, 25> days_2017 {
     &day_2017_01, &day_2017_02, &day_2017_03, &day_2017_04, &day_2017_05,
     &day_2017_06, &day_2017_07, &day_2017_08, &day_2017_09, &day_2017_10,
     &day_2017_11, &day_2017_12, &day_2017_13, &day_2017_14, &day_2017_15,
-    &day_2017_16, &day_2017_17, 
+    &day_2017_16, &day_2017_17, &day_2017_18, &day_2017_19, &day_2017_20, 
     nullptr
 };
