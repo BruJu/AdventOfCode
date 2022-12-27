@@ -92,6 +92,33 @@ namespace bj {
         }
     };
 
+    struct Kitten {
+        Position position;
+        Direction direction;
+
+        Kitten(Position position, Direction direction)
+            : position(position), direction(direction) {}
+        
+        void advance() { position.move(direction); }
+
+        void turn_left() {
+            switch (direction) {
+                case Direction::Left : direction = Direction::Down ; break;
+                case Direction::Right: direction = Direction::Top  ; break;
+                case Direction::Down : direction = Direction::Right; break;
+                case Direction::Top  : direction = Direction::Left ; break;
+            }
+        }
+
+        void turn_180() { turn_right(); turn_right(); }
+
+        void turn_right() {
+            turn_left();
+            turn_left();
+            turn_left();
+        }
+    };
+
 
     struct Rectangle {
         int left;
