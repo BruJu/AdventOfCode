@@ -3,6 +3,7 @@
 #include "2015/days.hpp"
 #include "2016/days.hpp"
 #include "2017/days.hpp"
+#include "2019/days.hpp"
 #include "2020/days.hpp"
 #include "2021/days.hpp"
 #include "2022/days.hpp"
@@ -15,6 +16,7 @@ static auto get_all_handlers() {
     map[2015] = days_2015;
     map[2016] = days_2016;
     map[2017] = days_2017;
+    map[2019] = days_2019;
     map[2020] = days_2020;
     map[2021] = days_2021;
     map[2022] = days_2022;

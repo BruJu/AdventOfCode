@@ -90,6 +90,13 @@ namespace bj {
 
             consumer(i);
         }
+
+        [[nodiscard]] int manhattan() const {
+            int distance = 0;
+            distance += x < 0 ? -x : x;
+            distance += y < 0 ? -y : y;
+            return distance;
+        }
     };
 
     struct Kitten {
