@@ -1,8 +1,47 @@
 #include "../advent_of_code.hpp"
 #include <map>
+#include <span>
 
 // https://adventofcode.com/2018/day/02
 
+
+namespace {
+
+std::optional<std::string> compare(const std::string & lhs, const std::string & rhs) {
+  if (lhs.size() != rhs.size()) return std::nullopt;
+
+  size_t letter_diff_position = std::string::npos;
+  size_t p = 0;
+  for (; p != lhs.size(); ++p) {
+    if (lhs[p] != rhs[p]) {
+      if (letter_diff_position == std::string::npos) {
+        letter_diff_position = p;
+      } else {
+        return std::nullopt;
+      }
+    }
+  }
+
+  if (p != lhs.size()) return std::nullopt;
+
+  std::string retval = lhs;
+  if (letter_diff_position != std::string::npos) {
+    retval.erase(letter_diff_position, 1);
+  }
+  return retval;
+}
+
+std::optional<std::string> part_b(std::span<const std::string> boxes) {
+  for (size_t i = 0; i != boxes.size(); ++i) {
+    for (size_t j = i + 1; j < boxes.size(); ++j) {
+      const auto maybe = compare(boxes[i], boxes[j]);
+      if (maybe) return maybe;
+    }
+  }
+  return std::nullopt;
+}
+
+}
 
 Output day_2018_02(const std::vector<std::string> & lines, const DayExtraInfo &) {
   // Part A
@@ -28,35 +67,7 @@ Output day_2018_02(const std::vector<std::string> & lines, const DayExtraInfo &)
   }
   
   // Part B
-  std::string part_b_answer;
-  for (size_t i = 0; i + 1 < lines.size(); ++i) {
-    const std::string & lhs = lines[i];
-    const std::string & rhs = lines[i + 1];
-
-    if (lhs.size() != rhs.size()) continue;
-
-    size_t letter_diff_position = std::string::npos;
-    size_t p = 0;
-    for (; p != lhs.size(); ++p) {
-      if (lhs[p] != rhs[p]) {
-        if (letter_diff_position == std::string::npos) {
-          letter_diff_position = p;
-        } else {
-          break;
-        }
-      }
-    }
-
-    if (p == lhs.size()) {
-      std::cout << lhs << " == " << rhs << " : " << letter_diff_position << "\n";
-      part_b_answer = lhs;
-      if (letter_diff_position != std::string::npos) {
-        part_b_answer = part_b_answer.substr(0, letter_diff_position) + part_b_answer.substr(letter_diff_position + 1);
-      }
-
-      break;
-    }
-  }
+  const auto part_b_answer = part_b(lines).value_or("No value");
 
   return Output(number_twice * number_thrice, part_b_answer);
 }
