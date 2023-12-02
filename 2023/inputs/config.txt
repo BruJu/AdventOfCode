@@ -2,3 +2,5 @@
 1  01_example_b.txt    _   281
 1  01_sigh.txt         _   21
 1  01_real.txt         ?   ?
+2  02_example.txt 8 2286
+2  02_puzzle.txt ? ?
