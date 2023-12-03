@@ -4,3 +4,5 @@
 1  01_real.txt         ?   ?
 2  02_example.txt 8 2286
 2  02_puzzle.txt ? ?
+3  03_example.txt 4361 467835
+3  03_puzzle.txt ? ?
