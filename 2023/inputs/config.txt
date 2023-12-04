@@ -6,3 +6,5 @@
 2  02_puzzle.txt ? ?
 3  03_example.txt 4361 467835
 3  03_puzzle.txt ? ?
+4  04_example.txt 13 30
+4  04_puzzle.txt ? ?
