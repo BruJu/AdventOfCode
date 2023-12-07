@@ -10,3 +10,7 @@
 4  04_puzzle.txt ? ?
 5 05_example.txt 35 46
 5 05_puzzle.txt ? ?
+6 06_example.txt 288 71503
+6 06_puzzle.txt ? ?
+7 07_example.txt 6440 5905
+7 07_puzzle.txt ? ?
