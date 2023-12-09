@@ -279,6 +279,43 @@ inline std::vector<int> extract_ints_from_line(const std::string & line) {
     values.emplace_back(accumulator);
   }
 }
+
+
+inline std::vector<std::int64_t> extract_signed_i64_from_line(const std::string & line) {
+  size_t i = 0;
+
+  std::vector<std::int64_t> values;
+
+  while (true) {
+    std::int64_t accumulator = 0;
+    bool is_negative = false;
+    
+    while (i < line.size()) {
+        if (line[i] >= '0' && line[i] <= '9') break;
+        if (line[i] == '-' || line[i] == '+') break;
+        ++i;
+    }
+
+    if (i == line.size()) return values;
+
+    if (line[i] == '-') {
+        is_negative = true;
+        ++i;
+    } else if (line[i] == '+') {
+        ++i;
+    }
+
+    while (i < line.size() && (line[i] >= '0' && line[i] <= '9')) {
+      accumulator = accumulator * 10 + (line[i] - '0');
+      ++i;
+    }
+
+    if (is_negative) accumulator *= -1;
+
+    values.emplace_back(accumulator);
+  }
+}
+
 }
 
 struct Board {

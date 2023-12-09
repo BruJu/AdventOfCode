@@ -1,6 +1,7 @@
 #include "../../common/advent_of_code.hpp"
 #include <span>
 #include "../../util/position.hpp"
+#include <algorithm>
 #include <variant>
 
 // https://adventofcode.com/2018/day/15
@@ -49,44 +50,73 @@ Game::Game(const std::vector<std::string> & lines) {
 }
 
 bool Game::finished() const {
-  return std::all_of(entities.begin(), entities.end(),
-    [](const Entity & e) { return e.race == Entity::Race::Golbin; }
-  )
-  || std::all_of(entities.begin(), entities.end(),
-    [](const Entity & e) { return e.race == Entity::Race::Elve; }
-  );
+  bool hasElve = false;
+  bool hasGoblin = false;
+
+  for (const auto & row : m_grid) {
+    for (const auto & slot : row) {
+      const Entity * entity = std::get_if<Entity>(&slot);
+      if (!entity) continue;
+
+      if (entity->race == Entity::Race::Golbin) hasGoblin = true;
+      if (entity->race == Entity::Race::Elve) hasElve = true;
+    }
+  }
+
+  return !(hasElve && hasGoblin);
+}
+
+#include <set>
+
+bj::Direction goTo(const Game & game, bj::Position pos, Entity::Race race) {
+  struct Path {
+    int steps;
+    bj::Direction first_direction;
+
+    Path(bj::Direction first_direction) : steps(1), first_direction(first_direction) {}
+    Path(Path previous, bj::Direction direction) : steps(previous.steps + 1), first_direction(previous.first_direction) {}
+
+    static bool comp_dir(bj::Direction lhs, bj::Direction rhs) {
+      std::array<bj::Direction, 4> dirs{ bj::Direction::Top, bj::Direction::Left, bj::Direction::Right, bj::Direction::Down };
+
+      auto lhs_it = std::find(dirs.begin(), dirs.end(), lhs);
+      auto rhs_it = std::find(dirs.begin(), dirs.end(), rhs);
+
+      return lhs_it < rhs_it;
+    }
+
+    bool operator<(const Path & other) const {
+      if (steps < other.steps) return true;
+      if (steps > other.steps) return false;
+      if (comp_dir(first_direction, other.first_direction)) return true;
+      return false;
+    }
+  };
+
+  std::set<Path> valid;
+  std::set<Path> left;
+
+
+
 }
 
 void Game::round() {
-  std::sort(
-    entities.begin(), entities.end(),
-    [](const Entity & lhs, const Entity & rhs) {
-      bj::Position lhs_pos = lhs.position;
-      bj::Position rhs_pos = rhs.position;
-      return std::pair(lhs_pos.y, lhs_pos.x) < std::pair(rhs_pos.y, rhs_pos.x);
+  std::vector<bj::Position> entity_positions;
+
+  for (int row = 0; row < m_grid.size(); ++row) {
+    for (int col = 0; col < m_grid[0].size(); ++col) {
+      const Entity * entity = std::get_if<Entity>(&m_grid[row][col]);
+      if (entity) {
+        entity_positions.emplace_back(bj::Position{ row, col });
+      }
     }
-  );
+  }
 
   size_t i = 0;
-  while (i != entities.size()) {
+  while (i < entity_positions.size()) {
 
 
-    ++i;
   }
-  
-  std::vector<bj::Position> look_at;
-
-
-  std::vector<Person> persons;
-  for (Elve & elve : elves) {
-    persons.emplace_back(Person { nullptr, &elve });
-  }
-  
-  for (Goblin & goblin : goblins) {
-    persons.emplace_back(Person { &goblin, nullptr });
-  }
-
-  
 
 
 }
@@ -95,7 +125,7 @@ void Game::round() {
 Output day_2018_15(const std::vector<std::string> & lines, const DayExtraInfo &) {
   Game game(lines);
 
-  while (game.finished()) {
+  while (!game.finished()) {
     game.round();
   }
 
