@@ -36,3 +36,5 @@
 13 13_example_b.txt 400 100
 13 13_example.txt 405 400
 13 13_puzzle.txt ? ?
+14 14_example.txt 136 64
+14 14_puzzle.txt ? ?
