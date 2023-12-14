@@ -1,4 +1,5 @@
 #include "../../common/advent_of_code.hpp"
+#include "../../util/position.hpp"
 #include <vector>
 #include <algorithm>
 #include <set>
@@ -10,126 +11,97 @@ using Grid = std::vector<std::string>;
 
 // https://adventofcode.com/2023/day/14
 
+namespace {
 
-void move_up(size_t row, size_t col, Grid & g) {
-  if (row == 0) return;
-  if (g[row][col] != 'O') return;
+void tilt_boulder(Grid & grid, bj::UnsignedPosition from, bj::Direction direction) {
+  bj::UnsignedPosition to = from;
+  if (!to.move(direction, grid)) return;
+  if (grid[from.y][from.x] != 'O') return;
+  if (grid[to.y][to.x] != '.') return;
 
-  if (g[row - 1][col] == '.') {
-    g[row - 1][col] = 'O';
-    g[row][col] = '.';
-    move_up(row - 1, col, g);
+  std::swap(grid[from.y][from.x], grid[to.y][to.x]);
+  tilt_boulder(grid, to, direction);
+}
+
+[[nodiscard]] i64 north_support_beams(const Grid & grid) {
+  i64 answer = 0;
+  for (size_t row = 0; row != grid.size(); ++row) {
+    for (size_t col = 0; col != grid[0].size(); ++col) {
+      if (grid[row][col] == 'O') {
+        answer += (grid.size() - row);
+      }
+    }
+  }
+  return answer;
+}
+
+void tilt_NWSE(Grid & grid) {
+  for (size_t row = 0; row != grid.size(); ++row) {
+    for (size_t col = 0; col != grid[0].size(); ++col) {
+      tilt_boulder(grid, bj::UnsignedPosition{ col, row }, bj::Direction::Top);
+    }
+  }
+  
+  for (size_t col = 0; col != grid[0].size(); ++col) {
+    for (size_t row = 0; row != grid.size(); ++row) {
+      tilt_boulder(grid, bj::UnsignedPosition{ col, row }, bj::Direction::Left);
+    }
+  }
+
+  for (size_t row = grid.size(); row > 0; --row) {
+    for (size_t col = 0; col != grid[0].size(); ++col) {
+      tilt_boulder(grid, bj::UnsignedPosition{ col, row - 1 }, bj::Direction::Down);
+    }
+  }
+
+  for (size_t col = grid[0].size(); col > 0; --col) {
+    for (size_t row = 0; row != grid.size(); ++row) {
+      tilt_boulder(grid, bj::UnsignedPosition{ col - 1, row }, bj::Direction::Right);
+    }
   }
 }
 
-
-void move_down(size_t row, size_t col, Grid & g) {
-  if (row + 1 == g.size()) return;
-  if (g[row][col] != 'O') return;
-
-  if (g[row + 1][col] == '.') {
-    g[row + 1][col] = 'O';
-    g[row][col] = '.';
-    move_down(row + 1, col, g);
-  }
 }
-
-void move_left(size_t row, size_t col, Grid & g) {
-  if (col == 0) return;
-  if (g[row][col] != 'O') return;
-
-  if (g[row][col - 1] == '.') {
-    g[row][col - 1] = 'O';
-    g[row][col] = '.';
-    move_left(row, col - 1, g);
-  }
-}
-
-void move_right(size_t row, size_t col, Grid & g) {
-  if (col  + 1 == g[0].size()) return;
-  if (g[row][col] != 'O') return;
-
-  if (g[row][col + 1] == '.') {
-    g[row][col + 1] = 'O';
-    g[row][col] = '.';
-    move_right(row, col + 1, g);
-  }
-}
-
 
 Output day_2023_14(const std::vector<std::string> & lines, const DayExtraInfo &) {
-  i64 part_a = 0;
-  i64 part_b = 0;
-
   Grid grid = lines;
 
+  // PART A
   for (size_t row = 0; row != grid.size(); ++row) {
     for (size_t col = 0; col != grid[0].size(); ++col) {
-      move_up(row, col, grid);
+      tilt_boulder(grid, bj::UnsignedPosition{ col, row }, bj::Direction::Top);
     }
   }
 
-  for (size_t row = 0; row != grid.size(); ++row) {
-    for (size_t col = 0; col != grid[0].size(); ++col) {
-      if (grid[row][col] == 'O') {
-        part_a += (grid.size() - row);
-      }
-    }
-  }
+  const i64 part_a = north_support_beams(grid);
 
+  // PART B
   grid = lines;
 
-  std::map<Grid, size_t> memory;
+  std::map<Grid, int> memory;
 
-  for (size_t i = 0; i != 1000000000; ++i) {
-    for (size_t row = 0; row != grid.size(); ++row) {
-      for (size_t col = 0; col != grid[0].size(); ++col) {
-        move_up(row, col, grid);
-      }
-    }
+  int iterations = 0;
+  while (iterations < 1000000000) {
+    // Do normal tilt
+    tilt_NWSE(grid);
+    ++iterations;
 
-    
-    for (size_t col = 0; col != grid[0].size(); ++col) {
-      for (size_t row = 0; row != grid.size(); ++row) {
-        move_left(row, col, grid);
-      }
-    }
-
-    for (int row = grid.size() - 1; row >= 0; --row) {
-      for (size_t col = 0; col != grid[0].size(); ++col) {
-        move_down(row, col, grid);
-      }
-    }
-
-    for (int col = grid[0].size() - 1; col >= 0; --col) {
-      for (size_t row = 0; row != grid.size(); ++row) {
-        move_right(row, col, grid);
-      }
-    }
-
-    auto it = memory.find(grid);
+    // Fast advance if in a situation that was already encountered
+    const auto it = memory.find(grid);
 
     if (it != memory.end()) {
-      size_t delta = i - it->second;
-
-      while (i + delta - 1 < 1000000000) {
-        i += delta;
+      // Known, fast forward
+      const size_t delta = iterations - it->second;
+      while (iterations + delta < 1000000000) {
+        iterations += delta;
       }
-
     } else {
-      memory.emplace(grid, i);
+      // Unknown, register
+      memory.emplace(grid, iterations);
     }
   }
 
+  const i64 part_b = north_support_beams(grid);
 
-  for (size_t row = 0; row != grid.size(); ++row) {
-    for (size_t col = 0; col != grid[0].size(); ++col) {
-      if (grid[row][col] == 'O') {
-        part_b += (grid.size() - row);
-      }
-    }
-  }
-
-  
   return Output(part_a, part_b);
 }
