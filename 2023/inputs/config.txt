@@ -38,3 +38,5 @@
 13 13_puzzle.txt ? ?
 14 14_example.txt 136 64
 14 14_puzzle.txt ? ?
+15 15_example.txt 1320 145
+15 15_puzzle.txt ? ?
