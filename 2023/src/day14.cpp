@@ -11,7 +11,7 @@ using Grid = std::vector<std::string>;
 
 // https://adventofcode.com/2023/day/14
 
-namespace {
+namespace { 
 
 void tilt_boulder(Grid & grid, bj::UnsignedPosition from, bj::Direction direction) {
   bj::UnsignedPosition to = from;

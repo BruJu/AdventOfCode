@@ -40,3 +40,7 @@
 14 14_puzzle.txt ? ?
 15 15_example.txt 1320 145
 15 15_puzzle.txt ? ?
+16 16_example.txt 46 51
+16 16_puzzle.txt ? ?
+17 17_example.txt 102 94
+17 17_puzzle.txt ? ?

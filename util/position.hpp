@@ -17,6 +17,13 @@ namespace bj {
         return std::nullopt;
     }
 
+    inline bool are_opposite_dirs(bj::Direction lhs, bj::Direction rhs) {
+        return (lhs == Direction::Top   && rhs == Direction::Down )
+            || (lhs == Direction::Down  && rhs == Direction::Top  )
+            || (lhs == Direction::Left  && rhs == Direction::Right)
+            || (lhs == Direction::Right && rhs == Direction::Left );
+    }
+
     // Sortable position
     struct Position {
         int x = 0;
@@ -96,6 +103,35 @@ namespace bj {
             distance += x < 0 ? -x : x;
             distance += y < 0 ? -y : y;
             return distance;
+        }
+    };
+
+    struct UnsignedPosition {
+        size_t x;
+        size_t y;
+        
+        bool move(Direction direction, const std::vector<std::string> & grid) {
+            switch (direction) {
+                case Direction::Left:
+                    if (x == 0) return false;
+                    --x;
+                    return true;
+                case Direction::Right:
+                    if (grid.empty()) return false;
+                    if (x + 1 >= grid[0].size()) return false;
+                    ++x;
+                    return true;
+                case Direction::Top:
+                    if (y == 0) return false;
+                    --y;
+                    return true;
+                case Direction::Down:
+                    if (y + 1 >= grid.size()) return false;
+                    ++y;
+                    return true;
+            }
+            
+            return false;
         }
     };
 
