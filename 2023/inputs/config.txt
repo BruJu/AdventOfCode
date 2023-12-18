@@ -44,3 +44,5 @@
 16 16_puzzle.txt ? ?
 17 17_example.txt 102 94
 17 17_puzzle.txt ? ?
+18 18_example.txt 62 952408144115
+18 18_puzzle.txt ? ?
