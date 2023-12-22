@@ -10,6 +10,25 @@ using i64 = long long int;
 
 // https://adventofcode.com/2023/day/8
 
+i64 compute_lcm(std::span<const i64> values) {
+  std::map<i64, i64> factors_to_power;
+  Dividers dividers;
+
+  for (const i64 value : values) {
+    for (const auto divider : dividers.get_prime_decomposition(value)) {
+      factors_to_power[divider.value] = std::max<i64>(divider.power, factors_to_power[divider.value]);
+    }
+  }
+
+  i64 lcm = 1;
+  for (const auto & [factor, power] : factors_to_power) {
+    for (i64 i = 0; i != power; ++i) {
+      lcm *= factor;
+    }
+  }
+
+  return lcm;
+}
 
 class Graph {
 private:
@@ -123,23 +142,7 @@ public:
     }
 
     // Compute LCM
-    std::map<i64, i64> factors_to_power;
-    Dividers dividers;
-
-    for (const i64 cycle : cycles) {
-      for (const auto divider : dividers.get_prime_decomposition(cycle)) {
-        factors_to_power[divider.value] = std::max<i64>(divider.power, factors_to_power[divider.value]);
-      }
-    }
-
-    i64 lcm = 1;
-    for (const auto & [factor, power] : factors_to_power) {
-      for (i64 i = 0; i != power; ++i) {
-        lcm *= factor;
-      }
-    }
-
-    return lcm;
+    return compute_lcm(cycles);
   }
 };
 

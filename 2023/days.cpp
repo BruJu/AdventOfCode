@@ -20,12 +20,16 @@ Output day_2023_16(const std::vector<std::string> & lines, const DayExtraInfo &)
 Output day_2023_17(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day_2023_18(const std::vector<std::string> & lines, const DayExtraInfo &);
 Output day_2023_19(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2023_20(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2023_21(const std::vector<std::string> & lines, const DayExtraInfo &);
+Output day_2023_22(const std::vector<std::string> & lines, const DayExtraInfo &);
 
 static constexpr std::array<DayEntryPoint *, 25> days_2023 {
   &day_2023_01, &day_2023_02, &day_2023_03, &day_2023_04, &day_2023_05,
   &day_2023_06, &day_2023_07, &day_2023_08, &day_2023_09, &day_2023_10, 
   &day_2023_11, &day_2023_12, &day_2023_13, &day_2023_14, &day_2023_15, 
-  &day_2023_16, &day_2023_17, &day_2023_18, &day_2023_19, 
+  &day_2023_16, &day_2023_17, &day_2023_18, &day_2023_19, &day_2023_20, 
+  &day_2023_21, &day_2023_22, 
   nullptr
 };
 

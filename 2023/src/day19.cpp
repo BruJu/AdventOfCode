@@ -1,12 +1,11 @@
 #include "../../common/advent_of_code.hpp"
 #include <vector>
 #include <map>
-#include <queue>
 #include "../../util/instruction_reader.hpp"
 
 using i64 = std::int64_t;
 
-// https://adventofcode.com/2023/day/18
+// https://adventofcode.com/2023/day/19
 
 namespace {
 
@@ -273,46 +272,33 @@ i64 solve_part_a(const WorkflowChart & workflow_chart, std::span<const MachinePa
   return answer;
 }
 
-i64 solve_part_b(const WorkflowChart & workflow_chart) {
-  i64 answer = 0;
 
-  std::queue<std::pair<std::string, GroupOfMachineParts>> todo;
+i64 find_accepted(const WorkflowChart & chart, const std::string & workflow_name, GroupOfMachineParts machine_parts) {
+  if (workflow_name == "R") return 0;
+  if (workflow_name == "A") return machine_parts.get_number_in_group();
 
-  todo.emplace("in", GroupOfMachineParts::initial_group());
+  const Workflow & workflow = chart.get(workflow_name);
 
-  while (!todo.empty()) {
-    const auto [workflow_name, parts] = todo.front();
-    todo.pop();
+  i64 sum = 0;
+  for (const Rule & rule : workflow.rules) {
+    const auto [yes, no] = machine_parts.splice(rule);
 
-    if (workflow_name == "R") {
-      continue;
-    }
-    if (workflow_name == "A") {
-      answer += parts.get_number_in_group();
-      continue;
+    if (yes) {
+      sum += find_accepted(chart, rule.next_workflow, *yes);
     }
 
-    const Workflow & workflow = workflow_chart.get(workflow_name);
-
-    std::optional<GroupOfMachineParts> current = parts;
-    for (const Rule & rule : workflow.rules) {
-      if (!current) break;
-
-      const auto [yes, no] = current->splice(rule);
-
-      if (yes) {
-        todo.emplace(rule.next_workflow, *yes);
-      }
-
-      current = no;
+    if (!no) {
+      return sum;
     }
 
-    if (current) {
-      todo.emplace(workflow.final_rule, *current);
-    }
+    machine_parts = *no;
   }
 
-  return answer;
+  return sum + find_accepted(chart, workflow.final_rule, machine_parts);
+}
+
+i64 solve_part_b(const WorkflowChart & workflow_chart) {
+  return find_accepted(workflow_chart, "in", GroupOfMachineParts::initial_group());
 }
 
 }
