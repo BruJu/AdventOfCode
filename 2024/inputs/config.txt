@@ -2,3 +2,5 @@
 1  01_real.txt     ? ?
 2 02_example.txt 2 4
 2 02_real.txt ? ?
+3 03_example.txt inline inline
+3 03_real.txt ? ?
