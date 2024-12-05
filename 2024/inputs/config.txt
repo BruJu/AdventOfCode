@@ -4,3 +4,7 @@
 2 02_real.txt ? ?
 3 03_example.txt inline inline
 3 03_real.txt ? ?
+4 04_example.txt 18 9
+4 04_real.txt ? ?
+5 05_example.txt 143 123
+5 05_real.txt ? ?

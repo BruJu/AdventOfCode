@@ -23,6 +23,11 @@ bool is_safe(std::span<const int> values) {
 
 static
 bool is_tolerating_safe(const std::vector<int> & values) {
+  // No values = safe
+  // One value = safe
+  // Two values = remove one, it's safe
+  if (values.size() <= 2) return true;
+
   if (is_safe(values)) return true;
 
   // values = 0 1 2 3 4 5
