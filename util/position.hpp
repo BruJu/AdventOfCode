@@ -144,6 +144,12 @@ namespace bj {
         
         void advance() { position.move(direction); }
 
+        void move_backward() {
+            turn_180();
+            advance();
+            turn_180();
+        }
+
         void turn_left() {
             switch (direction) {
                 case Direction::Left : direction = Direction::Down ; break;

@@ -9,6 +9,8 @@
 
 // https://adventofcode.com/2024/day/1
 
+namespace {
+  
 struct LineReader {
   std::regex pattern { R"(^(\d+)\s+(\d+)$)" } ;
   std::smatch matches;
@@ -21,6 +23,8 @@ struct LineReader {
     return { a, b };
   }
 };
+
+}
 
 Output day_2024_01(const std::vector<std::string> & lines, const DayExtraInfo &) {
   int part_a = 0;
