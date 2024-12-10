@@ -54,10 +54,7 @@ bj::Position move(bj::Position position, Direction direction) {
 
 static
 std::optional<char> get_letter(const std::vector<std::string> & grid, bj::Position position) {
-  if (position.x < 0) return std::nullopt;
-  if (position.y < 0) return std::nullopt;
-  if (std::cmp_greater_equal(position.y, grid.size())) return std::nullopt;
-  if (std::cmp_greater_equal(position.x, grid[position.y].size())) return std::nullopt;
+  if (position.is_out_of_bound(grid)) return std::nullopt;
   return grid[position.y][position.x];
 }
 

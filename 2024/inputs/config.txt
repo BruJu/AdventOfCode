@@ -16,3 +16,7 @@
 8 08_real.txt ? ?
 9 09_example.txt 1928 2858
 9 09_real.txt ? ?
+10 10_example_a.txt 2 _
+10 10_example_b.txt 4 _
+10 10_example_c.txt 36 81
+10 10_real.txt ? ?

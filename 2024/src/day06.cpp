@@ -8,15 +8,6 @@
 using Grid = std::vector<std::string>;
 
 static
-bool is_out_of_bound(bj::Position position, const Grid & grid) {
-  if (position.x < 0) return true;
-  if (position.y < 0) return true;
-  if (std::cmp_greater_equal(position.y,grid.size())) return true;
-  if (std::cmp_greater_equal(position.x,grid[0].size())) return true;
-  return false;
-}
-
-static
 char get_at(const Grid & grid, bj::Position position) {
   return grid[position.y][position.x];
 }
@@ -47,7 +38,7 @@ bool obstacle_here_provokes_loop(bj::Kitten guard, const bj::Position extra_obst
     already_visited.emplace(std::pair(guard.direction, guard.position));
 
     guard.advance();
-    if (is_out_of_bound(guard.position, grid)) {
+    if (guard.position.is_out_of_bound(grid)) {
       // No cycle
       return false;
     }
@@ -75,7 +66,7 @@ Output day_2024_06(const std::vector<std::string> & lines, const DayExtraInfo &)
 
     guard.advance();
 
-    if (is_out_of_bound(guard.position, lines)) break;
+    if (guard.position.is_out_of_bound(lines)) break;
 
     char c = get_at(lines, guard.position);
 

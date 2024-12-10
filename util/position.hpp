@@ -104,6 +104,21 @@ namespace bj {
             distance += y < 0 ? -y : y;
             return distance;
         }
+
+        [[nodiscard]] bool is_out_of_bound(const std::vector<std::string> & grid) const {
+            if (x < 0) return true;
+            if (y < 0) return true;
+            if (static_cast<size_t>(y) >= grid.size()) return true;
+            if (static_cast<size_t>(x) >= grid[y].size()) return true;
+            return false;
+        }
+
+        static Position from(size_t x, size_t y) {
+            return bj::Position {
+                static_cast<int>(x),
+                static_cast<int>(y)
+            };
+        }
     };
 
     struct UnsignedPosition {
