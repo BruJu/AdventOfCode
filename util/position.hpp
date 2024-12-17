@@ -37,6 +37,40 @@ namespace bj {
             return false;
         }
 
+        friend Position operator+(Position left, Position right) {
+            Position copy = left;
+            copy += right;
+            return copy;
+        }
+
+        Position & operator+=(const Position & right) {
+            x += right.x;
+            y += right.y;
+            return *this;
+        }
+
+        friend Position operator-(Position left, Position right) {
+            Position copy = left;
+            copy -= right;
+            return copy;
+        }
+
+        Position & operator-=(const Position & right) {
+            x -= right.x;
+            y -= right.y;
+            return *this;
+        }
+
+        friend Position operator*(bj::Position right, int scalar) {
+            return scalar * right;
+        }
+
+        friend Position operator*(int scalar, bj::Position right) {
+            right.x *= scalar;
+            right.y *= scalar;
+            return right;
+        }
+
         [[nodiscard]] bool operator==(const Position & rhs) const {
             return x == rhs.x && y == rhs.y;
         }
@@ -118,6 +152,17 @@ namespace bj {
                 static_cast<int>(x),
                 static_cast<int>(y)
             };
+        }
+
+        static std::optional<Position> find(const std::vector<std::string> & grid, char symbol) {
+            for (size_t y = 0; y != grid.size(); ++y) {
+                for (size_t x = 0; x != grid[y].size(); ++x) {
+                    if (grid[y][x] == symbol) {
+                        return from(x, y);
+                    }
+                }
+            }
+            return std::nullopt;
         }
     };
 
