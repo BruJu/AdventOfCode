@@ -182,6 +182,7 @@ struct Output {
 };
 
 struct DayExtraInfo {
+    std::string filename;
     bool can_skip_part_A = false;
     int  part_a_extra_param = 0;
     bool can_skip_part_B = false;
