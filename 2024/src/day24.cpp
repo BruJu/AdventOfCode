@@ -6,6 +6,7 @@
 #include <set>
 #include <ranges>
 #include <algorithm>
+#include <span>
 
 #include <ctime>
 #include <random>
@@ -72,25 +73,30 @@ struct Wire {
     }
   }
 
+std::pair<
+  std::map<std::string, int>,
+  std::vector<Calculus>
+> read_input(const std::vector<std::string> & lines) {
+  // RAM
+  // empty line
+  // Maths
 
-
-
-}
-
-Output day_2024_24(const std::vector<std::string> & lines, const DayExtraInfo & dei) {
+  // 1- RAM
   std::map<std::string, int> ram;
-
-  std::map<std::string, Wire> wires;
-
+  
   auto it_line = lines.begin();
   while (*it_line != "") {
+    // Format is as followes:
     // x23: 0
     ram[it_line->substr(0, 3)] = std::stoi(it_line->substr(it_line->find(":") + 1));
     ++it_line;
   }
 
-  std::vector<Calculus> maths;
+  // 2- Jump empty line
   ++it_line;
+
+  // 3- Maths
+  std::vector<Calculus> maths;
   while (it_line != lines.end()) {
     std::vector<std::string> strs = bj::string_split(*it_line, " ");
 
@@ -100,8 +106,19 @@ Output day_2024_24(const std::vector<std::string> & lines, const DayExtraInfo & 
       to_operator(strs[1]),
       strs[4],
     });
-  ++it_line;
+
+    ++it_line;
   }
+
+  return std::pair(ram, maths);
+}
+
+
+std::map<std::string, Wire> to_wires(
+  const std::map<std::string, int> & ram,
+  const std::vector<Calculus> & maths
+) {
+  std::map<std::string, Wire> wires;
 
   for (const auto & [name, value] : ram) {
     wires[name] = Wire{ name, value };
@@ -111,21 +128,45 @@ Output day_2024_24(const std::vector<std::string> & lines, const DayExtraInfo & 
     wires[calc.out] = Wire { calc.out, calc };
   }
 
-  std::map<std::string, int> out_a;
+  return wires;
+}
 
-  for (auto & [wire_name, wire] :wires ) {
-    if (wire_name[0] == 'z') {
-      out_a[wire_name] = wire.get_value(wires);
-    }
+
+std::int64_t evaluate(std::map<std::string, Wire> & wires, char first_letter) {
+  std::int64_t final_value = 0;
+
+  for (auto & [wire_name, wire] : wires) {
+    if (wire_name[0] != first_letter) continue;
+
+    const std::int64_t v = wire.get_value(wires);
+    int shift = (wire_name[1] - '0') * 10 + (wire_name[2] - '0');
+
+    final_value += v << shift;
   }
 
-  std::int64_t out = 0;
-  for (const auto & [wire_name, vlaue] : out_a| std::views::reverse) {
-    out = out * 2 + vlaue;
-  }
+  return final_value;
+}
+
+std::int64_t solve_part_a(
+  std::map<std::string, int> ram,
+  std::vector<Calculus> calculus
+) {
+  std::map<std::string, Wire> wires = to_wires(ram, calculus);
+  return evaluate(wires, 'z');
+}
+
+
+
+}
+
+Output day_2024_24(const std::vector<std::string> & lines, const DayExtraInfo & dei) {
+  const auto & [ram, maths] = read_input(lines);
+
+
+  std::int64_t part_a_answer = solve_part_a(ram, maths);
 
 
   return Output(
-    out, 0
+    part_a_answer, 0
     );
 }
