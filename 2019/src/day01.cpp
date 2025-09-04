@@ -16,7 +16,8 @@ Output day_2019_01(const std::vector<std::string> & lines, const DayExtraInfo &)
 
   for (const std::string & line : lines) {
     const int mass = std::stoi(line);
-    const int fuel = std::max((mass / 3) - 2, 0);
+    
+    const int fuel = get_fuel_for(mass);
     sum += fuel;
 
     int rec_mass = mass;
