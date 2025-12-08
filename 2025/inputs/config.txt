@@ -12,3 +12,5 @@
 6 06_real.txt ? ?
 7 07_example.txt 21 40
 7 07_real.txt ? ?
+8 08_example.txt 10`40 25272
+8 08_real.txt 1000`? ?
