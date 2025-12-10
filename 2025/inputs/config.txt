@@ -14,3 +14,7 @@
 7 07_real.txt ? ?
 8 08_example.txt 10`40 25272
 8 08_real.txt 1000`? ?
+9 09_example.txt 50 24
+9 09_real.txt ? ?
+10 10_example.txt inline inline
+10 10_real.txt ? ?
