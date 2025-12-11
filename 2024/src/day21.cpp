@@ -13,27 +13,20 @@ using i64 = std::int64_t;
 
 namespace {
 
-template<typename T>
-T unwrap(std::optional<T> value, std::string message) {
-  if (!value) throw std::runtime_error(message);
-  return *value;
-}
 
-// This class is a robot that moves on a keypad.
-// It knows where it is, how it has to move to reach each key.
-// What do we want to ask to the robot?
-// -> I have a keyboard with <^v>A, what do I press if i want to input this?
-//    So I have to press some <^v> to reach my letter, then press A
-//
-// Ok, now if I stack robots, why are some orders better?
-// Is <A<A^A better than <A^A<A? What does it mean?
 struct Robot {
   bj::Position pos;
   Robot * piloted_by;
 
+  struct Pathway {
+    std::vector<std::string> description_of_paths;
+    std::optional<size_t> minimal_size_of_input; // for memoization
+    bj::Position end_position;
+  };
+
   // [starting position, destination character] -> [legal sequences, fianl position]
   // In legal sequences, we forbid alternating between inputs. i.e. ^<^< is not legit but ^^<< and <<^^ are
-  std::map<std::pair<bj::Position, char>, std::pair<std::vector<std::string>, bj::Position>> paths;
+  std::map<std::pair<bj::Position, char>, Pathway> paths;
 
   Robot(std::vector<std::string> layout, Robot * piloted_by) : piloted_by(piloted_by) {
     const auto [symbols, forbidden_positions] = locate_all_symbols(layout);
@@ -42,7 +35,15 @@ struct Robot {
     if (it_pos_a == symbols.end()) throw std::runtime_error("202421 no A in input");
     pos = it_pos_a->second;
 
-    paths = build_valid_paths(symbols, forbidden_positions);
+    const auto bvp_result = build_valid_paths(symbols, forbidden_positions);
+
+    for (const auto & [key, value] : bvp_result) {
+      paths[key] = Pathway {
+        .description_of_paths = value.first,
+        .minimal_size_of_input = std::nullopt,
+        .end_position = value.second
+      };
+    }
   }
 
 
@@ -166,56 +167,38 @@ struct Robot {
     return output;
   }
   
-  std::vector<const std::vector<std::string> *> do_sequence(std::string_view s) {
-    std::vector<const std::vector<std::string> *> valid_sequences;
-    valid_sequences.reserve(s.size());
-
-    for (char c : s) {
-      auto it = paths.find({ this->pos, c });
-      if (it == paths.end()) throw std::runtime_error("paniku");
-
-      valid_sequences.emplace_back(&it->second.first);
-      this->pos = it->second.second;
-
-      // Must press A?
-    }
-
-    return valid_sequences;
-  }
-
-  std::string go_to_symbol(char target) {
-    std::map<char, int> required_presses;
-    // const bj::Position target_pos = find_symbol(target);
-
-    std::string sequence;
-
-
-
-    return sequence;
-  }
-
-  std::string press(std::string sequence) {
+  size_t press(std::string sequence) {
     if (piloted_by == nullptr) {
-      // Yeah I can do it. No need to look for complicated things
-      return sequence;
+      // Biological robot (aka me): just press the buttons
+      return sequence.size();
     }
 
-    // HOW I DO DIS???
+    // We assume we are on an A
     if (sequence.back() != 'A') throw std::runtime_error("Must finish with an A press");
 
-    std::string full_sequence;
+    size_t full_sequence = 0;
     for (const char c : sequence) {
       const auto it_possible_paths = paths.find(std::pair(pos, c));
       if (it_possible_paths == paths.end()) throw std::runtime_error("No path found");
 
-      bj::Position new_pos = it_possible_paths->second.second;
+      bj::Position new_pos = it_possible_paths->second.end_position;
 
-      std::optional<std::string> shortest_sequence;
-      for (const std::string & possible_path : it_possible_paths->second.first) {
-        std::string res = piloted_by->press(possible_path);
-        if (!shortest_sequence || shortest_sequence->size() > res.size()) {
-          shortest_sequence = res;
+      std::optional<size_t> shortest_sequence;
+
+      if (it_possible_paths->second.minimal_size_of_input) {
+        // already known (memoization)
+        shortest_sequence = *it_possible_paths->second.minimal_size_of_input;
+      } else {
+        // piloted_by is on A because all ends with A and we start at A
+        for (const std::string & possible_path : it_possible_paths->second.description_of_paths) {
+          size_t res = piloted_by->press(possible_path);
+          if (!shortest_sequence || *shortest_sequence > res) {
+            shortest_sequence = res;
+          }
         }
+        // piloted_by is on A because ends on an A
+
+        it_possible_paths->second.minimal_size_of_input = *shortest_sequence;
       }
 
       if (!shortest_sequence) {
@@ -249,30 +232,29 @@ Output day_2024_21(const std::vector<std::string> & lines, const DayExtraInfo & 
   Robot robot_1_on_dirpad(dirpad, &me);
   Robot robot_2_on_dirpad(dirpad, &robot_1_on_dirpad);
   Robot robot_on_numpad  (numpad, &robot_2_on_dirpad);
-  
-  
-  
-  
-  
+
+  std::vector<std::unique_ptr<Robot>> the_26_robots_and_me;
+  // One directional keypad that you are using.
+  the_26_robots_and_me.emplace_back(new Robot(dirpad, nullptr));
+  // 25 directional keypads that robots are using.
+  for (int i = 0; i != 25; ++i) {
+    Robot * previous = the_26_robots_and_me.back().get();
+    the_26_robots_and_me.emplace_back(new Robot(dirpad, previous));
+  }
+  // One numeric keypad (on a door) that a robot is using.
+  the_26_robots_and_me.emplace_back(new Robot(numpad, the_26_robots_and_me.back().get()));
 
   int sum = 0;
+  std::int64_t part_b_sum = 0;
   for (const std::string & line : lines) {
-    std::string pressed = robot_on_numpad.press(line);
+    size_t pressed = robot_on_numpad.press(line);
+    sum += pressed * std::stoi(line);
 
-    // auto a = robot_on_numpad.do_sequence(line);
-    // auto b = robot_on_dirpad.do_sequence(a);
-    // std::string d = me.do_sequence(b);
-    // std::string d;
-
-    // v<<A^>>AvA^A v<<A^>>AAv<A<A^>>AA<Av>AA^Av<A^>AA<A>Av<A<A^>>AAA<Av>A^A
-    // <v<A>>^AvA^A <vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^    AAAvA<^A>A
-
-    // printf("%s\n", d.c_str());
-    // printf("%zu ; %d, %ld\n", d.size(), std::stoi(line), d.size() * std::stoi(line));
-    sum += pressed.size() * std::stoi(line);
+    if (!dei.can_skip_part_B) {
+      size_t pressed_b = the_26_robots_and_me.back()->press(line);
+      part_b_sum += pressed_b * std::stoi(line);
+    }
   }
 
-  return Output(
-    sum, 0
-    );
+  return Output(sum, part_b_sum);
 }
